@@ -604,7 +604,7 @@ def check_html_basics() -> list[str]:
             if 'aria-hidden="true"' not in svg and "role=" not in svg:
                 problems.append(f"{name} has an <svg> that is neither decorative nor labelled")
     index = read(DOCS / "index.html")
-    if 'class="skip"' not in index:
+    if 'class="skip-link"' not in index:
         problems.append("index.html has no skip link")
     if 'href="#main"' not in index:
         problems.append("index.html skip link does not target #main")
@@ -740,180 +740,36 @@ def check_site_metadata() -> list[str]:
     return problems
 
 
-@check("ledger-demo", "the interactive demo and its no-JavaScript fallback agree")
-def check_ledger_demo() -> list[str]:
+@check("homepage-focus", "the public homepage stays short and centred on the core workflow")
+def check_homepage_focus() -> list[str]:
     problems = []
     text = read(DOCS / "index.html")
+    main = re.search(r"<main\b[^>]*>(.*?)</main>", text, re.S)
+    if not main:
+        return ["index.html has no main content"]
 
-    match = re.search(
-        r'<script type="application/json" id="ledger-data">(.*?)</script>', text, re.S
-    )
-    if not match:
-        return ["index.html has no ledger-data block"]
-    try:
-        data = json.loads(match.group(1))
-    except json.JSONDecodeError as exc:
-        return [f"ledger-data is not valid JSON: {exc}"]
+    visible = strip_tags(main.group(1))
+    words = re.findall(r"\b[\w’'-]+\b", visible)
+    if len(words) > 900:
+        problems.append(f"homepage main copy is {len(words)} words; keep it at or below 900")
+    sections = len(re.findall(r"<section\b", main.group(1)))
+    if sections > 6:
+        problems.append(f"homepage has {sections} main sections; keep it at or below 6")
 
-    steps = data.get("steps") or []
-    if len(steps) < 4:
-        problems.append("the demo needs at least four turns to show the behaviour")
-
-    stream = re.search(r'id="stream-list"[^>]*>(.*?)</ol>', text, re.S)
-    if not stream:
-        problems.append("index.html has no static stream-list fallback")
-    else:
-        said = [strip_tags(item) for item in re.findall(r"<li>(.*?)</li>", stream.group(1), re.S)]
-        expected = [step["say"] for step in steps]
-        if said != expected:
-            problems.append("static transcript and ledger-data disagree about what was said")
-
-    known_ids: set[str] = set()
-    for number, step in enumerate(steps, start=1):
-        for key in ("say", "note", "open", "done"):
-            if key not in step:
-                problems.append(f"demo step {number} is missing {key!r}")
-        for item in step.get("open", []) + step.get("done", []):
-            if not re.fullmatch(r"OI-\d+", item.get("id", "")):
-                problems.append(f"demo step {number} has a malformed id: {item.get('id')!r}")
-            if item.get("status") not in STATUSES:
-                problems.append(f"demo step {number} uses an unknown status: {item.get('status')!r}")
-            known_ids.add(item.get("id", ""))
-        for touched in step.get("touched", []):
-            if touched not in known_ids:
-                problems.append(f"demo step {number} highlights an unknown id: {touched}")
-        for item in step.get("done", []):
-            if item.get("status") not in RETIRING:
-                problems.append(
-                    f"demo step {number} moves {item.get('id')} to Done as {item.get('status')!r};"
-                    " only verified and dropped items retire"
-                )
-        recommendation = step.get("next")
-        if recommendation:
-            if number == 1:
-                problems.append("the first demo turn cannot recommend before a prior ledger state exists")
-            else:
-                previous = steps[number - 2]
-                if step.get("open") != previous.get("open") or step.get("done") != previous.get("done"):
-                    problems.append(
-                        f"demo step {number} changes the ledger on a recommendation-only turn"
-                    )
-            available = {
-                item["id"]: item["status"]
-                for item in step.get("open", [])
-                if item["status"] not in {"blocked", "reminder"}
-            }
-            target = recommendation.get("id")
-            if target not in available:
-                problems.append(
-                    f"demo step {number} recommends {target!r}, which is not an available open item;"
-                    " blocked and reminder items are never suggested"
-                )
-            for key in ("id", "step", "why"):
-                if not recommendation.get(key):
-                    problems.append(f"demo step {number} recommendation is missing {key!r}")
-
-    with_next = sum(1 for step in steps if step.get("next"))
-    if with_next == 0:
-        problems.append("no demo step shows a next-action recommendation")
-    if steps and with_next > max(1, len(steps) // 3):
-        problems.append(
-            f"{with_next} of {len(steps)} demo turns carry a recommendation;"
-            " the demo should show restraint, not a lecture"
-        )
-
-    body = re.search(r'id="ledger-body"[^>]*>(.*?)</section>', text, re.S)
-    if not body:
-        return problems + ["index.html has no static ledger fallback"]
-    static = body.group(1)
-
-    head = re.search(r'<span class="ledger-count">([^<]+)</span>', static)
-    final = steps[-1]
-    for_user = [
-        item for item in final["open"]
-        if item["status"] not in {"waiting-on-you", "reminder"}
-    ]
-    waiting = [item for item in final["open"] if item["status"] == "waiting-on-you"]
-    reminders = [item for item in final["open"] if item["status"] == "reminder"]
-    count_parts = []
-    if for_user:
-        count_parts.append(f"{len(for_user)} for you")
-    if waiting:
-        count_parts.append(f"{len(waiting)} waiting on you")
-    if reminders:
-        count_parts.append(f"{len(reminders)} reminder")
-    if final["done"]:
-        count_parts.append(f"{len(final['done'])} done")
-    expected_count = " \u00b7 ".join(count_parts)
-    actual_count = head.group(1) if head else None
-    if actual_count != expected_count:
-        problems.append(
-            f"static ledger header says {actual_count!r}, expected {expected_count!r}"
-        )
-
-    open_block, _, done_block = static.partition('<ul class="ledger-list is-done">')
-    row_re = re.compile(
-        r'<li data-status="(?P<status>[a-z-]+)">'
-        r'<span class="mark" aria-hidden="true">(?P<mark>[^<]+)</span>'
-        r'<span class="row"><span class="oi">(?P<id>[^<]+)</span>'
-        r'<span class="title">(?P<title>[^<]+)</span>\s*'
-        r'<span class="status">(?P<label>[^<]+)</span>'
-        r'(?:\s*<span class="qual">\((?P<qual>[^<]*)\)</span>)?'
-    )
-
-    def parsed(fragment: str) -> list[dict[str, str]]:
-        rows = []
-        for row in row_re.finditer(fragment):
-            entry = {
-                "id": row.group("id"),
-                "title": html.unescape(row.group("title")),
-                "status": row.group("status"),
-                "mark": row.group("mark"),
-                "label": row.group("label"),
-            }
-            if row.group("qual"):
-                entry["qual"] = html.unescape(row.group("qual"))
-            rows.append(entry)
-        return rows
-
-    def wanted(items: list[dict]) -> list[dict[str, str]]:
-        rows = []
-        for item in items:
-            entry = {
-                "id": item["id"],
-                "title": item["title"],
-                "status": item["status"],
-                "mark": MARKS[item["status"]],
-                "label": item["status"],
-            }
-            if item.get("qual"):
-                entry["qual"] = item["qual"]
-            rows.append(entry)
-        return rows
-
-    grouped_open = for_user + waiting + reminders
-    if parsed(open_block) != wanted(grouped_open):
-        problems.append("static open items do not match the final demo state")
-    if parsed(done_block) != wanted(final["done"]):
-        problems.append("static Done items do not match the final demo state")
-
-    for related in final.get("related", []):
-        line = f"Related: {related['title']} \u00b7 {related['id']} \u2014 {related['result']}"
-        if line not in static:
-            problems.append(f"static ledger is missing the related line: {line}")
-
-    final_next = final.get("next")
-    if final_next:
-        expected_markup = (
-            f'<span class="next-id">{final_next["id"]}</span>'
-            f' <span class="next-step">{final_next["step"]}</span>'
-        )
-        if expected_markup not in static:
-            problems.append("static ledger is missing the final recommendation line")
-        if f'<p class="ledger-why">{final_next["why"]}</p>' not in static:
-            problems.append("static ledger is missing the recommendation's reasoning")
-    elif "ledger-next" in static:
-        problems.append("static ledger shows a recommendation the final step does not have")
+    for required in (
+        'class="memory-demo"',
+        "It remembers. You decide what starts.",
+        "Captures every ask",
+        "Shows it every reply",
+        "Suggests one next move",
+        "Keeps a full ledger",
+        "The list belongs to you.",
+        "Install the skill",
+    ):
+        if required not in text:
+            problems.append(f"homepage no longer carries its core message: {required!r}")
+    if 'id="ledger-data"' in text or 'id="demo-toggle"' in text:
+        problems.append("homepage has regained the old multi-turn interactive demo")
     return problems
 
 
@@ -1006,11 +862,9 @@ def check_honesty() -> list[str]:
             "does not guarantee automatic invocation",
         ],
         "docs/index.html": [
-            "Not a background daemon",
-            "Not a cross-task message bus",
-            "Not a database",
-            "Not guaranteed invocation",
-            "Not a priority system",
+            "No cloud account or background daemon",
+            "No automatic authority over your work",
+            "No promise that every agent harness will invoke a skill perfectly",
         ],
     }
     required["README.md"].append("does not know what you have the appetite for")
@@ -1231,8 +1085,9 @@ def check_docs_consistency() -> list[str]:
     for status in STATUSES:
         if status not in readme:
             problems.append(f"README.md does not document the {status!r} label")
-        if status not in index:
-            problems.append(f"docs/index.html does not document the {status!r} label")
+    for summary in ("stable ID", "honest status", "Read the full documentation"):
+        if summary not in index:
+            problems.append(f"docs/index.html no longer links the simple story to detail: {summary!r}")
     for name in ("AGENTS.md", "CLAUDE.md"):
         text = read(ROOT / name)
         if "~/.codex" not in text and "~/.claude" not in text:
