@@ -18,7 +18,7 @@ Everything here is built around one rule:
 4. **References stay one level deep** and are linked directly from `SKILL.md`.
 5. **All identifiers are synthetic** — `task_EXAMPLE_xxxx`, `sess_EXAMPLE_xxxx`. A check enforces it.
 6. **No personal state**: no live backlogs, real IDs, absolute machine paths, credentials, or private URLs.
-7. **Truthful capability claims only.** Installation starts no process. The optional Full ledger editor is a per-ledger loopback process backed by one JSON file, not a daemon, message bus, or database. There is no guaranteed invocation. The public website has no analytics, third-party runtime dependencies, or outbound application requests.
+7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, message bus, or database. There is no guaranteed invocation. The public website has no analytics, third-party runtime dependencies, or outbound application requests.
 8. **No runtime dependencies on the site**, and all internal links relative so it works under `/outstanding-items/`.
 9. **Run the checks before claiming success:**
 
@@ -64,8 +64,14 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   are unrelated to the current work. Never refuse a reminder for being
   off-topic, and never start something because I asked you to remember it.
 - Give each item a permanent `OI-n` ID. Never renumber.
-- End every user-facing reply with the Outstanding footer: Outstanding for you,
-  Waiting on you, Intentional reminders, then the crossed-out Done section.
+- Keep the ledger silently while you work, then end the **final response of the
+  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
+  Intentional reminders, then the crossed-out Done section. Never put it in
+  commentary, progress notes, partial updates, or status messages.
+- Whenever a local ledger UI is running, put the exact tokenized URL it printed
+  on its own line as **Full outstanding items** directly below the Outstanding
+  header and again after the last section. With no live UI, write neither line,
+  and never point it at raw JSON or a Markdown list.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
   without evidence you observed in this session.
@@ -91,12 +97,14 @@ Put this in that project's own `CLAUDE.md` instead of the global file:
 ## Task hygiene
 
 Work here arrives in bursts of half-related requests. Use the `outstanding-items`
-skill for every session in this repository and keep the Outstanding footer on
-every reply. The list is mine: capture it, show it, suggest at most one next
-move, and wait for my current message to name the item you should start.
-Authority ends with that response turn. Past seven items for
-me, ask before writing `outstanding-items.json`, start its local HTML editor,
-and add its private ledger/runtime files to `.git/info/exclude`.
+skill for every session in this repository and end the final response of each
+turn with one Outstanding footer — never in commentary or progress messages. The
+list is mine: capture it, show it, suggest at most one next move, and wait for my
+current message to name the item you should start. Authority ends with that
+response turn. Past seven items for me, ask before writing
+`outstanding-items.json` and start its local HTML editor. Link it as
+**Full outstanding items** below the header and after the last section, and add
+its private ledger/runtime files to `.git/info/exclude`.
 ```
 
 The skill still has to be installed. A project instruction can ask for it; it cannot supply it.

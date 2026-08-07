@@ -9,6 +9,9 @@
   --danger: #a33a34;
   --snackbar: #202126;
   --snackbar-ink: #ffffff;
+  --tooltip: #ffffff;
+  --tooltip-ink: #2c2d33;
+  --tooltip-line: #d6d8dd;
   --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
 }
 
@@ -204,7 +207,76 @@ h1 {
   font-weight: 700;
 }
 
-.item-copy { min-width: 0; }
+.item-copy {
+  position: relative;
+  min-width: 0;
+}
+
+.item-tooltip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  max-width: 30rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--tooltip-line);
+  border-radius: 0.5rem;
+  background: var(--tooltip);
+  color: var(--tooltip-ink);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 130ms ease;
+}
+
+/* A transparent bridge so the tooltip stays reachable with the pointer. */
+.item-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0.5rem;
+}
+
+.ledger-item .item-tooltip { bottom: calc(100% + 0.4rem); }
+.ledger-item .item-tooltip::after { top: 100%; }
+
+.ledger-item[data-tooltip="below"] .item-tooltip {
+  top: calc(100% + 0.4rem);
+  bottom: auto;
+}
+
+.ledger-item[data-tooltip="below"] .item-tooltip::after {
+  top: auto;
+  bottom: 100%;
+}
+
+.item-tooltip-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.item-tooltip-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.ledger-item:hover .item-tooltip,
+.item-title:focus-visible ~ .item-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ledger-item.tooltip-dismissed .item-tooltip {
+  opacity: 0;
+  visibility: hidden;
+}
 
 .item-title {
   display: block;
@@ -420,6 +492,9 @@ footer p { margin: 0; }
     --danger: #e2867e;
     --snackbar: #f0f1f4;
     --snackbar-ink: #1c1d20;
+    --tooltip: #26282d;
+    --tooltip-ink: #eceef2;
+    --tooltip-line: #3d3f46;
   }
 
   .snackbar button { color: #3457c4; }

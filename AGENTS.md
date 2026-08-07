@@ -18,7 +18,7 @@ The product it describes has one non-negotiable rule, and every file here has to
 4. **References stay one level deep.** `references/*.md`, linked directly from `SKILL.md`. No reference-of-a-reference chains.
 5. **Every identifier is synthetic.** Task and session IDs must match `task_EXAMPLE_xxxx` / `sess_EXAMPLE_xxxx`. A check fails the build otherwise.
 6. **No personal state.** No live backlogs, no real task IDs, no absolute paths from anyone's machine, no credentials, no private URLs. Examples are invented, and stay invented.
-7. **Truthful capability claims only.** Installation starts no process. The optional Full ledger editor is a per-ledger loopback process backed by one JSON file, not a daemon, cross-task bus, or database. Do not claim guaranteed invocation. The public site has no analytics, third-party runtime dependencies, or outbound application requests. `tests/run_checks.py` enforces these boundaries.
+7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, cross-task bus, or database. Do not claim guaranteed invocation. The public site has no analytics, third-party runtime dependencies, or outbound application requests. `tests/run_checks.py` enforces these boundaries.
 8. **The site has no runtime dependencies.** No CDN, no analytics, no fonts fetched over the network, no framework. All internal links are relative so the site works under `/outstanding-items/`.
 9. **Run the checks before you claim anything works.**
 
@@ -37,7 +37,7 @@ If a task here produces a list of remaining work, that list is the user's. Write
 | `skill/outstanding-items/SKILL.md` | Always-loaded operating contract. Keep it imperative and short. |
 | `skill/outstanding-items/references/` | Conditional detail: authority, status labels, suggesting a next move, backlog artifact, related tasks, worked examples. |
 | `skill/outstanding-items/scripts/ledger_ui.py` | Canonical JSON validation/migration, atomic persistence API, and loopback-only editor lifecycle. |
-| `skill/outstanding-items/assets/` | Generic Full ledger HTML, CSS, and JavaScript. Never put a real ledger here. |
+| `skill/outstanding-items/assets/` | Generic Full outstanding items HTML, CSS, and JavaScript. Never put a real ledger here. |
 | `skill/outstanding-items/agents/openai.yaml` | Codex packaging metadata using the supported `interface` schema. It must stay truthful about the user-owned ledger and must not imply automatic execution. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from the JSON in `docs/index.html`. |
 | `scripts/` | POSIX `sh`. Dry-runnable, non-destructive. |
@@ -63,10 +63,14 @@ Use the `outstanding-items` skill in any task where I make more than one request
   being off-topic, and never start something just because I asked you to
   remember it.
 - Give each item a permanent `OI-n` ID. Never renumber.
-- End every user-facing reply with the Outstanding footer: Outstanding for you,
-  Waiting on you, Intentional reminders, then the crossed-out Done section.
-- When the footer overflows, point **Full ledger** at the tokenized local HTML
-  editor URL, never at raw JSON or a Markdown list. One task-owned JSON file is
+- Keep the ledger silently while you work, then end the **final response of the
+  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
+  Intentional reminders, then the crossed-out Done section. Never put it in
+  commentary, progress notes, partial updates, or status messages.
+- Whenever a local ledger UI is running, put the exact tokenized URL it printed
+  on its own line as **Full outstanding items** directly below the Outstanding
+  header and again after the last section. With no live UI, write neither line,
+  and never point it at raw JSON or a Markdown list. One task-owned JSON file is
   authoritative; the footer and UI only render or mutate it.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
@@ -93,13 +97,14 @@ To turn the ledger on for one project rather than globally, put this in that pro
 ## Task hygiene
 
 This project's work tends to arrive in bursts of half-related requests. Use the
-`outstanding-items` skill for every session here, and keep the Outstanding
-footer on every reply. The list is mine: record it, show it, suggest at most one
-next move, and wait for my current message to name the item to start. Authority
-ends with that response turn. If the list passes seven
-items for me, ask before writing `outstanding-items.json`, start its local HTML
-editor, and add its private ledger/runtime files to
-`.git/info/exclude`.
+`outstanding-items` skill for every session here, and end the final response of
+each turn with one Outstanding footer — never in commentary or progress
+messages. The list is mine: record it, show it, suggest at most one next move,
+and wait for my current message to name the item to start. Authority ends with
+that response turn. If the list passes seven items for me, ask before writing
+`outstanding-items.json` and start its local HTML editor. Link it as
+**Full outstanding items** below the header and after the last section, and add
+its private ledger/runtime files to `.git/info/exclude`.
 ```
 
 The skill still has to be installed — a project instruction can ask for it, but it cannot supply it.

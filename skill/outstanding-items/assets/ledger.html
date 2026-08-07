@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <meta name="referrer" content="no-referrer">
-  <title>Full ledger — Outstanding Items</title>
+  <title>Full outstanding items — Outstanding Items</title>
   <link rel="stylesheet" href="/assets/ledger.css">
   <script src="/assets/ledger.js" defer></script>
 </head>
@@ -15,7 +15,7 @@
     <header class="masthead">
       <div>
         <p class="kicker">Outstanding items</p>
-        <h1 id="ledger-title">Full ledger</h1>
+        <h1 id="ledger-title">Full outstanding items</h1>
         <p class="summary-line">
           <span><strong id="open-count">—</strong> open</span>
           <span><strong id="done-count">—</strong> completed</span>
@@ -34,7 +34,7 @@
           <h2 id="open-title">Open</h2>
         </div>
         <ol class="item-list" id="open-list" aria-describedby="open-help"></ol>
-        <p class="sr-only" id="open-help">Click task text to edit it. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
+        <p class="sr-only" id="open-help">Click task text to edit it. Hovering a task, or giving it keyboard focus, shows a short note describing what it is about; press Escape to dismiss that note. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
         <div class="empty-state" id="open-empty" hidden>
           <p>Nothing is open.</p>
         </div>
@@ -76,6 +76,10 @@
       </label>
       <div class="item-copy">
         <button type="button" class="item-title"></button>
+        <div class="item-tooltip" role="tooltip">
+          <span class="item-tooltip-label"></span>
+          <p class="item-tooltip-text"></p>
+        </div>
       </div>
       <div class="item-actions">
         <div class="drag-handle" draggable="true" role="button" tabindex="0" aria-label="Drag to reorder">

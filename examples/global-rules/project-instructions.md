@@ -14,14 +14,16 @@ Work in this repository arrives in bursts of half-related requests. Use the
   something from it is never permission to start, resume, investigate, research,
   prepare, do pre-work for, dispatch, route, or complete it. Wait until I name an
   item and tell you to go in the current message.
-- Keep the Outstanding footer on every user-facing reply: Outstanding for me,
-  Waiting on me, Intentional reminders, Done.
+- Keep the ledger silently while you work and put one Outstanding footer at the
+  end of the final response of each turn: Outstanding for me, Waiting on me,
+  Intentional reminders, Done. Commentary and progress messages carry none of it.
 - Capture asides that have nothing to do with the current change. Recording
   something is the whole job when I only asked you to record it.
 - Past seven items under Outstanding for me, ask before writing
-  `outstanding-items.json`, start its local Full ledger HTML editor, and add
-  the private ledger/runtime files to `.git/info/exclude` rather than to
-  `.gitignore`.
+  `outstanding-items.json` and start its local HTML editor. Link it as
+  **Full outstanding items** below the Outstanding header and again
+  after the last section, using the exact URL it printed, and add the private
+  ledger/runtime files to `.git/info/exclude` rather than to `.gitignore`.
 - Never label an item `verified` without a passing check from this repository's
   test suite, and never treat `in-progress` from an earlier turn as a reason to
   carry on in this one.
@@ -37,7 +39,8 @@ Work in this repository arrives in bursts of half-related requests. Use the
 ```markdown
 ## Task hygiene
 
-Use the `outstanding-items` skill. Every reply ends with the Outstanding footer.
+Use the `outstanding-items` skill. Each turn ends with one Outstanding footer, in
+the final response only.
 
 `verified` in this repository means one specific thing: `make check` passed on
 the current working tree, and you saw the output. Anything else is

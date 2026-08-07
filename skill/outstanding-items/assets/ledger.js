@@ -38,6 +38,44 @@
   };
   elements.transferredSection = elements.transferredList.closest(".ledger-section");
 
+  // Plain-language tooltip copy. An item's own `explanation` is preferred; these
+  // sentences are the fallback for a ledger written before that field existed.
+  const TOOLTIP_LABELS = {
+    requested: "On your list",
+    planned: "Approach agreed",
+    "in-progress": "Picked up",
+    implemented: "Change made",
+    verified: "Checked and finished",
+    "waiting-on-you": "Waiting on you",
+    blocked: "Held up elsewhere",
+    reminder: "Parked on purpose",
+    dropped: "Not doing this one",
+  };
+
+  const TOOLTIP_TEXT = {
+    requested:
+      "This one is here because you asked for it. Nothing has started, and it will wait quietly until you decide it is the right moment.",
+    planned:
+      "There is an agreed way to do this one, and nothing has changed yet. It is ready for you whenever it suits.",
+    "in-progress":
+      "You asked for this one to be picked up, so work went into it then. It sits here until you say what happens with it next.",
+    implemented:
+      "The change for this one has been made, and it has not been checked yet. A quick check is the natural next step whenever you want it.",
+    verified:
+      "This one is finished and was checked, so you can happily leave it behind. It stays on the list as a record of what happened.",
+    "waiting-on-you":
+      "This one is ready and just needs a moment from you — a click, a yes, a key, or a choice. Nothing else is holding it up.",
+    blocked:
+      "Something outside this list is in the way for now, so this one is parked rather than forgotten. It can move again once that clears.",
+    reminder:
+      "You parked this one on purpose. It stays visible for whenever you want it, and nothing will start it for you.",
+    dropped:
+      "You decided against this one. It stays here so the reasoning is easy to find later.",
+  };
+
+  const TOOLTIP_FALLBACK =
+    "This one is on your list, and it stays here until you decide what happens with it.";
+
   function apiUrl(path) {
     const query = new URLSearchParams({ token });
     return `${path}?${query.toString()}`;
@@ -138,6 +176,49 @@
   function autoSizeEditor(editor) {
     editor.style.height = "auto";
     editor.style.height = `${editor.scrollHeight}px`;
+  }
+
+  function tooltipLabel(item, transferred) {
+    if (transferred) return `${item.id} · Looked after elsewhere`;
+    return `${item.id} · ${TOOLTIP_LABELS[item.status] || "On your list"}`;
+  }
+
+  function tooltipText(item, transferred) {
+    const written = typeof item.explanation === "string" ? item.explanation.trim() : "";
+    if (written) return written;
+    if (transferred) {
+      const destination = (item.transferred_to?.title || "").trim() || "Another task";
+      return `${destination} looks after this one now. It stays here as a record, with its wording and status kept exactly as they were.`;
+    }
+    return TOOLTIP_TEXT[item.status] || TOOLTIP_FALLBACK;
+  }
+
+  function attachTooltip(node, item, transferred) {
+    const tooltip = node.querySelector(".item-tooltip");
+    if (!tooltip) return;
+    tooltip.id = `item-tooltip-${item.id}`;
+    tooltip.querySelector(".item-tooltip-label").textContent = tooltipLabel(item, transferred);
+    tooltip.querySelector(".item-tooltip-text").textContent = tooltipText(item, transferred);
+    node.querySelector(".item-title")?.setAttribute("aria-describedby", tooltip.id);
+    node.dataset.tooltip = "above";
+
+    // Prefer showing it above the row, and flip below only when the row sits too
+    // close to the top of the viewport for the tooltip to fit.
+    const place = () => {
+      node.classList.remove("tooltip-dismissed");
+      const room = node.getBoundingClientRect().top;
+      node.dataset.tooltip = room < tooltip.offsetHeight + 16 ? "below" : "above";
+    };
+    const restore = () => node.classList.remove("tooltip-dismissed");
+    node.addEventListener("pointerenter", place);
+    node.addEventListener("focusin", place);
+    node.addEventListener("pointerleave", restore);
+    node.addEventListener("focusout", restore);
+    node.addEventListener("keydown", (event) => {
+      // Dismissible without moving the pointer or the focus.
+      if (event.key !== "Escape" || state.editing?.id === item.id) return;
+      node.classList.add("tooltip-dismissed");
+    });
   }
 
   function beginEdit(node, item, initialValue = item.title) {
@@ -269,6 +350,8 @@
         moveBy(item.id, event.key === "ArrowUp" ? -1 : 1);
       });
     }
+
+    attachTooltip(node, item, transferred);
 
     const dragHandle = node.querySelector(".drag-handle");
     dragHandle.hidden = completed || transferred;
@@ -412,7 +495,7 @@
   async function refresh(silent = false) {
     if (!token) {
       setSaveState("error", "Missing access token");
-      showSnackbar("Open the Full ledger link supplied by the agent; it contains the local access token.");
+      showSnackbar("Open the Full outstanding items link supplied by the agent; it contains the local access token.");
       return;
     }
     if (!silent) setSaveState("saving", "Loading…");

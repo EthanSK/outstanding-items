@@ -20,10 +20,15 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   off-topic. If I say "add this to outstanding items" or "remember this", record
   it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
-- End every user-facing reply with the Outstanding footer: Outstanding for you,
-  Waiting on you, Intentional reminders, then the crossed-out Done section.
-- When the footer overflows, link **Full ledger** to the local HTML editor, not
-  raw JSON or Markdown. Keep one task-owned JSON ledger as the source of truth.
+- Keep the ledger silently while you work, then end the **final response of the
+  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
+  Intentional reminders, then the crossed-out Done section. Never put it in
+  commentary, progress notes, partial updates, or status messages.
+- When a local HTML editor is running for this ledger, link it as
+  **Full outstanding items** on its own line directly below the Outstanding
+  header and again after the last section, using the exact URL it printed.
+  With no live editor, write neither line, and never link raw JSON or Markdown.
+  Keep one task-owned JSON ledger as the source of truth.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
   without evidence you observed in this session, and never treat a label as a
@@ -47,7 +52,8 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 ```markdown
 ## Outstanding items
 Use the `outstanding-items` skill whenever I make more than one request in a session.
-Capture unrelated asides too, and end every reply with the Outstanding footer.
+Capture unrelated asides too, and end the final response of each turn with one
+Outstanding footer — never in commentary or progress messages.
 The list is mine: never start, resume, continue, investigate, research, prepare,
 do pre-work for, dispatch, route, hand off, or complete an item unless I have just
 told you to, naming it. Never mark something `verified` without evidence you saw,
@@ -61,7 +67,7 @@ Say so. The skill stops appending the footer when asked and keeps the ledger for
 
 ## Checking it worked
 
-Make two unrelated requests in one session and look at the end of the reply. If there is no `**Outstanding**` block:
+Make two unrelated requests in one session and look at the end of the final response. If there is no `**Outstanding**` block — or if the same block also shows up in the progress messages before it:
 
 1. Confirm the file exists: `ls ~/.claude/skills/outstanding-items/SKILL.md`
 2. Run `/skills` and look for `outstanding-items` in the list.

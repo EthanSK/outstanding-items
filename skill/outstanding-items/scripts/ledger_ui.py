@@ -50,6 +50,8 @@ DONE_ITEM_RE = re.compile(r"^-\s+~~(OI-\d+)\s+(.+?)~~\s*(.*?)\s*$")
 SECTION_HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 STATE_RE = re.compile(r"^-\s+\*\*State:\*\*\s*(.+?)\s*$", re.I)
 MAX_BODY_BYTES = 1_000_000
+# One short, plain-language paragraph shown as the item's hover/focus tooltip.
+MAX_EXPLANATION_CHARS = 600
 
 
 def utc_now() -> str:
@@ -145,9 +147,15 @@ def validate_ledger(data: Any) -> None:
         if position in positions[completed]:
             raise ValueError(f"duplicate {'done' if completed else 'open'} position {position}")
         positions[completed].add(position)
-        for key in ("details_markdown", "group", "state_text"):
+        for key in ("details_markdown", "group", "state_text", "explanation"):
             if key in item and not isinstance(item[key], str):
                 raise ValueError(f"{item_id} {key} must be a string")
+        # `explanation` is optional: a ledger written before this field existed
+        # stays valid, and the UI falls back to a status sentence for it.
+        if len(item.get("explanation", "")) > MAX_EXPLANATION_CHARS:
+            raise ValueError(
+                f"{item_id} explanation must be at most {MAX_EXPLANATION_CHARS} characters"
+            )
     for completed, found in positions.items():
         expected = set(range(len(found)))
         if found != expected:
@@ -230,6 +238,7 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
                 "group": current_group,
                 "state_text": state_text,
                 "details_markdown": details,
+                "explanation": "",
                 "completed_at": None,
                 "completed_session_id": None,
             }
@@ -751,12 +760,20 @@ def command_upsert(args: argparse.Namespace) -> int:
             "group": args.group or "Outstanding for you",
             "state_text": args.status or "requested",
             "details_markdown": "",
+            "explanation": "",
             "completed_at": utc_now() if (args.status or "requested") in DONE_STATUSES else None,
             "completed_session_id": args.session_id if (args.status or "requested") in DONE_STATUSES else None,
         }
         data["items"].append(item)
     if args.title:
         item["title"] = args.title.strip()
+    if args.explanation is not None:
+        explanation = " ".join(args.explanation.split())
+        if len(explanation) > MAX_EXPLANATION_CHARS:
+            raise ValueError(
+                f"--explanation must be at most {MAX_EXPLANATION_CHARS} characters"
+            )
+        item["explanation"] = explanation
     if args.status:
         item["status"] = args.status
         item["completed"] = args.status in DONE_STATUSES
@@ -828,6 +845,10 @@ def parser() -> argparse.ArgumentParser:
     upsert.add_argument("--title")
     upsert.add_argument("--status", choices=sorted(STATUSES))
     upsert.add_argument("--group")
+    upsert.add_argument(
+        "--explanation",
+        help="one short plain-language paragraph shown as the item's tooltip in the UI",
+    )
     upsert.add_argument("--notes-file")
     upsert.add_argument("--session-id")
     upsert.set_defaults(func=command_upsert)

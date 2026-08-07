@@ -760,7 +760,7 @@ def check_homepage_focus() -> list[str]:
         'class="memory-demo"',
         "It remembers. You decide what starts.",
         "Captures every ask",
-        "Shows it every reply",
+        "Shows it once per turn",
         "Suggests one next move",
         "Keeps a full ledger",
         "The list belongs to you.",
@@ -770,6 +770,205 @@ def check_homepage_focus() -> list[str]:
             problems.append(f"homepage no longer carries its core message: {required!r}")
     if 'id="ledger-data"' in text or 'id="demo-toggle"' in text:
         problems.append("homepage has regained the old multi-turn interactive demo")
+    return problems
+
+
+@check("footer-once-per-turn", "the footer is taught as final-response-only, never per reply")
+def check_footer_once_per_turn() -> list[str]:
+    """Regression guard for a live failure.
+
+    An earlier contract said 'append the footer to every user-facing response',
+    and a task rendered a full Outstanding block in several commentary and
+    progress messages before its answer. No shipped file may teach that again.
+    """
+    problems = []
+    per_reply = re.compile(r"every\s+(?:user-facing\s+)?(?:reply|response|message)", re.I)
+    for path in text_files():
+        if rel(path) in POLICY_EXEMPT:
+            continue
+        for number, line in enumerate(read(path).splitlines(), start=1):
+            if "footer" not in line.lower() and "**outstanding**" not in line.lower():
+                continue
+            found = per_reply.search(line)
+            if found:
+                problems.append(
+                    f"{rel(path)}:{number} still teaches a footer in {found.group(0)!r}; "
+                    "it belongs only in the final response of a turn"
+                )
+
+    required = {
+        "skill/outstanding-items/SKILL.md": [
+            "final response of the turn",
+            "One footer per turn, in the final response only",
+            "Never put it in commentary, progress notes",
+        ],
+        "AGENTS.md": ["final response of the", "commentary, progress notes"],
+        "CLAUDE.md": ["final response of the", "commentary, progress notes"],
+        "README.md": ["once, in the final response", "One footer per turn"],
+        "docs/index.html": ["Shows it once per turn"],
+        "examples/global-rules/codex-agents-md.md": ["final response of the", "commentary"],
+        "examples/global-rules/claude-code-claude-md.md": ["final response of the", "commentary"],
+        "examples/global-rules/project-instructions.md": ["final response"],
+        "examples/transcript.md": ["No Outstanding block here"],
+        "skill/outstanding-items/references/worked-examples.md": [
+            "once per turn, at the end of the final response",
+        ],
+        "skill/outstanding-items/references/ledger-ui.md": ["final response of a turn"],
+    }
+    for name, phrases in required.items():
+        text = read(ROOT / name)
+        for phrase in phrases:
+            if phrase not in text:
+                problems.append(f"{name} no longer carries the final-response rule: {phrase!r}")
+
+    description = frontmatter(read(SKILL_MD))[0].get("description", "")
+    if "final response" not in description:
+        problems.append("SKILL.md description must say the footer lands in the final response")
+    return problems
+
+
+@check("full-outstanding-items-link", "the live UI link is labelled and placed exactly")
+def check_full_outstanding_items_link() -> list[str]:
+    problems = []
+    label = "[Full outstanding items]("
+    for path in text_files():
+        if rel(path) in POLICY_EXEMPT:
+            continue
+        text = read(path)
+        if "[Full ledger](" in text:
+            problems.append(f"{rel(path)} still links the old 'Full ledger' label")
+        for target in re.findall(r"\[Full outstanding items\]\(([^)]*)\)", text):
+            if target.endswith(".json") or target.endswith(".md"):
+                problems.append(f"{rel(path)} points a Full outstanding items link at {target}")
+
+    skill = read(SKILL_MD)
+    for phrase in (
+        "The Full outstanding items link appears twice, or not at all",
+        "directly below the `**Outstanding** (…)` header",
+        "after the final non-empty section",
+        "never invent a URL",
+    ):
+        if phrase not in skill:
+            problems.append(f"SKILL.md no longer states the link rule: {phrase!r}")
+
+    demonstrated = 0
+    for name in (
+        "skill/outstanding-items/SKILL.md",
+        "skill/outstanding-items/references/worked-examples.md",
+        "examples/transcript.md",
+    ):
+        path = ROOT / name
+        for block in re.findall(r"```text\n(.*?)\n```", read(path), re.S):
+            lines = block.splitlines()
+            if not lines or not lines[0].startswith("**Outstanding** ("):
+                continue
+            standalone = [
+                index for index, line in enumerate(lines) if line.strip().startswith(label)
+            ]
+            if not standalone:
+                continue
+            demonstrated += 1
+            if standalone[0] != 1:
+                problems.append(
+                    f"{name}: a footer does not carry the link directly below its header line"
+                )
+            body = [line for line in lines if line.strip()]
+            if not body[-1].strip().startswith(label):
+                problems.append(
+                    f"{name}: a footer does not repeat the link after its final section"
+                )
+            if len(standalone) != 2:
+                problems.append(
+                    f"{name}: a footer shows the standalone link {len(standalone)} time(s), expected 2"
+                )
+            urls = set(re.findall(r"\[Full outstanding items\]\(([^)]+)\)", block))
+            if len(urls) != 1:
+                problems.append(f"{name}: one footer mixes {len(urls)} different UI URLs")
+    if demonstrated < 3:
+        problems.append(
+            f"only {demonstrated} worked footer(s) demonstrate both links; the contract needs at least 3"
+        )
+
+    for name in (
+        "AGENTS.md",
+        "CLAUDE.md",
+        "README.md",
+        "examples/global-rules/codex-agents-md.md",
+        "examples/global-rules/claude-code-claude-md.md",
+        "examples/global-rules/project-instructions.md",
+    ):
+        text = read(ROOT / name)
+        if "Full outstanding items" not in text:
+            problems.append(f"{name} does not name the Full outstanding items link")
+        if "after the last section" not in text and "after the final non-empty section" not in text:
+            problems.append(f"{name} does not state the second link position")
+    return problems
+
+
+@check("item-explanations", "every item can carry a plain-language tooltip explanation")
+def check_item_explanations() -> list[str]:
+    problems = []
+    assets = SKILL_DIR / "assets"
+    html_text = read(assets / "ledger.html")
+    script = read(assets / "ledger.js")
+    style = read(assets / "ledger.css")
+    runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
+
+    for fragment in ('class="item-tooltip"', 'role="tooltip"', "item-tooltip-label", "item-tooltip-text"):
+        if fragment not in html_text:
+            problems.append(f"ledger.html has no tooltip {fragment!r}")
+    if "Hovering a task" not in html_text:
+        problems.append("ledger.html does not describe the tooltip for assistive technology")
+
+    if "innerHTML" in script or "insertAdjacentHTML" in script:
+        problems.append("ledger.js renders markup instead of safe text")
+    for fragment in (
+        "item.explanation",
+        'querySelector(".item-tooltip-text").textContent',
+        'querySelector(".item-tooltip-label").textContent',
+        'setAttribute("aria-describedby"',
+        "tooltip-dismissed",
+    ):
+        if fragment not in script:
+            problems.append(f"ledger.js is missing the tooltip wiring: {fragment!r}")
+    for status in STATUSES:
+        key = f'"{status}"' if "-" in status else status
+        if not re.search(rf"^\s*{re.escape(key)}:", script, re.M):
+            problems.append(f"ledger.js has no tooltip fallback sentence for {status!r}")
+
+    for fragment in (".item-tooltip", ":hover .item-tooltip", "focus-visible ~ .item-tooltip"):
+        if fragment not in style:
+            problems.append(f"ledger.css is missing the tooltip rule: {fragment!r}")
+
+    if "MAX_EXPLANATION_CHARS" not in runtime or '"explanation"' not in runtime:
+        problems.append("ledger_ui.py does not validate the explanation field")
+    if '"--explanation"' not in runtime:
+        problems.append("ledger_ui.py upsert cannot populate an explanation")
+
+    artifact = read(SKILL_DIR / "references" / "backlog-artifact.md")
+    if "| `explanation` |" not in artifact:
+        problems.append("backlog-artifact.md does not document the explanation field")
+    if "Compatibility of `explanation`" not in artifact:
+        problems.append("backlog-artifact.md does not document explanation backward compatibility")
+    ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
+    for phrase in ("--explanation", "Writing the explanation", "textContent"):
+        if phrase not in ui_reference:
+            problems.append(f"ledger-ui.md does not cover: {phrase!r}")
+
+    payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
+    items = payload.get("items", [])
+    written = [item for item in items if item.get("explanation")]
+    if not written:
+        problems.append("the example ledger shows no item explanation")
+    if len(written) == len(items):
+        problems.append("the example ledger never shows the older-ledger fallback case")
+    for item in written:
+        explanation = item["explanation"]
+        if len(explanation) > 600:
+            problems.append(f"{item['id']} explanation is longer than 600 characters")
+        for markup in ("`", "](", "<", "**"):
+            if markup in explanation:
+                problems.append(f"{item['id']} explanation contains markup: {markup!r}")
     return problems
 
 

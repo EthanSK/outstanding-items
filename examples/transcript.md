@@ -2,7 +2,7 @@
 
 A synthetic task showing the boundary between remembering, advising, and doing.
 
-This teaching transcript sometimes shows only the changed portion of a reply for brevity. In real use, every user-facing reply still ends with the complete applicable Outstanding footer.
+This teaching transcript sometimes shows only the changed portion of a reply for brevity. In real use the complete applicable Outstanding footer appears once per turn, at the end of the final response. Progress notes and commentary written before that answer carry no Outstanding block at all.
 
 ---
 
@@ -52,7 +52,13 @@ The status question causes no tool call and no status change.
 
 **You:** Run CI for OI-1 now.
 
-**Agent:** CI passed the login suite 20 times.
+**Agent** *(progress note, while the suite runs)*: CI is running the login
+suite now.
+
+No Outstanding block here. This is commentary, and the ledger stays silent until
+the answer.
+
+**Agent** *(final response)*: CI passed the login suite 20 times.
 
 ```text
 **Outstanding** (1 for you · 1 reminder · 1 done)
@@ -152,3 +158,37 @@ pending, and no sibling item is authorized.
 The temporary `in-progress` state was reconciled to `implemented` before the
 reply ended because material work changed. A later turn must receive a new
 named instruction before browser verification or any other OI-5 work resumes.
+
+---
+
+**You:** Open the full list so I can see all of it.
+
+**Agent:** Opened the local editor for `outstanding-items.json`. Hovering a row
+there shows a short note about what that item is. Nothing on the list started.
+
+```text
+**Outstanding** (5 for you · 1 waiting on you · 1 reminder · 1 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+
+**Outstanding for you**
+- OI-2 Add rate-limit docs to the handbook — requested
+- OI-4 Focus ring on interactive elements — requested
+- OI-5 Skip link — implemented (skip link added; browser proof pending)
+- OI-6 Aria labels on the nav — requested
+- OI-7 Register the design audit memory update — implemented (prepared, not sent)
+
+**Waiting on you**
+- OI-8 Carry the prepared delta to the design audit — waiting-on-you (paste it only if you want that task's memory updated)
+
+**Intentional reminders**
+- OI-3 Ask the design channel about the empty state — reminder
+
+**Done**
+- ~~OI-1 Fix the flaky login test~~ — verified (CI green 20/20)
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```
+
+The same live URL sits directly below the header and after the last section. In
+every earlier turn no editor was running, so neither line appeared and no URL
+was invented to fill the gap.

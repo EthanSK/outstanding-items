@@ -21,6 +21,7 @@
       "group": "Outstanding for you",
       "state_text": "requested",
       "details_markdown": "Shared token is a possible route, not permission.",
+      "explanation": "This is the one about buttons and links showing a clear outline when you tab to them. Right now that outline is missing in places, so keyboard users lose track of where they are on the page.",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -33,6 +34,7 @@
       "group": "Waiting on you",
       "state_text": "waiting-on-you",
       "details_markdown": "Paste the prepared note only if wanted.",
+      "explanation": "A short note is written and waiting for you to carry across to the design audit, so that task's list knows about the shared token. Pasting it is the whole job, and only if you want it there.",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -45,6 +47,7 @@
       "group": "Intentional reminders",
       "state_text": "reminder",
       "details_markdown": "Parked on purpose; no deadline.",
+      "explanation": "You wanted to ask the design channel what the empty state should say before anyone builds it. You parked this one deliberately, so it simply stays visible until you feel like raising it.",
       "completed_at": null,
       "completed_session_id": null
     },

@@ -20,10 +20,15 @@ Use the `outstanding-items` skill in any task where I make more than one request
   being off-topic. If I say "add this to outstanding items" or "remember this",
   record it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
-- End every user-facing reply with the Outstanding footer: Outstanding for you,
-  Waiting on you, Intentional reminders, then the crossed-out Done section.
-- When the footer overflows, link **Full ledger** to the local HTML editor, not
-  raw JSON or Markdown. Keep one task-owned JSON ledger as the source of truth.
+- Keep the ledger silently while you work, then end the **final response of the
+  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
+  Intentional reminders, then the crossed-out Done section. Never put it in
+  commentary, progress notes, partial updates, or status messages.
+- When a local HTML editor is running for this ledger, link it as
+  **Full outstanding items** on its own line directly below the Outstanding
+  header and again after the last section, using the exact URL it printed.
+  With no live editor, write neither line, and never link raw JSON or Markdown.
+  Keep one task-owned JSON ledger as the source of truth.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
   without evidence you observed in this task, and never treat a label as a
@@ -49,7 +54,8 @@ If your global instructions are already crowded:
 ```markdown
 ## Outstanding items
 Use the `outstanding-items` skill whenever I make more than one request in a task.
-Capture unrelated asides too, and end every reply with the Outstanding footer.
+Capture unrelated asides too, and end the final response of each turn with one
+Outstanding footer — never in commentary or progress messages.
 The list is mine: never start, resume, continue, investigate, research, prepare,
 do pre-work for, dispatch, route, hand off, or complete an item unless I have just
 told you to, naming it. Never mark something `verified` without evidence you saw,
@@ -63,10 +69,12 @@ Say so in the task. The skill stops appending the footer when asked and keeps th
 
 ## Checking it worked
 
-Start a task, make two unrelated requests, and look at the end of the reply. If there is no `**Outstanding**` block:
+Start a task, make two unrelated requests, and look at the end of the final response. If there is no `**Outstanding**` block:
 
 1. Confirm the file exists: `ls ~/.codex/skills/outstanding-items/SKILL.md`
 2. Confirm the frontmatter is intact — `name:` and `description:` between `---` fences.
 3. Ask directly: "use the outstanding-items skill". If that works, discovery is the issue, not installation, and the global rule above is what to strengthen.
+
+One block per turn is the other thing to look for. If the same list also appears in a progress or commentary message before the answer, the final-response rule has not landed.
 
 Then check the other half, which matters more: say "add something to outstanding items" and see whether the reply records it and stops. If the agent starts the work instead, the ownership rule has not landed — put the first bullet at the very top of your global instructions.

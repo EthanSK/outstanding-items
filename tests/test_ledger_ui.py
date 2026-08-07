@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -47,6 +48,7 @@ def sample_ledger() -> dict:
                 "group": "Outstanding for you",
                 "state_text": "requested",
                 "details_markdown": "Synthetic note one.",
+                "explanation": "A synthetic item kept here so the tooltip has something plain to say.",
                 "completed_at": None,
                 "completed_session_id": None,
             },
@@ -128,6 +130,69 @@ class LedgerModelTests(unittest.TestCase):
         duplicate["position"] = 2
         data["items"].append(duplicate)
         with self.assertRaisesRegex(ValueError, "duplicate item id"):
+            ledger_ui.validate_ledger(data)
+
+    def test_explanation_is_optional_typed_and_bounded(self) -> None:
+        data = sample_ledger()
+        # OI-2 and OI-3 predate the field, which must stay valid on its own.
+        self.assertNotIn("explanation", data["items"][1])
+        self.assertNotIn("explanation", data["items"][2])
+        ledger_ui.validate_ledger(data)
+
+        data["items"][1]["explanation"] = "A short, plain sentence about this item."
+        ledger_ui.validate_ledger(data)
+
+        data["items"][1]["explanation"] = 42
+        with self.assertRaisesRegex(ValueError, "explanation must be a string"):
+            ledger_ui.validate_ledger(data)
+
+        data["items"][1]["explanation"] = "x" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
+        with self.assertRaisesRegex(ValueError, "at most"):
+            ledger_ui.validate_ledger(data)
+
+    def test_upsert_writes_and_preserves_an_explanation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-9",
+                title="A newly captured item",
+                status="requested",
+                group=None,
+                explanation="  A gentle sentence\n  spread over two lines.  ",
+                notes_file=None,
+                session_id=None,
+            )
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            created = next(
+                item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == "OI-9"
+            )
+            self.assertEqual(created["explanation"], "A gentle sentence spread over two lines.")
+
+            args.explanation = None
+            args.title = "A renamed item"
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            kept = next(
+                item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == "OI-9"
+            )
+            self.assertEqual(kept["title"], "A renamed item")
+            self.assertEqual(kept["explanation"], "A gentle sentence spread over two lines.")
+
+            args.explanation = "y" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
+            with self.assertRaisesRegex(ValueError, "at most"):
+                ledger_ui.command_upsert(args)
+
+    def test_migration_leaves_the_explanation_empty_for_the_ui_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            source = pathlib.Path(temp) / "legacy.md"
+            source.write_text(
+                "# Legacy ledger\n\n## Product work\n\n"
+                "### OI-1 Build the thing\n\n- **State:** requested; untouched.\n",
+                encoding="utf-8",
+            )
+            data = ledger_ui.migrate_markdown(source, "Migrated ledger", None)
+            self.assertEqual(data["items"][0]["explanation"], "")
             ledger_ui.validate_ledger(data)
 
     def test_transfer_preserves_status_and_records_destination(self) -> None:
@@ -334,10 +399,30 @@ class LedgerServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(reordered["revision"], 3)
 
+    def test_browser_mutation_cannot_rewrite_an_explanation(self) -> None:
+        original = next(
+            item for item in ledger_ui.read_json(self.ledger)["items"] if item["id"] == "OI-1"
+        )["explanation"]
+        status, payload = self.request(
+            "POST",
+            "/api/mutate",
+            {
+                "base_revision": 1,
+                "action": "edit",
+                "id": "OI-1",
+                "title": "Edited title only",
+                "explanation": "Injected by the browser",
+            },
+        )
+        self.assertEqual(status, 200)
+        item = next(entry for entry in payload["items"] if entry["id"] == "OI-1")
+        self.assertEqual(item["title"], "Edited title only")
+        self.assertEqual(item["explanation"], original)
+
     def test_html_assets_and_token_gate(self) -> None:
         status, html = self.request("GET", "/")
         self.assertEqual(status, 200)
-        self.assertIn("Full ledger", html)
+        self.assertIn("Full outstanding items", html)
         self.assertIn("item-template", html)
         with self.assertRaises(urllib.error.HTTPError) as raised:
             urllib.request.urlopen(f"{self.base}/api/ledger", timeout=2)
@@ -363,6 +448,51 @@ class LedgerAssetTests(unittest.TestCase):
             self.assertIn(f'action: "{action}"', script)
         self.assertIn("window.setInterval", script)
         self.assertIn("tracking_state === \"transferred\"", script)
+
+    def test_every_row_carries_an_accessible_explanation_tooltip(self) -> None:
+        html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
+        script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+        style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
+
+        # One tooltip per row, in the shared template rather than per ledger.
+        self.assertEqual(html.count('class="item-tooltip"'), 1)
+        self.assertIn('role="tooltip"', html)
+        self.assertIn("item-tooltip-label", html)
+        self.assertIn("item-tooltip-text", html)
+
+        # Safe text rendering only, wired to the item's own explanation.
+        self.assertNotIn("innerHTML", script)
+        self.assertNotIn("insertAdjacentHTML", script)
+        self.assertIn('querySelector(".item-tooltip-label").textContent', script)
+        self.assertIn('querySelector(".item-tooltip-text").textContent', script)
+        self.assertIn("item.explanation", script)
+        self.assertIn('setAttribute("aria-describedby", tooltip.id)', script)
+
+        # A ledger written before the field existed still says something useful.
+        for status in (
+            "requested",
+            "planned",
+            "in-progress",
+            "implemented",
+            "verified",
+            "waiting-on-you",
+            "blocked",
+            "reminder",
+            "dropped",
+        ):
+            self.assertRegex(script, rf'(?m)^\s*"?{re.escape(status)}"?:')
+        self.assertIn("TOOLTIP_FALLBACK", script)
+        self.assertIn("transferred_to?.title", script)
+
+        # Pointer hover, keyboard focus, dismissal, and flipped placement.
+        self.assertIn(":hover .item-tooltip", style)
+        self.assertIn("focus-visible ~ .item-tooltip", style)
+        self.assertIn("tooltip-dismissed", style)
+        self.assertIn('data-tooltip="below"', style)
+        self.assertIn('node.addEventListener("pointerenter", place)', script)
+        self.assertIn('node.addEventListener("focusin", place)', script)
+        self.assertIn("tooltip-dismissed", script)
+        self.assertIn('event.key !== "Escape"', script)
 
 
 if __name__ == "__main__":

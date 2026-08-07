@@ -4,7 +4,7 @@
 
 A skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that does two things across a long, branching task — and, deliberately, nothing more.
 
-**It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and every reply comes back with a compact **Outstanding** footer split into what is outstanding for you, what is waiting on you, what you parked on purpose, and a crossed-out Done section. The backlog lives in the transcript instead of in your head.
+**It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and each turn finishes with a compact **Outstanding** footer split into what is outstanding for you, what is waiting on you, what you parked on purpose, and a crossed-out Done section. It appears once, in the final response, so progress chatter never turns into three copies of the same list. The backlog lives in the transcript instead of in your head.
 
 **It curates, and curation proposes.** When it would genuinely help, one line suggests a next move *for you*, says why, and stops. **You decide, and you start it.**
 
@@ -16,7 +16,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **prompt-level skill** with one small optional local editor: one `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. Installing it starts nothing and opens no port. When you explicitly open a Full ledger, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. Cross-task propagation happens only when the harness exposes task tools, and only as a memory update that starts nothing; otherwise the skill registers the relationship and hands you the exact text to carry across yourself.
+Working, and simple on purpose. This is a **prompt-level skill** with one small optional local editor: one `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. Cross-task propagation happens only when the harness exposes task tools, and only as a memory update that starts nothing; otherwise the skill registers the relationship and hands you the exact text to carry across yourself.
 
 ## What it actually does
 
@@ -25,7 +25,7 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 | Multi-request tracking | Every request in the task gets a permanent `OI-n` ID, in the order you said it. |
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
-| Footer on every reply | Four sections — Outstanding for you, Waiting on you, Intentional reminders, Done. |
+| One footer per turn | Four sections — Outstanding for you, Waiting on you, Intentional reminders, Done — rendered once, at the end of the final response. Commentary and progress messages stay clean. |
 | Crossed-out Done section | Finished and cancelled items move to the bottom, struck through, so you can audit what happened. |
 | Honest status labels | `requested` / `in-progress` / `implemented` / `verified` are four different amounts of proof, and the skill may not round them up. |
 | Labels that are not licences | `in-progress` records the instruction that started it. When the turn ends, so does the permission. |
@@ -33,11 +33,12 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 | A real difference between stuck and yours | Something needing your click, key, or approval is `waiting-on-you`, with the exact action. `blocked` is reserved for a genuine external wall. |
 | One suggestion, for you | One item, one small possible first step, one sentence of reasoning — then it waits. |
 | Canonical task ledger | Past the overflow threshold the full list lives in one task-owned `outstanding-items.json` — after asking you for a path. |
-| Editable Full ledger | A quiet local list: click task text to edit it, drag or use keyboard controls to reorder, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
+| Editable Full outstanding items | A quiet local list: click task text to edit it, drag or use keyboard controls to reorder, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
+| A plain-words tooltip per item | Hover an item, or move keyboard focus to it, and a small note above the row says in ordinary language what that item is about. |
 | Auditable ownership transfer | Moving work to another task preserves its status and notes as read-only history here instead of pretending it was completed. |
 | Registered related tasks | Another conversation is resolved once, stored by title plus stable ID, and receives memory-only deltas that authorize nothing. |
 
-A real footer looks like this:
+A real footer looks like this — once per turn, at the end of the final response:
 
 ```text
 **Outstanding** (2 for you · 1 waiting on you · 1 reminder · 2 done)
@@ -61,9 +62,24 @@ A real footer looks like this:
 
 IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing.
 
-## The Full ledger is an editor, not a raw file
+Once a local editor is running for that task, the same footer carries its link twice — directly under the header and again after the last section, so it is there whichever end you are reading from:
 
-When the compact footer overflows, **Full ledger** opens a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is just its checkbox and task text. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+```text
+**Outstanding** (8 for you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+
+… your sections …
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```
+
+Both links are the exact URL the editor printed. If no editor is running, neither line appears — the skill does not invent a URL to fill the space.
+
+## Full outstanding items is an editor, not a raw file
+
+When the compact footer overflows, **Full outstanding items** opens a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is just its checkbox and task text. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+
+Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short paragraph in ordinary words about what the item is. It comes from the item's own optional `explanation` field, written by the agent for a moment when the title alone is not enough. Items saved before that field existed still get a plain sentence based on their status, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 
 There is still only one ledger: the task-owned `outstanding-items.json`. The UI reads and atomically writes that file through a token-protected server bound to `127.0.0.1`; it stores no copy in the HTML or browser storage. Agent-side changes update the same JSON, and an open page notices a new revision within two seconds. If two edits race, the stale one is rejected and reloaded instead of overwriting newer work.
 
@@ -218,12 +234,15 @@ Codex — append to `~/.codex/AGENTS.md`:
 ## Outstanding items
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
-and end every user-facing reply with the Outstanding footer and the crossed-out
-Done section. Anything needing my click, key, or approval is `waiting-on-you`,
-not `blocked`. Never start, resume, investigate, research, prepare, do pre-work
-for, dispatch, route, hand off, continue, or complete an item unless my current
-message names it and tells you to. That authority ends with the response turn.
-When I ask what to do next, suggest one thing and a
+keep the ledger silently while you work, and end the final response of each turn
+with one Outstanding footer and its crossed-out Done section — never in
+commentary or progress messages. When a local ledger UI is running, link it as
+**Full outstanding items** below the header and after the last section, using the
+exact URL it printed. Anything needing my click, key, or approval is
+`waiting-on-you`, not `blocked`. Never start, resume, investigate, research,
+prepare, do pre-work for, dispatch, route, hand off, continue, or complete an
+item unless my current message names it and tells you to. That authority ends
+with the response turn. When I ask what to do next, suggest one thing and a
 small first step, then wait for me.
 ```
 
@@ -232,7 +251,10 @@ Claude Code — append to `~/.claude/CLAUDE.md`:
 ```markdown
 ## Outstanding items
 Use the `outstanding-items` skill in any session with more than one request.
-The list is mine. End every user-facing reply with the Outstanding footer, never
+The list is mine. Maintain it silently while you work and end the final response
+of each turn with one Outstanding footer — never in commentary or progress
+messages — link a running local UI as **Full outstanding items** below the header
+and after the last section, never
 label an item `verified` without evidence you observed in this session, and never
 label something `blocked` when it is really waiting on me. Being on the list,
 being suggested, or being labelled `in-progress` is never permission to work on
@@ -256,7 +278,7 @@ sh scripts/check.sh --installed  # also validate the copies in your home directo
 Stated plainly, because these are the assumptions people arrive with:
 
 - It **does not give the agent authority over your work**. Nothing in the ledger, and nothing the skill writes, is permission to start something.
-- Installation **does not run a background daemon**. Nothing is scheduled. The optional Full ledger starts one explicit per-ledger loopback process, and `ledger_ui.py stop` ends it without touching the data.
+- Installation **does not run a background daemon**. Nothing is scheduled. The optional Full outstanding items view starts one explicit per-ledger loopback process, and `ledger_ui.py stop` ends it without touching the data.
 - It **does not create a cross-task message bus**. There is no broker, no queue, no inbox — and a delta never wakes the conversation it describes.
 - It **does not create a persistent database**. The only durable ledger is one plain JSON file at a path you approve; the UI is a live view of that file, not another store.
 - It **does not guarantee automatic invocation**. Harnesses decide when to load a skill from its description. Global rules make it likelier, not certain.
@@ -270,7 +292,7 @@ Stated plainly, because these are the assumptions people arrive with:
 | Path | Purpose |
 | --- | --- |
 | `skill/outstanding-items/SKILL.md` | The canonical operating contract, Rule #1 first. Single source of truth. |
-| `skill/outstanding-items/references/` | Seven one-level references: authority, status labels, suggesting a next move, backlog artifact, Full ledger operations, related tasks, worked examples. |
+| `skill/outstanding-items/references/` | Seven one-level references: authority, status labels, suggesting a next move, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
 | `skill/outstanding-items/assets/` | Generic local ledger HTML, CSS, and JavaScript. It contains no user data. |
 | `skill/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
 | `skill/outstanding-items/agents/openai.yaml` | Codex packaging metadata. |

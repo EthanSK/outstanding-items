@@ -1,6 +1,6 @@
-# Full ledger UI
+# Full outstanding items UI
 
-Operational guide for the local interactive ledger. Load after a canonical JSON ledger exists, when a Full ledger link must be shown, or when the editor needs diagnosis.
+Operational guide for the local interactive ledger. Load after a canonical JSON ledger exists, when a **Full outstanding items** link must be shown, or when the editor needs diagnosis.
 
 ## Start or reuse it
 
@@ -13,17 +13,28 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py start \
 
 Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger; otherwise it starts a loopback-only process on an available port.
 
-Use the printed URL for the compact footer:
+Use the printed URL for the compact footer, and use it in both places:
 
 ```markdown
-[Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+**Outstanding** (8 for you · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+
+… sections …
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-Never link the footer to the raw JSON or an archived Markdown list. Do not invent or redact the URL: use exactly what `start` printed. The token is local runtime state, not ledger data; do not copy it into a repository file, cross-task delta, or public message.
+The label is exactly **Full outstanding items**, on its own line directly below the `**Outstanding** (…)` header line and again on its own line after the last non-empty section. Any overflow line uses the same label and the same verified live URL.
+
+Both links carry the same URL, and both disappear together. If no verified live UI URL exists for this ledger, write neither line: never invent, guess, shorten, or redact a URL, never reuse one from an earlier task, and never link the footer to the raw JSON or an archived Markdown list. Use exactly what `start` printed. The token is local runtime state, not ledger data; do not copy it into a repository file, cross-task delta, or public message.
+
+The footer itself, with or without these links, belongs only to the final response of a turn — never to commentary or progress messages.
 
 ## Interaction model
 
 Keep the resting interface visually quiet: each actionable row shows only its real checkbox and task text. The task text is the edit control. Clicking or pressing it creates one inline textarea at the same location; `Enter` saves, `Shift+Enter` inserts a line break, `Escape` cancels, and leaving the editor saves. An unchanged edit sends no mutation. Never pre-render a text input or separate Edit button beneath every item.
+
+Hovering a row with a pointer, or moving keyboard focus onto its task text, shows one small tooltip above that row: the item's `OI-n` and a friendly state phrase on the first line, then its short explanation paragraph. It flips below the row only when there is not enough space above. `Escape` dismisses it without moving the pointer or the focus, the pointer can travel onto the tooltip without it closing, and it stays up as long as the row is hovered or focused. The tooltip is text only, rendered with `textContent`, and it is never used to show Markdown, evidence, logs, or a next step.
 
 Open-item reorder controls are latent rather than absent: hover or keyboard focus reveals the drag grip and move buttons. `Alt+Up` and `Alt+Down` on focused task text provide the same keyboard movement without requiring the buttons. Completed items stay at the bottom and may be reopened with their checkbox.
 
@@ -48,10 +59,27 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
   --id OI-12 \
   --title "Confirm the release" \
   --status waiting-on-you \
-  --group "Release"
+  --group "Release" \
+  --explanation "The release is built and ready; it just needs your yes before it goes out. One click in the release page is the whole job."
 ```
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. The command atomically increments the revision, and an open UI sees it within two seconds.
+
+## Writing the explanation
+
+`--explanation` fills the tooltip. Write it as if the user is meeting the item for the first time in a while and wants to feel oriented, not tested.
+
+- One or two warm, ordinary sentences. Up to 600 characters, and shorter is better.
+- Say what the item is and why it is on the list, in the user's own vocabulary.
+- Plain text only: no Markdown, no code, no file paths, no ticket numbers, no command output, no evidence, no credentials.
+- Describe the item, never the plan. It states nothing about what will happen next, claims no progress, and is not permission to act.
+- No apologies, no reference to forgetting or remembering, and nothing that reads as talking down to the user.
+
+Good: `The docs page for rate limits has no numbers in it yet, so this is the one where the real limits get written down.`
+
+Avoid: `Per OI-12 above, blocked on the CI matrix; see details_markdown for the full evidence trail.`
+
+Leaving it out is safe. Ledgers written before this field existed stay valid, and the UI falls back to a plain sentence based on the item's status — for example, a `waiting-on-you` item reads as ready and simply needing a moment from the user. Fill the field in when you can: the fallback describes the state, while a written explanation describes the item.
 
 Transfer exact items after an explicitly authorized handoff:
 
@@ -88,6 +116,7 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
 - The HTML, CSS, and JavaScript are a generic shell installed with the skill. They contain no task items and never need regeneration when ledger data changes.
 - Transferred items render read-only under **Owned elsewhere** and are excluded from active open/done counts without being deleted.
+- `explanation` is an optional per-item string of at most 600 characters. It travels with the rest of the ledger, needs no schema bump, and an item or ledger without it stays valid; the browser supplies the status fallback at render time and stores nothing of its own.
 
 ## Stop or inspect
 
@@ -103,6 +132,6 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py stop \
 
 ## Verification boundary
 
-Automated API tests prove validation, migration, atomic edit/toggle/reopen/reorder behavior, stale-revision rejection, token gating, and external-file refresh. Asset checks prove that no text input or textarea exists in the resting HTML and that editing creates its textarea on demand. A real-browser pass must still verify the uncluttered resting state, click-to-edit behavior, completion snackbar and Undo, pointer drag, keyboard movement, transferred read-only presentation, responsive layout, and saved-state feedback before calling a new UI design verified.
+Automated API tests prove validation, migration, atomic edit/toggle/reopen/reorder behavior, stale-revision rejection, token gating, external-file refresh, and the optional `explanation` field. Asset checks prove that no text input or textarea exists in the resting HTML, that editing creates its textarea on demand, and that every row carries a `role="tooltip"` element wired to its task text through `aria-describedby` and filled with `textContent`. A real-browser pass must still verify the uncluttered resting state, the tooltip on pointer hover and on keyboard focus (including its `Escape` dismissal and an item with no `explanation`), click-to-edit behavior, completion snackbar and Undo, pointer drag, keyboard movement, transferred read-only presentation, responsive layout, and saved-state feedback before calling a new UI design verified.
 
 During that pass, capture the rendered ledger and load the screenshot into vision; DOM, Accessibility, file-existence, and automated-test evidence do not prove visual quality. Fix visible defects caused by the current UI change before finishing. Report a pre-existing browser/display/control problem as the exact acceptance blocker instead of changing unrelated windows or substituting an isolated browser.

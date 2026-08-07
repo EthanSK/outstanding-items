@@ -2,7 +2,7 @@
 
 Annotated synthetic transcripts. Every name, task ID, and session ID is invented. Load when you want to see the behaviour end to end — especially where the ledger stops and the user's authority begins.
 
-Some teaching excerpts below show only the changed portion of a reply for brevity. In real use, every user-facing reply still ends with the complete applicable Outstanding footer.
+Some teaching excerpts below show only the changed portion of a reply for brevity. In real use the complete applicable Outstanding footer appears once per turn, at the end of the final response — never in the commentary or progress messages that come before it.
 
 ---
 
@@ -104,7 +104,7 @@ That is a fresh, explicit instruction naming a specific thing, so the work is au
 
 Eight items now sit under **Outstanding for you**. That is the overflow trigger.
 
-**Agent (body):** That takes it to eight items for you, past what the footer should carry. Shall I create the canonical `outstanding-items.json` in this directory and open its local Full ledger editor? It is a Git repository, so I would exclude the JSON and its runtime files from Git too. None of the items are started.
+**Agent (body):** That takes it to eight items for you, past what the footer should carry. Shall I create the canonical `outstanding-items.json` in this directory and open its local Full outstanding items editor? It is a Git repository, so I would exclude the JSON and its runtime files from Git too. None of the items are started.
 
 > Ask once, propose a path, name the exclusion. Do not create the file first and mention it afterwards. And say plainly that a longer list is still not a list of things you are doing.
 
@@ -112,6 +112,7 @@ Eight items now sit under **Outstanding for you**. That is the overflow trigger.
 
 ```text
 **Outstanding** (8 for you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Outstanding for you**
 - OI-4 Focus ring on interactive elements — requested
@@ -121,7 +122,7 @@ Eight items now sit under **Outstanding for you**. That is the overflow trigger.
 - OI-8 Reduced-motion pass — requested
 - OI-9 Keyboard trap in the dialog — blocked (upstream bug 4821; local patch regresses Safari)
 - OI-10 Heading order on the settings page — requested
-- … +1 more in [Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+- … +1 more in [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Intentional reminders**
 - OI-3 Ask the design channel about the empty state — reminder
@@ -129,9 +130,13 @@ Eight items now sit under **Outstanding for you**. That is the overflow trigger.
 **Done**
 - ~~OI-2 Add rate-limit docs to the handbook~~ — dropped (user cancelled, page being deleted)
 - ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 > "Yeah do it" authorized the canonical JSON and its editor, and nothing on the list. Seven lines are shown, the overflow points at the live HTML UI, and the JSON is the only writable ledger. `blocked` carries both facts: the wall, and the route already tried.
+>
+> The UI is now running, so the exact URL `start` printed appears twice: once directly under the header and once after the last section. It is the same link in both places, and it would appear in neither if no UI were live. The eight items were created and shown in one final response — the file creation itself produced no interim Outstanding block.
 
 ---
 
@@ -143,10 +148,11 @@ The pipeline requires a human. The agent cannot press the button, and no in-scop
 
 ```text
 **Outstanding** (8 for you · 1 waiting on you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Outstanding for you**
 - OI-4 Focus ring on interactive elements — requested
-- … +7 more in [Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+- … +7 more in [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Waiting on you**
 - OI-12 Approve the staging deploy — waiting-on-you (click approve in the deploy UI)
@@ -157,6 +163,8 @@ The pipeline requires a human. The agent cannot press the button, and no in-scop
 **Done**
 - ~~OI-2 Add rate-limit docs to the handbook~~ — dropped (user cancelled, page being deleted)
 - ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 > Not `blocked`. Nothing external is broken; the pipeline is working exactly as designed. The note is the action itself, in the imperative, so it can be done without re-reading anything. If the deploy service were down, that would be `blocked` — and the note would then have to say both what broke and what was tried.
@@ -184,10 +192,11 @@ Registry row: `Design system audit · task_EXAMPLE_8f31 · outbound · prepared 
 
 ```text
 **Outstanding** (8 for you · 2 waiting on you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Outstanding for you**
 - OI-4 Focus ring on interactive elements — requested
-- … +7 more in [Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+- … +7 more in [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Waiting on you**
 - OI-12 Approve the staging deploy — waiting-on-you (click approve in the deploy UI)
@@ -199,6 +208,8 @@ Registry row: `Design system audit · task_EXAMPLE_8f31 · outbound · prepared 
 **Done**
 - ~~OI-2 Add rate-limit docs to the handbook~~ — dropped (user cancelled, page being deleted)
 - ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 What deliberately did **not** happen:
@@ -222,10 +233,11 @@ Availability from the user's side: OI-9 is `blocked`, so nothing they do moves i
 
 ```text
 **Outstanding** (8 for you · 2 waiting on you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Outstanding for you**
 - OI-4 Focus ring on interactive elements — requested
-- … +7 more in [Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+- … +7 more in [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Waiting on you**
 - OI-12 Approve the staging deploy — waiting-on-you (click approve in the deploy UI)
@@ -239,6 +251,8 @@ Availability from the user's side: OI-9 is `blocked`, so nothing they do moves i
 **Done**
 - ~~OI-2 Add rate-limit docs to the handbook~~ — dropped (user cancelled, page being deleted)
 - ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 What the suggestion did **not** do:
@@ -259,13 +273,16 @@ What the suggestion did **not** do:
 
 Now there is a fresh, explicit instruction naming one item. The agent adds the skip link during this turn; browser proof remains outstanding.
 
+While the work was under way the agent posted two short progress notes — "reading the layout template", then "skip link added, checking the tab order". Neither carried an Outstanding block, a counts line, or a single `OI-n` line. The ledger was updated silently, and the footer appeared once, here, at the end of the final response:
+
 ```text
 **Outstanding** (8 for you · 2 waiting on you · 1 reminder · 2 done)
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Outstanding for you**
 - OI-4 Focus ring on interactive elements — requested
 - OI-5 Skip link — implemented (skip link added; browser proof pending)
-- … +6 more in [Full ledger](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+- … +6 more in [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 **Waiting on you**
 - OI-12 Approve the staging deploy — waiting-on-you (click approve in the deploy UI)
@@ -277,9 +294,13 @@ Now there is a fresh, explicit instruction naming one item. The agent adds the s
 **Done**
 - ~~OI-2 Add rate-limit docs to the handbook~~ — dropped (user cancelled, page being deleted)
 - ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 > The temporary `in-progress` state was reconciled before the final reply: material work changed, so OI-5 is `implemented`. When the turn ends, so does the authority: browser verification, OI-6, and OI-4 all need their own fresh named instruction.
+>
+> One turn, one footer. Repeating the block after each progress note would have buried the answer and made the same list look like three different lists.
 
 ---
 
@@ -312,3 +333,6 @@ Now there is a fresh, explicit instruction naming one item. The agent adds the s
 | Waking another task to deliver a delta | A note that arrives as an instruction commissions work nobody authorized. | `prepared (not sent)`, and hand the text over. |
 | "I've let the design system audit know" with no successful call | Unverifiable claim. | `registered (manual)` plus the text to carry. |
 | Creating `outstanding-items.json` without asking | Files appear in someone's repository unannounced. | Ask once, propose a path, offer the exclusion. |
+| Repeating the Outstanding block in every progress message | The turn becomes three near-identical lists, and the answer disappears between them. | Maintain the ledger silently; render one footer in the final response. |
+| Writing a **Full outstanding items** link because the footer looks bare | An invented or stale URL sends the user nowhere. | Link only the exact URL `start` printed, in both places, or write neither line. |
+| Putting the link at the bottom only, to save a line | It is the entry point people reach for first, and the top of the block is where they look. | Same link directly under the header and after the last section. |

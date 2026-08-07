@@ -1,6 +1,6 @@
 ---
 name: outstanding-items
-description: Hold the user's ledger of outstanding items so nothing is dropped, show it back at the end of every reply, provide an editable HTML Full ledger when the list grows, and — when useful — propose one next move for the user to decide. The items belong to the user, so listing, ranking, syncing, or recommending one never authorizes starting it. Use when the user makes multiple requests, says also, don't forget, later, remind me, add that to the list, what's left, Full ledger, or where are we; when a task has run long enough that requests may have fallen out of context; when the user asks what to do next; or when the user asks to register, update, or notify a related task.
+description: Hold the user's ledger of outstanding items so nothing is dropped, show it back once at the end of the final response of each turn, provide an editable HTML Full outstanding items view when the list grows, and — when useful — propose one next move for the user to decide. The items belong to the user, so listing, ranking, syncing, or recommending one never authorizes starting it. Use when the user makes multiple requests, says also, don't forget, later, remind me, add that to the list, what's left, full outstanding items, full ledger, or where are we; when a task has run long enough that requests may have fallen out of context; when the user asks what to do next; or when the user asks to register, update, or notify a related task.
 ---
 
 # Outstanding Items
@@ -27,17 +27,17 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 1. **Capture everything.** Every distinct request, correction, deferral, or "while you're there" aside becomes an item — including requests unrelated to the current work. Never refuse a reminder because it is off-topic; capture it without changing the execution state of any item.
 2. **Capturing is not accepting a job.** "Add this to outstanding items" and "remember this" ask you to record, and nothing more. Record it, say so, and stop.
 3. **Assign a stable ID.** Items are `OI-1`, `OI-2`, … in the order first seen. IDs are never reused and never renumbered, so deltas stay compact and references stay valid.
-4. **Show the ledger.** Append the Outstanding footer to every user-facing response while any item is open. If nothing is open, append nothing.
+4. **Show the ledger once per turn.** Maintain it silently while you work, then append the Outstanding footer to the **final response of the turn** while any item is open. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
 5. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
 6. **Close the loop.** When an item is finished, move it to the crossed-out Done section instead of deleting it, so the user can audit what happened.
 7. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer and HTML UI render it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
 8. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
 9. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
-10. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full ledger keeps it as read-only history.
+10. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
 
 ## The Outstanding footer
 
-Render this at the very end of a user-facing response, after your normal answer, separated by a blank line. Keep it compact — it is the user's list, not a report on you.
+Render this exactly once per turn, at the very end of the **final** response, after your normal answer, separated by a blank line. Keep it compact — it is the user's list, not a report on you.
 
 ```text
 **Outstanding** (2 for you · 1 waiting on you · 1 reminder · 2 done)
@@ -59,15 +59,36 @@ Render this at the very end of a user-facing response, after your normal answer,
 - ~~OI-3 Drop the legacy feature flag~~ — dropped (superseded by OI-5)
 ```
 
+When a Full outstanding items UI is already running for this ledger, the same footer carries its link twice — directly under the header, and again after the last section:
+
+```text
+**Outstanding** (8 for you · 1 reminder · 2 done)
+[Full outstanding items](<live local UI URL>)
+
+**Outstanding for you**
+- OI-4 Focus ring on interactive elements — requested
+- … +7 more in [Full outstanding items](<live local UI URL>)
+
+**Intentional reminders**
+- OI-3 Ask the design channel about the empty state — reminder
+
+**Done**
+- ~~OI-1 Fix the flaky login test~~ — verified
+
+[Full outstanding items](<live local UI URL>)
+```
+
 Rules:
 
+- **One footer per turn, in the final response only.** Update the ledger silently while working. Commentary, progress notes, partial updates, and status lines carry no Outstanding section, no counts line, and no item list.
 - Four sections, always in this order: **Outstanding for you**, **Waiting on you**, **Intentional reminders**, **Done**. Omit a section that is empty, and omit its count from the header.
+- **The Full outstanding items link appears twice, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line directly below the `**Outstanding** (…)` header and again on its own line after the final non-empty section. Use the exact URL `ledger_ui.py start` printed. With no live UI, show neither line: never invent a URL, and never link raw JSON or Markdown.
 - Section membership follows the status, with no judgement: `waiting-on-you` items go under **Waiting on you**, `reminder` items under **Intentional reminders**, every other open item under **Outstanding for you**, and `verified` or `dropped` items under **Done**.
-- Items whose tracking state is `transferred` appear in none of those active sections. The HTML Full ledger retains them under **Owned elsewhere** with their original status and destination.
+- Items whose tracking state is `transferred` appear in none of those active sections. The HTML Full outstanding items view retains them under **Owned elsewhere** with their original status and destination.
 - One line per item: `- OI-n <short title> — <status>`, with an optional `(note)`. Titles are the user's words, trimmed to roughly 60 characters.
 - Oldest ID first inside each section. Done items last, most recently completed first.
 - **Suggested for you** is optional, appears at most once, and sits directly above Done. One line, plus at most one line of reasoning. Leave it out entirely when no suggestion is warranted. Never title this line `Next`, and never write it as something you are about to do.
-- Show at most 7 lines under **Outstanding for you** and 3 under each other section. Replace overflow with `- … +N more in [Full ledger](<live local UI URL>)`. Start or reuse the verified UI first; never link to raw JSON or legacy Markdown.
+- Show at most 7 lines under **Outstanding for you** and 3 under each other section. Replace overflow with `- … +N more in [Full outstanding items](<live local UI URL>)`. Start or reuse the verified UI first; never link to raw JSON or legacy Markdown.
 - Strike through Done titles with `~~…~~`. Keep the status label outside the strikethrough so it stays readable.
 - If the surface cannot render Markdown, use `[done]` prefixes instead of `~~…~~` and keep everything else identical.
 - Omit the footer inside tool calls, commit messages, file contents, and anything you write on the user's behalf. It belongs to the conversation only.
@@ -121,9 +142,11 @@ Then stop and wait for the user. Weighing, wording, and the cases where you shou
 
 Move to a task-owned canonical JSON ledger when any of these is true: more than 7 items under **Outstanding for you**, more than 20 items in total, the user asks for the full list/UI, or you register a related task. The footer stays compact and points to its HTML UI.
 
-Ask once for the path before creating it, in this order: a path the user names, a task/session output directory, then `outstanding-items.json` in the working directory. If the working directory is a Git repository, offer to exclude the ledger and UI runtime files from Git. If the user explicitly asks for a Full ledger UI, that authorizes the task-owned file needed for it. Schema and lifecycle: [references/backlog-artifact.md](references/backlog-artifact.md).
+Ask once for the path before creating it, in this order: a path the user names, a task/session output directory, then `outstanding-items.json` in the working directory. If the working directory is a Git repository, offer to exclude the ledger and UI runtime files from Git. If the user explicitly asks for a Full outstanding items UI, that authorizes the task-owned file needed for it. Schema and lifecycle: [references/backlog-artifact.md](references/backlog-artifact.md).
 
-Start or reuse the loopback editor, use its printed tokenized URL for every **Full ledger** link, and validate after agent-side mutations. The browser reads and atomically writes the same JSON, polls external changes, and rejects stale revisions. Commands, persistence, migration, and browser-proof requirements: [references/ledger-ui.md](references/ledger-ui.md).
+Start or reuse the loopback editor, use its printed tokenized URL for both **Full outstanding items** links, and validate after agent-side mutations. The browser reads and atomically writes the same JSON, polls external changes, and rejects stale revisions.
+
+Give each item a short `explanation`: one warm, plain sentence or two saying what the item is about, so hovering or focusing it in the UI brings the whole thing back. Write it for someone meeting the item cold — no jargon, no evidence dumps, no next steps, no Markdown. It is optional, an older ledger without it still loads, and the UI falls back to a plain status sentence. Commands, tooltip copy, persistence, migration, and browser-proof requirements: [references/ledger-ui.md](references/ledger-ui.md).
 
 ## Related tasks
 
@@ -145,7 +168,7 @@ An explicit ownership-transfer instruction is stronger than an ordinary memory d
 
 ## What this skill does not do
 
-Installing it does not start a background daemon, does not create a cross-task message bus, does not create a persistent database, and does not guarantee automatic invocation. The optional Full ledger UI is an explicit per-ledger loopback process; its only durable data is the task-owned JSON file. Cross-task propagation works only through tools the current harness already provides.
+Installing it does not start a background daemon, does not create a cross-task message bus, does not create a persistent database, and does not guarantee automatic invocation. The optional Full outstanding items UI is an explicit per-ledger loopback process; its only durable data is the task-owned JSON file. Cross-task propagation works only through tools the current harness already provides.
 
 It does not grant you any authority over the user's work. It does not know what the user actually has the appetite for. A suggestion is a judgement made from what they said in this task, offered once and dropped if ignored — not a prediction, not a schedule, and not a claim about what matters most in their life.
 
