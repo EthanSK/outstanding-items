@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Outstanding Items">
+  <style>
+    .paper { fill: #faf8f2; }
+    .ink { fill: #16150f; }
+    .muted { fill: #8c8676; }
+    .accent { fill: #9a3412; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #12110e; }
+      .ink { fill: #efeadd; }
+      .muted { fill: #6f6a5d; }
+      .accent { fill: #e08a52; }
+    }
+  </style>
+  <rect class="paper" width="32" height="32" rx="5" />
+  <rect class="ink" x="6" y="8" width="20" height="2.8" rx="1.4" />
+  <rect class="ink" x="6" y="14.6" width="15" height="2.8" rx="1.4" />
+  <rect class="muted" x="6" y="21.2" width="11" height="2.8" rx="1.4" />
+  <rect class="accent" x="3.6" y="21.9" width="15.8" height="1.4" rx="0.7" />
+</svg>

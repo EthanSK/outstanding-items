@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+
+docs/** linguist-documentation
+examples/** linguist-documentation

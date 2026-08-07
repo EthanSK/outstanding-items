@@ -1,0 +1,369 @@
+#!/usr/bin/env python3
+"""End-to-end tests for the canonical ledger and local HTML editor server."""
+
+from __future__ import annotations
+
+import importlib.util
+import json
+import pathlib
+import subprocess
+import sys
+import tempfile
+import time
+import types
+import unittest
+import urllib.error
+import urllib.parse
+import urllib.request
+
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SCRIPT = ROOT / "skill" / "outstanding-items" / "scripts" / "ledger_ui.py"
+ASSETS = ROOT / "skill" / "outstanding-items" / "assets"
+SPEC = importlib.util.spec_from_file_location("ledger_ui", SCRIPT)
+assert SPEC and SPEC.loader
+ledger_ui = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(ledger_ui)
+
+
+def sample_ledger() -> dict:
+    return {
+        "schema_version": 3,
+        "owner": "user",
+        "authorizes_work": False,
+        "title": "Synthetic full ledger",
+        "task_id": "task_EXAMPLE_1234",
+        "revision": 1,
+        "created_at": "2026-08-07T10:00:00Z",
+        "updated_at": "2026-08-07T10:00:00Z",
+        "latest_unanswered_suggestion": None,
+        "items": [
+            {
+                "id": "OI-1",
+                "title": "First open item",
+                "status": "requested",
+                "completed": False,
+                "position": 0,
+                "group": "Outstanding for you",
+                "state_text": "requested",
+                "details_markdown": "Synthetic note one.",
+                "completed_at": None,
+                "completed_session_id": None,
+            },
+            {
+                "id": "OI-2",
+                "title": "Second open item",
+                "status": "planned",
+                "completed": False,
+                "position": 1,
+                "group": "Outstanding for you",
+                "state_text": "planned",
+                "details_markdown": "Synthetic note two.",
+                "completed_at": None,
+                "completed_session_id": None,
+            },
+            {
+                "id": "OI-3",
+                "title": "Already complete",
+                "status": "verified",
+                "completed": True,
+                "position": 0,
+                "group": "Done",
+                "state_text": "verified",
+                "details_markdown": "Synthetic proof.",
+                "completed_at": "2026-08-07T10:00:00Z",
+                "completed_session_id": "sess_EXAMPLE_1234",
+            },
+        ],
+        "sections": [{"title": "Notes", "markdown": "Synthetic global context."}],
+        "source": {"kind": "synthetic-test", "path": "synthetic", "status": "test-only"},
+    }
+
+
+class LedgerModelTests(unittest.TestCase):
+    def test_markdown_migration_preserves_items_notes_and_sections(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            source = pathlib.Path(temp) / "legacy.md"
+            source.write_text(
+                "# Legacy ledger\n\nIntro text.\n\n"
+                "## Product work\n\nGroup note.\n\n"
+                "### OI-1 Build the thing\n\n- **State:** requested; untouched.\n- **Wanted:** Keep this detail.\n\n"
+                "### OI-2 Verify the thing\n\n- **State:** verified complete.\n- **Evidence:** Synthetic pass.\n\n"
+                "## Related tasks\n\n| Title | ID |\n|---|---|\n| Example | task_EXAMPLE_1234 |\n",
+                encoding="utf-8",
+            )
+            data = ledger_ui.migrate_markdown(source, "Migrated ledger", "task_EXAMPLE_9999")
+            self.assertEqual([item["id"] for item in data["items"]], ["OI-1", "OI-2"])
+            self.assertIn("Keep this detail", data["items"][0]["details_markdown"])
+            self.assertFalse(data["items"][0]["completed"])
+            self.assertTrue(data["items"][1]["completed"])
+            self.assertTrue(any(section["title"] == "Related tasks" for section in data["sections"]))
+            ledger_ui.validate_ledger(data)
+
+    def test_markdown_migration_promotes_struck_id_items_to_completed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            source = pathlib.Path(temp) / "legacy.md"
+            source.write_text(
+                "# Legacy ledger\n\n"
+                "## Done — verified milestones only\n\n"
+                "- ~~OI-9 Ship the editor.~~ Verified by synthetic browser proof.\n"
+                "  The retained detail belongs to OI-9.\n"
+                "- ~~An unnumbered milestone.~~ Preserved as section context.\n"
+                "- ~~OI-7 Drop the old route.~~\n"
+                "  Dropped by the user on the following line.\n",
+                encoding="utf-8",
+            )
+            data = ledger_ui.migrate_markdown(source, "Migrated ledger", None)
+            self.assertEqual([item["id"] for item in data["items"]], ["OI-9", "OI-7"])
+            self.assertEqual([item["status"] for item in data["items"]], ["verified", "dropped"])
+            self.assertTrue(all(item["completed"] for item in data["items"]))
+            self.assertIn("retained detail", data["items"][0]["details_markdown"])
+            section_text = "\n".join(section["markdown"] for section in data["sections"])
+            self.assertIn("An unnumbered milestone", section_text)
+            ledger_ui.validate_ledger(data)
+
+    def test_validation_rejects_duplicate_ids(self) -> None:
+        data = sample_ledger()
+        duplicate = dict(data["items"][0])
+        duplicate["position"] = 2
+        data["items"].append(duplicate)
+        with self.assertRaisesRegex(ValueError, "duplicate item id"):
+            ledger_ui.validate_ledger(data)
+
+    def test_transfer_preserves_status_and_records_destination(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                ids=["OI-1", "OI-3"],
+                task_id="task_EXAMPLE_target",
+                destination_title="Destination task",
+                handoff_path=str(pathlib.Path(temp) / "handoff.md"),
+            )
+            self.assertEqual(ledger_ui.command_transfer(args), 0)
+            data = ledger_ui.read_json(ledger)
+            by_id = {item["id"]: item for item in data["items"]}
+            self.assertEqual(by_id["OI-1"]["status"], "requested")
+            self.assertEqual(by_id["OI-3"]["status"], "verified")
+            self.assertEqual(by_id["OI-1"]["tracking_state"], "transferred")
+            self.assertEqual(by_id["OI-3"]["transferred_to"]["task_id"], "task_EXAMPLE_target")
+            self.assertNotEqual(by_id["OI-2"].get("tracking_state"), "transferred")
+            ledger_ui.validate_ledger(data)
+
+
+class LedgerServerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        root = pathlib.Path(self.temp.name)
+        self.ledger = root / "ledger.json"
+        ledger_ui.atomic_write_json(self.ledger, sample_ledger())
+        self.state_file = root / "state.json"
+        self.token = "token_EXAMPLE_1234"
+        self.process = subprocess.Popen(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "serve",
+                "--ledger",
+                str(self.ledger),
+                "--port",
+                "0",
+                "--token",
+                self.token,
+                "--instance-id",
+                "instance_EXAMPLE_1234",
+                "--state-file",
+                str(self.state_file),
+            ],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        deadline = time.monotonic() + 5
+        self.state = None
+        while time.monotonic() < deadline:
+            if self.state_file.exists():
+                self.state = json.loads(self.state_file.read_text(encoding="utf-8"))
+                if ledger_ui.health(self.state["url"], self.token):
+                    break
+            if self.process.poll() is not None:
+                stderr = self.process.stderr.read() if self.process.stderr else ""
+                self.fail(f"server exited early: {stderr}")
+            time.sleep(0.05)
+        if not self.state:
+            self.fail("server did not become ready")
+        parsed = urllib.parse.urlsplit(self.state["url"])
+        self.base = f"{parsed.scheme}://{parsed.netloc}"
+
+    def tearDown(self) -> None:
+        if self.process.poll() is None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=4)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait(timeout=2)
+        if self.process.stdout:
+            self.process.stdout.close()
+        if self.process.stderr:
+            self.process.stderr.close()
+        self.temp.cleanup()
+
+    def request(self, method: str, path: str, payload: dict | None = None) -> tuple[int, dict | str]:
+        url = f"{self.base}{path}"
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}token={urllib.parse.quote(self.token)}"
+        body = json.dumps(payload).encode("utf-8") if payload is not None else None
+        request = urllib.request.Request(
+            url,
+            data=body,
+            method=method,
+            headers={"Content-Type": "application/json", "X-Ledger-Token": self.token},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=2) as response:
+                content = response.read().decode("utf-8")
+                return response.status, json.loads(content) if "application/json" in response.headers.get("Content-Type", "") else content
+        except urllib.error.HTTPError as exc:
+            try:
+                content = exc.read().decode("utf-8")
+                return exc.code, json.loads(content)
+            finally:
+                exc.close()
+
+    def test_edit_reorder_complete_and_external_refresh(self) -> None:
+        status, current = self.request("GET", "/api/ledger")
+        self.assertEqual(status, 200)
+        self.assertEqual(current["revision"], 1)
+        self.assertEqual(current["_runtime"]["ledger_path"], str(self.ledger.resolve()))
+
+        status, edited = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 1, "action": "edit", "id": "OI-1", "title": "Edited first item"},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(edited["revision"], 2)
+        self.assertEqual(edited["items"][0]["title"], "Edited first item")
+
+        status, reordered = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 2, "action": "reorder", "order": ["OI-2", "OI-1"]},
+        )
+        self.assertEqual(status, 200)
+        open_order = [item["id"] for item in sorted(
+            (item for item in reordered["items"] if not item["completed"]), key=lambda item: item["position"]
+        )]
+        self.assertEqual(open_order, ["OI-2", "OI-1"])
+
+        status, completed = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 3, "action": "toggle", "id": "OI-2", "completed": True},
+        )
+        self.assertEqual(status, 200)
+        item = next(item for item in completed["items"] if item["id"] == "OI-2")
+        self.assertTrue(item["completed"])
+        self.assertEqual(item["status"], "verified")
+
+        status, reopened = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 4, "action": "toggle", "id": "OI-2", "completed": False},
+        )
+        self.assertEqual(status, 200)
+        item = next(item for item in reopened["items"] if item["id"] == "OI-2")
+        self.assertFalse(item["completed"])
+        self.assertEqual(item["status"], "planned")
+
+        external = ledger_ui.read_json(self.ledger)
+        external["title"] = "Externally updated title"
+        external["revision"] += 1
+        external["updated_at"] = ledger_ui.utc_now()
+        ledger_ui.atomic_write_json(self.ledger, external)
+        status, refreshed = self.request("GET", "/api/ledger")
+        self.assertEqual(status, 200)
+        self.assertEqual(refreshed["title"], "Externally updated title")
+
+    def test_stale_revision_conflicts_without_overwrite(self) -> None:
+        status, _ = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 1, "action": "edit", "id": "OI-1", "title": "Fresh edit"},
+        )
+        self.assertEqual(status, 200)
+        status, conflict = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 1, "action": "edit", "id": "OI-1", "title": "Stale overwrite"},
+        )
+        self.assertEqual(status, 409)
+        self.assertIn("changed elsewhere", conflict["error"])
+        saved = ledger_ui.read_json(self.ledger)
+        self.assertEqual(next(item for item in saved["items"] if item["id"] == "OI-1")["title"], "Fresh edit")
+
+    def test_transferred_items_are_read_only_and_excluded_from_reorder(self) -> None:
+        data = ledger_ui.read_json(self.ledger)
+        item = next(item for item in data["items"] if item["id"] == "OI-1")
+        item["tracking_state"] = "transferred"
+        item["transferred_to"] = {
+            "task_id": "task_EXAMPLE_target",
+            "title": "Destination task",
+            "transferred_at": ledger_ui.utc_now(),
+        }
+        data["revision"] = 2
+        ledger_ui.normalize_positions(data)
+        ledger_ui.atomic_write_json(self.ledger, data)
+
+        status, error = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 2, "action": "edit", "id": "OI-1", "title": "Must not change"},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("read-only", error["error"])
+
+        status, reordered = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 2, "action": "reorder", "order": ["OI-2"]},
+        )
+        self.assertEqual(status, 200)
+        self.assertEqual(reordered["revision"], 3)
+
+    def test_html_assets_and_token_gate(self) -> None:
+        status, html = self.request("GET", "/")
+        self.assertEqual(status, 200)
+        self.assertIn("Full ledger", html)
+        self.assertIn("item-template", html)
+        with self.assertRaises(urllib.error.HTTPError) as raised:
+            urllib.request.urlopen(f"{self.base}/api/ledger", timeout=2)
+        self.assertEqual(raised.exception.code, 401)
+        raised.exception.close()
+
+
+class LedgerAssetTests(unittest.TestCase):
+    def test_ui_contains_required_interactions(self) -> None:
+        html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
+        script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+        self.assertIn("type=\"checkbox\"", html)
+        self.assertIn("draggable=\"true\"", html)
+        self.assertNotIn("edit-form", html)
+        self.assertNotIn("class=\"edit-input\"", html)
+        self.assertNotIn("type=\"text\"", html)
+        self.assertIn('document.createElement("textarea")', script)
+        self.assertIn("beginEdit", script)
+        self.assertIn("snackbar-action", html)
+        self.assertIn("undoCompletion", script)
+        self.assertIn("transferred-list", html)
+        for action in ("toggle", "reorder", "edit"):
+            self.assertIn(f'action: "{action}"', script)
+        self.assertIn("window.setInterval", script)
+        self.assertIn("tracking_state === \"transferred\"", script)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

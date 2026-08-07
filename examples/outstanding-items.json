@@ -1,0 +1,78 @@
+{
+  "schema_version": 3,
+  "owner": "user",
+  "authorizes_work": false,
+  "title": "Synthetic outstanding items",
+  "task_id": "task_EXAMPLE_4b7c",
+  "revision": 12,
+  "created_at": "2026-05-04T10:00:00Z",
+  "updated_at": "2026-05-04T11:20:00Z",
+  "latest_unanswered_suggestion": {
+    "id": "OI-4",
+    "text": "About twenty minutes: add the shared token and check one button. Advice only; nothing started."
+  },
+  "items": [
+    {
+      "id": "OI-4",
+      "title": "Focus ring on interactive elements",
+      "status": "requested",
+      "completed": false,
+      "position": 0,
+      "group": "Outstanding for you",
+      "state_text": "requested",
+      "details_markdown": "Shared token is a possible route, not permission.",
+      "completed_at": null,
+      "completed_session_id": null
+    },
+    {
+      "id": "OI-10",
+      "title": "Carry the focus-token memory update",
+      "status": "waiting-on-you",
+      "completed": false,
+      "position": 1,
+      "group": "Waiting on you",
+      "state_text": "waiting-on-you",
+      "details_markdown": "Paste the prepared note only if wanted.",
+      "completed_at": null,
+      "completed_session_id": null
+    },
+    {
+      "id": "OI-3",
+      "title": "Ask the design channel about the empty state",
+      "status": "reminder",
+      "completed": false,
+      "position": 2,
+      "group": "Intentional reminders",
+      "state_text": "reminder",
+      "details_markdown": "Parked on purpose; no deadline.",
+      "completed_at": null,
+      "completed_session_id": null
+    },
+    {
+      "id": "OI-1",
+      "title": "Fix the flaky login test",
+      "status": "verified",
+      "completed": true,
+      "position": 0,
+      "group": "Done",
+      "state_text": "verified",
+      "details_markdown": "CI run 481: login suite green 20/20.",
+      "completed_at": "2026-05-04T11:10:00Z",
+      "completed_session_id": "sess_EXAMPLE_9d21"
+    }
+  ],
+  "sections": [
+    {
+      "title": "Suggested for you",
+      "markdown": "OI-4, about twenty minutes: add the shared token and check one button. Advice only; nothing started."
+    },
+    {
+      "title": "Related tasks",
+      "markdown": "Design system audit · task_EXAMPLE_8f31 · prepared (not sent)"
+    }
+  ],
+  "source": {
+    "kind": "synthetic-example",
+    "status": "example-only"
+  }
+}

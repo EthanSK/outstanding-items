@@ -1,0 +1,22 @@
+# Local build notes and scratch. Never part of the published project.
+.opus-*-prompt.md
+.DS_Store
+Thumbs.db
+*.log
+.tmp/
+tmp/
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Never commit a real backlog artifact into this repository.
+# The synthetic sample under examples/ is explicitly allowed.
+outstanding-items.md
+outstanding-items.json
+.*.ledger-ui-state.json
+.*.ledger-ui.log
+.outstanding/
+!examples/outstanding-items.md
+!examples/outstanding-items.json

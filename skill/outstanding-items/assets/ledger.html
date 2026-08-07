@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="no-referrer">
+  <title>Full ledger — Outstanding Items</title>
+  <link rel="stylesheet" href="/assets/ledger.css">
+  <script src="/assets/ledger.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#ledger">Skip to ledger</a>
+  <div class="shell">
+    <header class="masthead">
+      <div>
+        <p class="kicker">Outstanding items</p>
+        <h1 id="ledger-title">Full ledger</h1>
+        <p class="summary-line">
+          <span><strong id="open-count">—</strong> open</span>
+          <span><strong id="done-count">—</strong> completed</span>
+          <span><strong id="transferred-count">—</strong> elsewhere</span>
+        </p>
+      </div>
+      <div class="save-state" id="save-state" role="status" aria-live="polite">
+        <span class="save-dot" aria-hidden="true"></span>
+        <span id="save-label">Connecting…</span>
+      </div>
+    </header>
+
+    <main id="ledger" tabindex="-1">
+      <section class="ledger-section" aria-labelledby="open-title">
+        <div class="section-heading">
+          <h2 id="open-title">Open</h2>
+        </div>
+        <ol class="item-list" id="open-list" aria-describedby="open-help"></ol>
+        <p class="sr-only" id="open-help">Click task text to edit it. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
+        <div class="empty-state" id="open-empty" hidden>
+          <p>Nothing is open.</p>
+        </div>
+      </section>
+
+      <section class="ledger-section ledger-section--transferred" aria-labelledby="transferred-title">
+        <div class="section-heading">
+          <h2 id="transferred-title">Owned elsewhere</h2>
+        </div>
+        <ol class="item-list item-list--transferred" id="transferred-list"></ol>
+        <div class="empty-state" id="transferred-empty" hidden>
+          <p>No transferred items.</p>
+        </div>
+      </section>
+
+      <section class="ledger-section ledger-section--done" aria-labelledby="done-title">
+        <div class="section-heading">
+          <h2 id="done-title">Completed</h2>
+        </div>
+        <ol class="item-list item-list--done" id="done-list"></ol>
+        <div class="empty-state" id="done-empty" hidden>
+          <p>No completed items yet.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p class="updated" id="updated-label">Loading the canonical ledger…</p>
+      <p id="ledger-path"></p>
+    </footer>
+  </div>
+
+  <template id="item-template">
+    <li class="ledger-item">
+      <label class="check-wrap">
+        <input class="item-check" type="checkbox">
+        <span class="custom-check" aria-hidden="true"></span>
+        <span class="sr-only">Mark complete</span>
+      </label>
+      <div class="item-copy">
+        <button type="button" class="item-title"></button>
+      </div>
+      <div class="item-actions">
+        <div class="drag-handle" draggable="true" role="button" tabindex="0" aria-label="Drag to reorder">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <button type="button" class="move-up" aria-label="Move item up">↑</button>
+        <button type="button" class="move-down" aria-label="Move item down">↓</button>
+      </div>
+    </li>
+  </template>
+
+  <div class="snackbar" id="snackbar" role="status" aria-live="polite" hidden>
+    <span id="snackbar-message"></span>
+    <button type="button" id="snackbar-action" hidden>Undo</button>
+  </div>
+  <div class="sr-only" id="live-status" role="status" aria-live="polite"></div>
+</body>
+</html>

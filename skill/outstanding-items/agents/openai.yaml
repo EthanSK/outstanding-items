@@ -1,0 +1,9 @@
+# Codex packaging metadata. Claude Code safely ignores this file.
+# Implicit invocation loads the skill so the user's ledger stays visible. It
+# never authorizes the agent to work on an item in that ledger.
+interface:
+  display_name: "Outstanding Items"
+  short_description: "Hold the user's outstanding-items ledger"
+  default_prompt: "Use $outstanding-items to keep my outstanding items visible and honestly labelled, propose at most one next move for me to decide, and never start, continue, or hand off an item without a fresh instruction from me naming it."
+policy:
+  allow_implicit_invocation: true

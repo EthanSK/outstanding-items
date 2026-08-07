@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outsource your memory — a curated work experience.</title>
+<meta name="description" content="A skill for Codex and Claude Code that keeps a running ledger of everything you asked for in a long task, ends every reply with a compact Outstanding footer and a crossed-out Done list, and recommends the one thing worth doing next.">
+<link rel="canonical" href="https://ethansk.github.io/outstanding-items/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#faf8f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12110e" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Outstanding Items">
+<meta property="og:title" content="Outstanding Items — Outsource your memory — a curated work experience.">
+<meta property="og:description" content="Speak freely across a long agent task. The ledger comes back on every reply: open items, honest statuses, a crossed-out Done list, and one recommendation for what to do next.">
+<meta property="og:url" content="https://ethansk.github.io/outstanding-items/">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Outstanding Items — Outsource your memory — a curated work experience.">
+<meta name="twitter:description" content="A skill for Codex and Claude Code that holds your backlog so you do not have to, and tells you what is worth doing next.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="assets/styles.css">
+<script src="assets/app.js" defer></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  "name": "Outstanding Items",
+  "description": "A skill for Codex and Claude Code that tracks every outstanding request in a long agent task, renders a compact Outstanding footer on every reply, and recommends the next thing worth doing.",
+  "codeRepository": "https://github.com/EthanSK/outstanding-items",
+  "url": "https://ethansk.github.io/outstanding-items/",
+  "license": "https://opensource.org/licenses/MIT",
+  "programmingLanguage": "Markdown"
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="wordmark" href="./">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <rect width="32" height="32" rx="5" fill="currentColor" opacity="0.06"></rect>
+        <rect x="6" y="8" width="20" height="2.8" rx="1.4" fill="currentColor"></rect>
+        <rect x="6" y="14.6" width="15" height="2.8" rx="1.4" fill="currentColor"></rect>
+        <rect x="6" y="21.2" width="11" height="2.8" rx="1.4" fill="currentColor" opacity="0.45"></rect>
+        <rect x="3.6" y="21.9" width="15.8" height="1.4" rx="0.7" fill="#9a3412"></rect>
+      </svg>
+      <span>Outstanding Items</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="#ledger">The ledger</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#labels">Labels</a></li>
+        <li><a href="#next">What's next</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#limits">Limits</a></li>
+        <li><a href="https://github.com/EthanSK/outstanding-items">GitHub</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <p class="eyebrow">A skill for Codex and Claude Code</p>
+      <h1 id="hero-title">Outsource your memory</h1>
+      <p class="hero-title-2">— a curated work experience.</p>
+      <p class="lede">You talk the way you actually think — three requests, a correction, and something unrelated you nearly forgot. Your agent keeps the ledger, shows it back at the end of every reply, and tells you the one thing worth doing next.</p>
+      <div class="actions">
+        <a class="btn" href="#install">Install it</a>
+        <a class="btn btn--ghost" href="#ledger">See the ledger</a>
+      </div>
+      <ul class="facts">
+        <li>Text files, not a service</li>
+        <li>No network, ever</li>
+        <li>MIT licensed</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="ledger" aria-labelledby="ledger-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Loose talk in, legible ledger out</p>
+        <h2 id="ledger-title">One task, nine interruptions, nothing lost</h2>
+        <p class="note">A synthetic session, played back turn by turn. Left: what someone actually says. Right: what comes back at the bottom of every reply. Watch the last turn — that is the only one that gets a recommendation.</p>
+      </div>
+
+      <div class="demo">
+        <div>
+          <h3 class="col-label" id="stream-label">What you say</h3>
+          <ol class="stream-list" id="stream-list" aria-labelledby="stream-label">
+            <li>The login test is flaky, sort it out.</li>
+            <li>Also we should document the rate limits in the handbook at some point.</li>
+            <li>Oh and completely unrelated — remind me to ask the design channel about the empty state.</li>
+            <li>Right, run CI.</li>
+            <li>Actually forget the handbook thing, that page is being deleted.</li>
+            <li>And while you're in there — focus ring, skip link, nav aria labels.</li>
+            <li>The staging deploy needs someone to click approve before any of this ships.</li>
+            <li>The dialog focus trap is stuck on the upstream library — and this overlaps with the design system audit, make sure that one knows.</li>
+            <li>Honestly this is a lot. What should I actually do next?</li>
+          </ol>
+        </div>
+
+        <div>
+          <h3 class="col-label" id="ledger-label">What comes back, every reply</h3>
+          <div class="ledger">
+            <section class="ledger-inner" id="ledger-body" aria-labelledby="ledger-label">
+              <p class="ledger-head"><strong>Outstanding</strong> <span class="ledger-count">4 for you · 2 waiting on you · 1 reminder · 2 done</span></p>
+              <p class="ledger-subhead"><strong>Outstanding for you</strong></p>
+              <ul class="ledger-list">
+                <li data-status="requested"><span class="mark" aria-hidden="true">·</span><span class="row"><span class="oi">OI-4</span><span class="title">Focus ring on interactive elements</span> <span class="status">requested</span></span></li>
+                <li data-status="requested"><span class="mark" aria-hidden="true">·</span><span class="row"><span class="oi">OI-5</span><span class="title">Skip link</span> <span class="status">requested</span></span></li>
+                <li data-status="requested"><span class="mark" aria-hidden="true">·</span><span class="row"><span class="oi">OI-6</span><span class="title">Aria labels on the nav</span> <span class="status">requested</span></span></li>
+                <li data-status="blocked"><span class="mark" aria-hidden="true">!</span><span class="row"><span class="oi">OI-8</span><span class="title">Dialog focus trap</span> <span class="status">blocked</span> <span class="qual">(upstream bug 4821, local patch regresses Safari)</span></span></li>
+              </ul>
+              <p class="ledger-subhead"><strong>Waiting on you</strong></p>
+              <ul class="ledger-list">
+                <li data-status="waiting-on-you"><span class="mark" aria-hidden="true">»</span><span class="row"><span class="oi">OI-7</span><span class="title">Approve the staging deploy</span> <span class="status">waiting-on-you</span> <span class="qual">(click approve in the deploy UI)</span></span></li>
+                <li data-status="waiting-on-you"><span class="mark" aria-hidden="true">»</span><span class="row"><span class="oi">OI-9</span><span class="title">Tell the design audit about the focus token</span> <span class="status">waiting-on-you</span> <span class="qual">(paste the note into that task)</span></span></li>
+              </ul>
+              <p class="ledger-subhead"><strong>Intentional reminders</strong></p>
+              <ul class="ledger-list">
+                <li data-status="reminder"><span class="mark" aria-hidden="true">◦</span><span class="row"><span class="oi">OI-3</span><span class="title">Ask the design channel about the empty state</span> <span class="status">reminder</span></span></li>
+              </ul>
+              <p class="ledger-next"><strong>Suggested for you</strong> — <span class="next-id">OI-4</span> <span class="next-step">add the shared token and check one button</span></p>
+              <p class="ledger-why">Twenty minutes, you are already in that file, and it settles OI-6 at the same time.</p>
+              <p class="ledger-related">Related: Design system audit · task_EXAMPLE_8f31 — registered (manual)</p>
+              <p class="ledger-subhead"><strong>Done</strong></p>
+              <ul class="ledger-list is-done">
+                <li data-status="dropped"><span class="mark" aria-hidden="true">×</span><span class="row"><span class="oi">OI-2</span><span class="title">Add rate-limit docs to the handbook</span> <span class="status">dropped</span> <span class="qual">(page being deleted)</span></span></li>
+                <li data-status="verified"><span class="mark" aria-hidden="true">✓</span><span class="row"><span class="oi">OI-1</span><span class="title">Fix the flaky login test</span> <span class="status">verified</span> <span class="qual">(CI green 20/20)</span></span></li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="demo-controls" id="demo-controls" hidden>
+            <button type="button" id="demo-toggle" aria-controls="ledger-body stream-list">Pause</button>
+            <button type="button" id="demo-step" aria-controls="ledger-body stream-list">Next turn</button>
+            <button type="button" id="demo-restart" aria-controls="ledger-body stream-list">Restart</button>
+            <p class="demo-status" id="demo-status" role="status">Turn 9 of 9</p>
+          </div>
+
+          <p class="demo-caption" id="demo-caption">Asked directly, so a suggestion is warranted. OI-7 and OI-9 stay separately visible because they need you, OI-8 names its genuine external wall, and OI-3 remains parked on purpose. Nothing was started or reordered.</p>
+        </div>
+      </div>
+    </div>
+
+    <script type="application/json" id="ledger-data">
+{
+  "steps": [
+    {
+      "say": "The login test is flaky, sort it out.",
+      "note": "Captured as OI-1. The change is in, but nothing has proved it works yet, so the label stays honest.",
+      "touched": ["OI-1"],
+      "open": [
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "implemented" }
+      ],
+      "done": [],
+      "related": []
+    },
+    {
+      "say": "Also we should document the rate limits in the handbook at some point.",
+      "note": "A second thread opens, and you stop being the one who has to hold it.",
+      "touched": ["OI-2"],
+      "open": [
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "implemented" },
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "requested" }
+      ],
+      "done": [],
+      "related": []
+    },
+    {
+      "say": "Oh and completely unrelated — remind me to ask the design channel about the empty state.",
+      "note": "An intentional reminder: parked on purpose, no deadline, no execution request. Kept visible, never started, never nagged about.",
+      "touched": ["OI-3"],
+      "open": [
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "implemented" },
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "requested" },
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" }
+      ],
+      "done": [],
+      "related": []
+    },
+    {
+      "say": "Right, run CI.",
+      "note": "CI came back green, so OI-1 finally earns verified and moves to Done, struck through.",
+      "touched": ["OI-1"],
+      "open": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "requested" },
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" }
+      ],
+      "done": [
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": []
+    },
+    {
+      "say": "Actually forget the handbook thing, that page is being deleted.",
+      "note": "Cancelled work is struck through and kept. In three weeks you can still see that you asked.",
+      "touched": ["OI-2"],
+      "open": [
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" }
+      ],
+      "done": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "dropped", "qual": "page being deleted" },
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": []
+    },
+    {
+      "say": "And while you're in there — focus ring, skip link, nav aria labels.",
+      "note": "Three asks in one sentence become three items with three permanent IDs.",
+      "touched": ["OI-4", "OI-5", "OI-6"],
+      "open": [
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" },
+        { "id": "OI-4", "title": "Focus ring on interactive elements", "status": "requested" },
+        { "id": "OI-5", "title": "Skip link", "status": "requested" },
+        { "id": "OI-6", "title": "Aria labels on the nav", "status": "requested" }
+      ],
+      "done": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "dropped", "qual": "page being deleted" },
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": []
+    },
+    {
+      "say": "The staging deploy needs someone to click approve before any of this ships.",
+      "note": "Waiting on you, not blocked. Nothing is broken — the pipeline wants a human. The note is the action itself, so it can be done without re-reading anything.",
+      "touched": ["OI-7"],
+      "open": [
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" },
+        { "id": "OI-4", "title": "Focus ring on interactive elements", "status": "requested" },
+        { "id": "OI-5", "title": "Skip link", "status": "requested" },
+        { "id": "OI-6", "title": "Aria labels on the nav", "status": "requested" },
+        { "id": "OI-7", "title": "Approve the staging deploy", "status": "waiting-on-you", "qual": "click approve in the deploy UI" }
+      ],
+      "done": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "dropped", "qual": "page being deleted" },
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": []
+    },
+    {
+      "say": "The dialog focus trap is stuck on the upstream library — and this overlaps with the design system audit, make sure that one knows.",
+      "note": "Two different kinds of stuck. OI-8 is a real external wall, and says what was already tried. OI-9 only needs you to paste something, so it is waiting on you rather than blocked.",
+      "touched": ["OI-8", "OI-9"],
+      "open": [
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" },
+        { "id": "OI-4", "title": "Focus ring on interactive elements", "status": "requested" },
+        { "id": "OI-5", "title": "Skip link", "status": "requested" },
+        { "id": "OI-6", "title": "Aria labels on the nav", "status": "requested" },
+        { "id": "OI-7", "title": "Approve the staging deploy", "status": "waiting-on-you", "qual": "click approve in the deploy UI" },
+        { "id": "OI-8", "title": "Dialog focus trap", "status": "blocked", "qual": "upstream bug 4821, local patch regresses Safari" },
+        { "id": "OI-9", "title": "Tell the design audit about the focus token", "status": "waiting-on-you", "qual": "paste the note into that task" }
+      ],
+      "done": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "dropped", "qual": "page being deleted" },
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": [
+        { "title": "Design system audit", "id": "task_EXAMPLE_8f31", "result": "registered (manual)" }
+      ]
+    },
+    {
+      "say": "Honestly this is a lot. What should I actually do next?",
+      "note": "Asked directly, so a recommendation is warranted. OI-8 is out because it is genuinely stuck; OI-7 and OI-9 remain valid user-action candidates, but OI-4 best matches the current momentum. Nothing was reordered or relabelled.",
+      "touched": [],
+      "open": [
+        { "id": "OI-3", "title": "Ask the design channel about the empty state", "status": "reminder" },
+        { "id": "OI-4", "title": "Focus ring on interactive elements", "status": "requested" },
+        { "id": "OI-5", "title": "Skip link", "status": "requested" },
+        { "id": "OI-6", "title": "Aria labels on the nav", "status": "requested" },
+        { "id": "OI-7", "title": "Approve the staging deploy", "status": "waiting-on-you", "qual": "click approve in the deploy UI" },
+        { "id": "OI-8", "title": "Dialog focus trap", "status": "blocked", "qual": "upstream bug 4821, local patch regresses Safari" },
+        { "id": "OI-9", "title": "Tell the design audit about the focus token", "status": "waiting-on-you", "qual": "paste the note into that task" }
+      ],
+      "next": {
+        "id": "OI-4",
+        "step": "add the shared token and check one button",
+        "why": "Twenty minutes, you are already in that file, and it settles OI-6 at the same time."
+      },
+      "done": [
+        { "id": "OI-2", "title": "Add rate-limit docs to the handbook", "status": "dropped", "qual": "page being deleted" },
+        { "id": "OI-1", "title": "Fix the flaky login test", "status": "verified", "qual": "CI green 20/20" }
+      ],
+      "related": [
+        { "title": "Design system audit", "id": "task_EXAMPLE_8f31", "result": "registered (manual)" }
+      ]
+    }
+  ]
+}
+    </script>
+  </section>
+
+  <section id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">The loop</p>
+        <h2 id="how-title">Four things every turn, and a fifth only when it helps</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Capture</h3>
+          <p>Every request, correction, deferral and “while you're there” aside becomes an item with a permanent <code>OI-n</code> ID. Off-topic reminders are captured too, never refused.</p>
+        </li>
+        <li>
+          <h3>Label</h3>
+          <p>Each item gets one of nine statuses, and the skill is forbidden from claiming a rung it did not climb. Editing a file is <code>implemented</code>. Only evidence makes it <code>verified</code>.</p>
+        </li>
+        <li>
+          <h3>Show</h3>
+          <p>The footer is appended to every user-facing reply while anything is open. At most seven open lines and three done lines, so it stays a reminder rather than a report.</p>
+        </li>
+        <li>
+          <h3>Retire</h3>
+          <p>Finished and cancelled items move into the crossed-out Done section instead of vanishing, so you can audit what happened and why it stopped.</p>
+        </li>
+        <li>
+          <h3>Recommend</h3>
+          <p>Only when it would genuinely help — you asked, you came back, you sound buried, or a real decision point arrived. One item, one small step, one sentence. Then it stops talking.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="labels" aria-labelledby="labels-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Honest status</p>
+        <h2 id="labels-title">The difference between done and said</h2>
+        <p class="note">Four of these labels describe four different amounts of proof. Collapsing them is the failure this skill exists to prevent.</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <caption>Status labels and the evidence each one requires.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Label</th>
+              <th scope="col">Means</th>
+              <th scope="col">Required evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">requested</th>
+              <td>You asked for it. Nothing decided or started.</td>
+              <td>None.</td>
+            </tr>
+            <tr>
+              <th scope="row">planned</th>
+              <td>An approach exists and was stated. Nothing has changed.</td>
+              <td>The approach, in one sentence.</td>
+            </tr>
+            <tr>
+              <th scope="row">in-progress</th>
+              <td>You explicitly told the agent to start this specific item in this turn.</td>
+              <td>Your fresh start instruction, recorded in the note.</td>
+            </tr>
+            <tr>
+              <th scope="row">implemented</th>
+              <td>The change was made but not proven to work.</td>
+              <td>The edit or action performed in this task.</td>
+            </tr>
+            <tr>
+              <th scope="row">verified</th>
+              <td>The change was proven to work.</td>
+              <td>Command output, a passing check, or your confirmation.</td>
+            </tr>
+            <tr>
+              <th scope="row">waiting-on-you</th>
+              <td>It needs you in person: a press, an approval, a choice, a credential, an acceptance.</td>
+              <td>The exact action, written in the imperative.</td>
+            </tr>
+            <tr>
+              <th scope="row">blocked</th>
+              <td>A genuine external impasse, after every safe in-scope route was tried.</td>
+              <td>The blocker <em>and</em> what was already attempted.</td>
+            </tr>
+            <tr>
+              <th scope="row">reminder</th>
+              <td>An <em>Intentional reminder</em>: parked on purpose, no execution request, no deadline.</td>
+              <td>None. It waits until you give it one.</td>
+            </tr>
+            <tr>
+              <th scope="row">dropped</th>
+              <td>Deliberately not doing it.</td>
+              <td>Who decided, and why.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two-col section-spaced">
+        <div>
+          <h3>Waiting on you is not blocked</h3>
+          <p class="note">“Blocked” reads as <em>nothing to be done</em>, so it gets skipped for a week. If the only missing thing is your click, your key, your yes, or a paste into another conversation, the ledger says <code>waiting-on-you</code> and writes the action in the imperative — <code>click approve in the deploy UI</code>, not <code>needs approval</code>.</p>
+          <p class="note"><code>blocked</code> is reserved for a real external wall, and it has to carry two facts rather than one: what stopped things, and what was already tried to get around it.</p>
+        </div>
+        <div>
+          <h3>A reminder is not a neglected request</h3>
+          <p class="note">Something you parked deliberately is a <code>reminder</code>. It stays visible, it is never started, it never retires itself into Done, and nobody comments on how long it has been sitting there. That is the entire point of parking it.</p>
+          <p class="note">It also never competes to be the recommended next action — unless you ask for it, or something makes it genuinely urgent, at which point it becomes a normal request.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="next" aria-labelledby="next-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Outsource your memory — a curated work experience</p>
+        <h2 id="next-title">The second half: what to actually do</h2>
+        <p class="note">A list tells you what is outstanding. It does not tell you what to pick up when you sit down with eleven open items and forty minutes. That is the other half of this skill.</p>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>What it weighs</h3>
+          <div class="table-scroll">
+            <table>
+              <caption>Judgement, held together. Not a score, and never shown as one.</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Factor</th>
+                  <th scope="col">The question it asks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Dependencies</th>
+                  <td>Does finishing this make other things possible? Is anything already waiting on it?</td>
+                </tr>
+                <tr>
+                  <th scope="row">Momentum</th>
+                  <td>Are you already inside this file, this idea, this mood? Restarting is the expensive part.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Effort vs value</th>
+                  <td>What is the smallest thing with a real payoff? Twenty minutes with an outcome beats three hours toward a milestone.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Availability</th>
+                  <td>Can you actually choose it? <code>blocked</code> items are filtered out. A <code>waiting-on-you</code> item may be ideal because the suggested action belongs to you.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Urgency</th>
+                  <td>Real consequences only. Age is not urgency, and neither is the length of the list.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Load</th>
+                  <td>How much are you carrying right now? After a long push the honest answer is a small thing, or nothing.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Kindness</th>
+                  <td>Would a thoughtful colleague say this out loud right now, or leave you alone?</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h3>And what keeps it bearable</h3>
+          <ul class="nots">
+            <li><span><strong>One item, one small step.</strong> <span>The twenty-minute version, so starting is cheap and stopping is allowed. No frameworks, no scores, no numbered plans.</span></span></li>
+            <li><span><strong>Not every turn.</strong> <span>Most replies carry no recommendation at all. A footer that advises constantly stops being read by turn four.</span></span></li>
+            <li><span><strong>It never edits the ledger.</strong> <span>Nothing is dropped, reordered, merged, hidden or deprioritised out of existence because it was not the thing chosen. Recommending is a comment, not an edit.</span></span></li>
+            <li><span><strong>Your priorities win.</strong> <span>Say what you want to do and it stops — immediately, without a counter-proposal and without raising it again next turn.</span></span></li>
+            <li><span><strong>Calibrated, not confident.</strong> <span>If it is a close call it says so and names the alternative. “Nothing here needs you tonight” is a legitimate answer.</span></span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="beyond" aria-labelledby="beyond-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">When a footer is not enough</p>
+        <h2 id="beyond-title">Two escape hatches, both cautious</h2>
+      </div>
+      <div class="two-col">
+        <div>
+          <h3>The list outgrows the reply</h3>
+          <p>Past seven open items, twenty items in total, or a request for the whole list, the ledger moves to one task-owned <code>outstanding-items.json</code>. The footer's <strong>Full ledger</strong> link opens a private local HTML editor instead of dumping the raw file into your browser.</p>
+          <p>Open items come first in a deliberately quiet list. A resting row is just its checkbox and task text; click the text to create an inline editor, with no permanent blank input underneath it. Drag the revealed grip or use keyboard move controls to reorder. Checking a task complete moves it to the bottom and shows a temporary <strong>Undo</strong> snackbar. Explicitly transferred work remains read-only under <strong>Owned elsewhere</strong>, with its original status and destination intact. The page and the agent both edit the same JSON file, with atomic writes and revision checks, so there is no competing browser or Markdown ledger.</p>
+          <p>It asks first. It proposes a path, prefers a task scratch directory, and offers to exclude the JSON and local runtime files from Git. The editor starts only when requested, binds to <code>127.0.0.1</code>, requires its random URL token, stores nothing in the browser, and makes no outbound request.</p>
+        </div>
+        <div>
+          <h3>Another task needs to know</h3>
+          <p>A related conversation is resolved <em>once</em> — visible title plus stable ID — and stored in the registry. After that the reference is reused, never re-derived.</p>
+          <p>Only relevant changes travel: something that changes the other task's scope, unblocks it, or invalidates an assumption. Deltas are additive, one change each, and never reorder or overwrite what that task already tracks.</p>
+          <p>If the harness exposes no tools to read or message other tasks, it says so, records the relationship as <code>registered (manual)</code>, and gives you the exact text to paste. A send that fails is reported and the registry entry is kept.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" aria-labelledby="install-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Install</p>
+        <h2 id="install-title">Two directories and a copy command</h2>
+        <p class="note">Everything installs from the checked-out repository. No package manager, no build step, and no network access at any point.</p>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>The script</h3>
+          <div class="codeblock">
+            <pre><code>git clone https://github.com/EthanSK/outstanding-items.git
+cd outstanding-items
+sh scripts/install.sh --dry-run
+sh scripts/install.sh</code></pre>
+            <button type="button" class="copy" hidden>Copy</button>
+          </div>
+          <p class="note">The dry run prints a per-file plan and writes nothing. Without a target it installs for each harness whose directory already exists, and skips the others with a note. It validates manifest paths and resolved boundaries, refuses symbolic-link traversal, never runs a recursive delete, and will not overwrite a locally modified skill unless you explicitly use <code>--force</code>.</p>
+        </div>
+        <div>
+          <h3>Or by hand</h3>
+          <div class="codeblock">
+            <pre><code># Codex
+mkdir -p ~/.codex/skills/outstanding-items
+cp -R skill/outstanding-items/. ~/.codex/skills/outstanding-items/
+
+# Claude Code
+mkdir -p ~/.claude/skills/outstanding-items
+cp -R skill/outstanding-items/. ~/.claude/skills/outstanding-items/</code></pre>
+            <button type="button" class="copy" hidden>Copy</button>
+          </div>
+          <p class="note">One canonical source, copied twice. The <code>SKILL.md</code> frontmatter is valid for both harnesses, and the supported Codex <code>interface</code> metadata alongside it is simply ignored by Claude Code. Manual copies do not get the install manifest; use the installer for conflict-aware updates and hash-checked uninstalling.</p>
+        </div>
+      </div>
+
+      <div class="two-col section-spaced">
+        <div>
+          <h3>Make it fire without asking</h3>
+          <p class="note">Harnesses discover skills from the description field, which is why the trigger phrases live there. A global rule makes invocation more reliable. It is optional, and it does not make invocation certain.</p>
+          <div class="codeblock">
+            <pre><code>## Outstanding items
+Use the `outstanding-items` skill in any task where I
+make more than one request. Capture unrelated asides
+too, and end every user-facing reply with the
+Outstanding footer. Never label something `verified`
+without evidence you observed in this task.</code></pre>
+            <button type="button" class="copy" hidden>Copy</button>
+          </div>
+          <p class="note">Append to <code>~/.codex/AGENTS.md</code> or <code>~/.claude/CLAUDE.md</code>.</p>
+        </div>
+        <div>
+          <h3>Check it</h3>
+          <div class="codeblock">
+            <pre><code>sh scripts/check.sh
+sh scripts/check.sh --installed</code></pre>
+            <button type="button" class="copy" hidden>Copy</button>
+          </div>
+          <p class="note">Needs only <code>sh</code> and <code>python3</code>. It validates required files, frontmatter and YAML basics, internal links, site base paths, the synthetic-identifier rule, honesty guards, and the ledger migration/edit/check/reorder lifecycle. No third-party packages, no outbound network requests.</p>
+          <p class="note">To remove it again: <code>sh scripts/uninstall.sh</code> deletes only the files it installed, then removes directories only when they are already empty.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits" aria-labelledby="limits-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Limits</p>
+        <h2 id="limits-title">What this deliberately is not</h2>
+        <p class="note">These are the assumptions people arrive with. All of them are wrong, and it is better to say so on the homepage than in an issue thread later.</p>
+      </div>
+      <ul class="nots">
+        <li><span><strong>Not execution permission.</strong> <span>The ledger is memory. Listing, ranking, suggesting or sharing an item never authorises the agent to start, resume, investigate, research, prepare, route or complete it. Only your current message can name what begins, and that authority ends with the response turn.</span></span></li>
+        <li><span><strong>Not a background daemon.</strong> <span>Installation schedules and starts nothing. The optional Full ledger is an explicit per-ledger loopback process that you can stop without touching its data.</span></span></li>
+        <li><span><strong>Not a cross-task message bus.</strong> <span>There is no broker, no queue and no inbox. Propagation happens only through tools the harness already exposes.</span></span></li>
+        <li><span><strong>Not a database.</strong> <span>The only durable ledger is one plain JSON file at a path you approve first. The HTML is a live view of that file, not another store.</span></span></li>
+        <li><span><strong>Not guaranteed invocation.</strong> <span>Harnesses decide when to load a skill from its description. A global rule makes it likelier, never certain.</span></span></li>
+        <li><span><strong>Not a task discovery service.</strong> <span>Without task tools it cannot find, read or message another conversation. It says so and hands you the text.</span></span></li>
+        <li><span><strong>Not networked.</strong> <span>The skill, the installer and this website make no outbound requests. There is no analytics and there are no cookies.</span></span></li>
+        <li><span><strong>Not a priority system, and not a plan.</strong> <span>The next-action recommendation is a judgement made from what you said in this task, offered once and dropped if ignored. It does not know your deadlines, your week, or what you have the appetite for — and it will not pretend otherwise.</span></span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="faq" aria-labelledby="faq-title">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-title">Reasonable objections</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Is this just a to-do list?</summary>
+          <p>A to-do list is something you maintain. This is something the agent maintains from what you already said, and shows back without being asked. The point is not storage — it is that you never have to restate the list to get accurate work.</p>
+        </details>
+        <details>
+          <summary>Does it work in both Codex and Claude Code?</summary>
+          <p>Yes, from one canonical source. Both read a <code>SKILL.md</code> with <code>name</code> and <code>description</code> frontmatter, so the same file installs into <code>~/.codex/skills/</code> and <code>~/.claude/skills/</code>. The Codex packaging file that sits alongside it is ignored by Claude Code.</p>
+        </details>
+        <details>
+          <summary>What happens to my unrelated reminders?</summary>
+          <p>They are captured and left alone, under their own label: <code>reminder</code>. The skill is explicitly told never to refuse a reminder for being off-topic, never to start it, never to pad it out with questions, and never to retire it on your behalf. It also never gets promoted into the “what next” recommendation unless you ask for it.</p>
+        </details>
+        <details>
+          <summary>Will it really tell my other conversation?</summary>
+          <p>Only if the harness you are running exposes tools to read or message other tasks, and only if the call succeeds. Otherwise it registers the relationship, labels it <code>registered (manual)</code>, gives you the exact text to paste, and keeps the item open as <code>waiting-on-you</code> until you say it landed. It is never allowed to imply a message was delivered when it was not.</p>
+        </details>
+        <details>
+          <summary>Does it write files into my repository?</summary>
+          <p>Only after asking, and only past the overflow threshold. It proposes a path, prefers a scratch directory the harness provides, and offers a <code>.git/info/exclude</code> entry so the file cannot be committed by accident. Decline and the whole ledger stays in the conversation.</p>
+        </details>
+        <details>
+          <summary>Is the “what next” bit going to nag me?</summary>
+          <p>No, and that is written into the contract rather than left to taste. It offers a recommendation when you ask, when you come back after a gap, when you sound overloaded, or at a real decision point — and stays silent otherwise. It is one item, one small step and one sentence. If you say you would rather do something else, it agrees and does not raise it again.</p>
+        </details>
+        <details>
+          <summary>Why is <code>waiting-on-you</code> a separate label?</summary>
+          <p>Because <code>blocked</code> quietly means “nothing to be done”, and things that only needed thirty seconds of your attention were disappearing into it. If the missing ingredient is a person — an approval, a credential, a choice, a paste into another conversation — the ledger names the exact action instead. <code>blocked</code> then means what it should: a real external wall, with the attempted route recorded next to it.</p>
+        </details>
+        <details>
+          <summary>Can I change how it behaves?</summary>
+          <p>It is Markdown. Fork it, rewrite the description with your own trigger phrases, swap the status vocabulary for your pipeline, move the thresholds. Then run the checks — they are structural, so they keep working after the prose changes.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <p>Outstanding Items — a prompt-level skill for Codex and Claude Code. MIT licensed. This site has no analytics, no cookies and no third-party requests.</p>
+    <ul>
+      <li><a href="https://github.com/EthanSK/outstanding-items">Repository</a></li>
+      <li><a href="https://github.com/EthanSK/outstanding-items/blob/main/skill/outstanding-items/SKILL.md">Read the skill</a></li>
+      <li><a href="https://github.com/EthanSK/outstanding-items/blob/main/examples/transcript.md">Example transcript</a></li>
+      <li><a href="https://github.com/EthanSK/outstanding-items/blob/main/LICENSE">Licence</a></li>
+    </ul>
+  </div>
+</footer>
+
+</body>
+</html>

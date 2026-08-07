@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not found — Outstanding Items</title>
+<meta name="description" content="That page is not part of Outstanding Items. Head back to the front page.">
+<meta name="robots" content="noindex, follow">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#faf8f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12110e" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://ethansk.github.io/outstanding-items/">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<!-- Styles are inlined so this page renders correctly no matter how deep the
+     missing URL was. GitHub Pages serves this file for any unknown path under
+     the project, where relative asset links would not resolve. -->
+<style>
+  :root {
+    color-scheme: light dark;
+    --paper: #faf8f2;
+    --ink: #16150f;
+    --ink-muted: #4a463a;
+    --rule: #ded8c7;
+    --rule-strong: #bdb59d;
+    --accent: #9a3412;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #12110e;
+      --ink: #efeadd;
+      --ink-muted: #a9a291;
+      --rule: #33302a;
+      --rule-strong: #55503f;
+      --accent: #e08a52;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+  }
+
+  main {
+    width: 100%;
+    max-width: 44rem;
+    margin-inline: auto;
+    padding: 3rem clamp(1.25rem, 5vw, 3rem);
+  }
+
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 1rem;
+  }
+
+  .eyebrow::before {
+    content: "";
+    display: inline-block;
+    width: 1.6rem;
+    height: 2px;
+    background: var(--accent);
+    vertical-align: 0.28em;
+    margin-right: 0.7rem;
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 1.2rem + 2.4vw, 2.8rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin: 0 0 1rem;
+  }
+
+  p { max-width: 52ch; }
+
+  .ledger {
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    padding: 1rem 1.1rem;
+    margin: 2rem 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .ledger p { margin: 0 0 0.35rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--ink); }
+  .ledger ul { list-style: none; margin: 0; padding: 0; }
+  .ledger li { padding: 0.4rem 0; border-bottom: 1px solid var(--rule); color: var(--ink-muted); }
+  .ledger li:last-child { border-bottom: 0; }
+  .ledger s { text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+
+  a { color: inherit; text-underline-offset: 0.18em; text-decoration-color: var(--rule-strong); }
+  a:hover { text-decoration-color: var(--accent); }
+
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+  .btn {
+    display: inline-block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.7rem 1.15rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+    border-radius: 2px;
+  }
+
+  .btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .muted { color: var(--ink-muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">404 — not found</p>
+  <h1>That one is not on the list.</h1>
+  <p>The page you asked for does not exist here. Everything about this project lives on one page, so the front page is almost certainly what you wanted.</p>
+
+  <div class="ledger">
+    <p><strong>Outstanding</strong> (1 open · 1 done)</p>
+    <ul>
+      <li>OI-2 Find the page you were looking for — waiting-on-you (try the front page)</li>
+      <li><s>OI-1 Load a 404 page that still works</s> — verified</li>
+    </ul>
+  </div>
+
+  <p><a class="btn" href="https://ethansk.github.io/outstanding-items/">Go to the front page</a></p>
+  <p class="muted">Or read the source: <a href="https://github.com/EthanSK/outstanding-items">github.com/EthanSK/outstanding-items</a></p>
+</main>
+</body>
+</html>
