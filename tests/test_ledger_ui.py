@@ -87,6 +87,19 @@ def sample_ledger() -> dict:
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_acting_on_the_suggested_item_clears_the_unanswered_pointer(self) -> None:
+        data = sample_ledger()
+        data["latest_unanswered_suggestion"] = {
+            "id": "OI-1",
+            "text": "Synthetic suggestion",
+            "outcome": "unanswered",
+        }
+        edited = ledger_ui.mutate(
+            data,
+            {"base_revision": 1, "action": "edit", "id": "OI-1", "title": "Edited item"},
+        )
+        self.assertIsNone(edited["latest_unanswered_suggestion"])
+
     def test_v3_ledger_migrates_to_unknown_legacy_without_item_state_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             ledger = pathlib.Path(temp) / "ledger.json"
@@ -224,6 +237,30 @@ class LedgerModelTests(unittest.TestCase):
             args.explanation = "y" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
             with self.assertRaisesRegex(ValueError, "at most"):
                 ledger_ui.command_upsert(args)
+
+    def test_status_update_clears_the_matching_unanswered_suggestion(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            data = sample_ledger()
+            data["latest_unanswered_suggestion"] = {
+                "id": "OI-1",
+                "text": "Synthetic suggestion",
+                "outcome": "unanswered",
+            }
+            ledger_ui.atomic_write_json(ledger, data)
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-1",
+                title=None,
+                status="verified",
+                provenance=None,
+                group=None,
+                explanation=None,
+                notes_file=None,
+                session_id="sess_EXAMPLE_5678",
+            )
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            self.assertIsNone(ledger_ui.read_json(ledger)["latest_unanswered_suggestion"])
 
     def test_new_item_requires_provenance_and_existing_origin_is_immutable(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

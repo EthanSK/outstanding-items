@@ -374,6 +374,12 @@ def normalize_positions(data: dict[str, Any]) -> None:
             item["position"] = position
 
 
+def clear_suggestion_for(data: dict[str, Any], item_id: str) -> None:
+    suggestion = data.get("latest_unanswered_suggestion")
+    if isinstance(suggestion, dict) and suggestion.get("id") == item_id:
+        data["latest_unanswered_suggestion"] = None
+
+
 def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     base_revision = payload.get("base_revision")
     if base_revision != data["revision"]:
@@ -392,6 +398,7 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         if len(title.strip()) > 500:
             raise ValueError("title must be at most 500 characters")
         item["title"] = title.strip()
+        clear_suggestion_for(data, item_id)
     elif action == "toggle":
         completed = payload.get("completed")
         if not isinstance(completed, bool):
@@ -409,6 +416,7 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
             item["completed"] = False
             item["completed_at"] = None
             item["completed_session_id"] = None
+        clear_suggestion_for(data, item_id)
         normalize_positions(data)
     elif action == "reorder":
         order = payload.get("order")
@@ -836,6 +844,8 @@ def command_upsert(args: argparse.Namespace) -> int:
         item["group"] = args.group
     if args.notes_file:
         item["details_markdown"] = pathlib.Path(args.notes_file).read_text(encoding="utf-8").strip()
+    if args.title or args.status:
+        clear_suggestion_for(data, args.id)
     normalize_positions(data)
     data["revision"] += 1
     data["updated_at"] = utc_now()
