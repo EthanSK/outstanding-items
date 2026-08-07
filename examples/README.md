@@ -4,7 +4,7 @@ Copy-paste material. Everything here is synthetic: the task titles are invented 
 
 | File | What it is |
 | --- | --- |
-| [`transcript.md`](transcript.md) | A full task read end to end: one footer per turn in the final response, `waiting-on-you` against `blocked`, an intentional reminder, and one next-action recommendation that gets declined. |
+| [`transcript.md`](transcript.md) | A full task read end to end: one compact footer per turn in the final response, naming a single suggested item — plus `waiting-on-you` against `blocked`, an intentional reminder, a recommendation that gets declined and is not repeated, the whole list answered in the body when asked, and the quiet no-suggestion footer. |
 | [`outstanding-items.json`](outstanding-items.json) | The synthetic schema-v3 canonical ledger used by the Full outstanding items UI, including the optional per-item `explanation` shown as a tooltip. |
 | [`outstanding-items.md`](outstanding-items.md) | A frozen legacy fixture showing the Markdown format accepted by one-time migration. |
 | [`delta-messages.md`](delta-messages.md) | Well-formed cross-task deltas, and the malformed versions to avoid. |

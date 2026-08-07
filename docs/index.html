@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Outstanding Items — outsource your memory</title>
-<meta name="description" content="A simple skill for Codex and Claude Code that remembers every request, shows what is still open, and helps you choose what to do next.">
+<meta name="description" content="A simple skill for Codex and Claude Code that remembers every request, keeps the list out of your chat, and ends each answer with one suggested next move.">
 <link rel="canonical" href="https://ethansk.github.io/outstanding-items/">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f6f8fc" media="(prefers-color-scheme: light)">
@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Outstanding Items">
 <meta property="og:title" content="Outsource your memory — a curated work experience.">
-<meta property="og:description" content="Talk freely. Your agent keeps the list, shows it back, and waits for you to choose what starts.">
+<meta property="og:description" content="Talk freely. Your agent keeps the list, shows you one next move, and waits for you to choose what starts.">
 <meta property="og:url" content="https://ethansk.github.io/outstanding-items/">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
@@ -51,22 +51,20 @@
       <p class="kicker">For Codex and Claude Code</p>
       <h1 id="hero-title">Outsource your memory</h1>
       <p class="hero-title-2">— a curated work experience.</p>
-      <p class="hero-summary">Say everything as it comes to you. Your agent keeps the list, shows you what is still open, and helps you choose what to do next.</p>
+      <p class="hero-summary">Say everything as it comes to you. Your agent keeps the whole list out of the chat and ends each answer with one thoughtful next choice — the rest is one click away.</p>
       <div class="hero-actions">
         <a class="button" href="#install">Install the skill</a>
         <a class="text-link" href="https://github.com/EthanSK/outstanding-items#readme">Read the full documentation</a>
       </div>
     </div>
 
-    <div class="memory-demo" aria-label="Example of an Outstanding Items reply">
+    <div class="memory-demo" role="group" aria-label="Example of an Outstanding Items reply">
       <p class="you-said"><span>You</span> Fix the login bug. Also update the README—and remind me about the launch post.</p>
       <div class="agent-reply">
-        <p class="reply-title"><strong>Outstanding</strong> <span>2 for you · 1 reminder</span></p>
-        <ul>
-          <li><span>OI-1</span> Fix the login bug</li>
-          <li><span>OI-2</span> Update the README</li>
-          <li class="reminder"><span>OI-3</span> Write the launch post</li>
-        </ul>
+        <p class="reply-title"><strong>Outstanding</strong> <span>one next move</span></p>
+        <p class="reply-item"><span>OI-1</span> Fix the login bug <em>— requested</em></p>
+        <p class="reply-reason">Start with the failing test; it is the small one, and the other two can wait.</p>
+        <p class="reply-link">Full outstanding items ↗</p>
       </div>
       <p class="demo-rule">It remembers. You decide what starts.</p>
     </div>
@@ -87,17 +85,17 @@
       <article>
         <span class="feature-symbol" aria-hidden="true">↺</span>
         <h3>Shows it once per turn</h3>
-        <p>Every answer ends with a compact view of what is open, waiting, parked, and done.</p>
+        <p>Two or three lines at the end of the final answer. Never repeated through progress messages.</p>
       </article>
       <article>
         <span class="feature-symbol" aria-hidden="true">→</span>
         <h3>Suggests one next move</h3>
-        <p>When it helps, the agent recommends one sensible next step. It does not start it.</p>
+        <p>Those lines name a single item worth doing next — no list, no counts, no done pile. It does not start it.</p>
       </article>
       <article>
         <span class="feature-symbol" aria-hidden="true">✓</span>
         <h3>Keeps a full ledger</h3>
-        <p>Long lists open in a clean local editor where you can edit, reorder, complete, and undo. Hover an item for a plain-words note about what it is.</p>
+        <p>Everything else waits in a clean local editor where you can edit, reorder, complete, and undo. Hover an item for a plain-words note about what it is.</p>
       </article>
     </div>
   </section>
@@ -118,7 +116,7 @@
     </div>
     <ol>
       <li><strong>Talk normally.</strong><span>Do not stop to organise your thoughts.</span></li>
-      <li><strong>Get the ledger back.</strong><span>Every request has a stable ID and an honest status.</span></li>
+      <li><strong>Get one suggestion back.</strong><span>Every request has a stable ID and an honest status; one of them ends the answer.</span></li>
       <li><strong>Start what you want.</strong><span>Say “start OI-2” when you are ready. Until then, it waits.</span></li>
     </ol>
   </section>

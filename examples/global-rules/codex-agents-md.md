@@ -21,14 +21,20 @@ Use the `outstanding-items` skill in any task where I make more than one request
   record it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
-  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
-  Intentional reminders, then the crossed-out Done section. Never put it in
-  commentary, progress notes, partial updates, or status messages.
+  turn** with one compact Outstanding footer: the single item you think I should
+  do next, at most one line about it, and nothing else. No list, no counts, no
+  section headings, no reminders, no Done section. Never put it in commentary,
+  progress notes, partial updates, or status messages.
 - When a local HTML editor is running for this ledger, link it as
-  **Full outstanding items** on its own line directly below the Outstanding
-  header and again after the last section, using the exact URL it printed.
-  With no live editor, write neither line, and never link raw JSON or Markdown.
-  Keep one task-owned JSON ledger as the source of truth.
+  **Full outstanding items** on its own line, once, as the footer's last line,
+  using the exact URL it printed. With no live editor, write no link line, and
+  never link raw JSON or Markdown. Keep one task-owned JSON ledger as the source
+  of truth, and let it hold everything the footer does not show.
+- Never offer the same item twice. If I ignored or declined it, choose another
+  eligible one, or say plainly that there is nothing new to suggest — unless I
+  ask what to do next, which clears the slate.
+- If I ask for the whole list, put it in the answer itself and keep the footer to
+  one line.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
   without evidence you observed in this task, and never treat a label as a
@@ -36,12 +42,13 @@ Use the `outstanding-items` skill in any task where I make more than one request
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. Keep `blocked` for a
   real external wall you already tried to get around.
-- Something I parked on purpose is a `reminder`. Keep it visible, do not start
-  it, and do not nag me about it.
-- When I ask what to do next, come back after a gap, or sound overloaded,
-  suggest one item and a small first step in a single `**Suggested for you**`
-  line addressed to me, then wait. Never rearrange the ledger to match it, and
-  never start it yourself.
+- Something I parked on purpose is a `reminder`. Keep it in the ledger, do not
+  start it, do not suggest it, and do not nag me about it.
+- Choose the one item you show me with judgement — dependencies, where my
+  attention already is, effort against value, what I can actually pick up now,
+  real urgency, and how much I am carrying. Name a small first step, address it
+  to me, then wait. Never rearrange the ledger to match it, and never start it
+  yourself.
 - Anything another task should know is a memory update that starts nothing
   there. Ask me first before using a tool that would wake or dispatch it.
 - Ask before writing a backlog file anywhere.
@@ -55,12 +62,14 @@ If your global instructions are already crowded:
 ## Outstanding items
 Use the `outstanding-items` skill whenever I make more than one request in a task.
 Capture unrelated asides too, and end the final response of each turn with one
-Outstanding footer — never in commentary or progress messages.
-The list is mine: never start, resume, continue, investigate, research, prepare,
-do pre-work for, dispatch, route, hand off, or complete an item unless I have just
-told you to, naming it. Never mark something `verified` without evidence you saw,
-and never say `blocked` when it is really waiting on me. If I ask what is next,
-suggest one thing and wait.
+compact Outstanding footer naming a single suggested item — never in commentary
+or progress messages, and never as a list, a count, or a Done section. Link a
+running local editor as **Full outstanding items** on the last line, or write no
+link at all. The list is mine: never start, resume, continue, investigate,
+research, prepare, do pre-work for, dispatch, route, hand off, or complete an item
+unless I have just told you to, naming it. Never mark something `verified` without
+evidence you saw, and never say `blocked` when it is really waiting on me. Never
+repeat a suggestion I ignored.
 ```
 
 ## Turning it off for one task
@@ -69,12 +78,12 @@ Say so in the task. The skill stops appending the footer when asked and keeps th
 
 ## Checking it worked
 
-Start a task, make two unrelated requests, and look at the end of the final response. If there is no `**Outstanding**` block:
+Start a task, make two unrelated requests, and look at the end of the final response. If there is no `**Outstanding**` line:
 
 1. Confirm the file exists: `ls ~/.codex/skills/outstanding-items/SKILL.md`
 2. Confirm the frontmatter is intact — `name:` and `description:` between `---` fences.
 3. Ask directly: "use the outstanding-items skill". If that works, discovery is the issue, not installation, and the global rule above is what to strengthen.
 
-One block per turn is the other thing to look for. If the same list also appears in a progress or commentary message before the answer, the final-response rule has not landed.
+Then look at its shape. One footer per turn, two or three lines, one `OI-n` in it. If the same block also appears in a progress or commentary message before the answer, the final-response rule has not landed; if it comes back as sections, counts, or a Done pile, the compact-footer rule has not landed.
 
 Then check the other half, which matters more: say "add something to outstanding items" and see whether the reply records it and stops. If the agent starts the work instead, the ownership rule has not landed — put the first bullet at the very top of your global instructions.

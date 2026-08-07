@@ -1,20 +1,22 @@
-# Suggesting a next move
+# Choosing the one item
 
-How to choose what to suggest to the user, how to say it, and when to say nothing. Load when a suggestion is warranted and the choice is not obvious.
+How to choose the single item the Outstanding footer names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when you suspect the honest answer is "nothing new".
 
-A suggestion is addressed to the person. It proposes and then waits. It is never a plan you carry out, and it never becomes authority to start — see [authority.md](authority.md).
+The footer is one suggestion addressed to the person. It proposes and then waits. It is never a plan you carry out, and it never becomes authority to start — see [authority.md](authority.md).
 
-## When to offer one
+## The footer always ends the turn; the suggestion does not always exist
 
-| Offer a suggestion | Stay quiet |
+While any item is open, the final response carries the footer. What varies is whether it can honestly name an item.
+
+| Name an item | Use the no-suggestion line |
 | --- | --- |
-| The user asks what to do next, where to start, or what matters most. | The user is mid-flow on something and did not ask. |
-| They return after a gap and the ledger has drifted out of their head. | The last turn already carried a suggestion they have not answered. |
-| They sound overloaded — a burst of items, "this is a lot", "I don't know where to start". | Nothing has changed since the last one. |
-| A natural decision point just appeared: several items landed at once, something finished, the obvious path closed. | Only one thing is open. Saying "do the one thing" is noise. |
-| Everything on the list now needs them personally, and they should know. | You would only be restating the top of the list. |
+| Something is genuinely the next sensible thing for the user to pick up. | The last suggestion is still unanswered, and nothing else is eligible. |
+| They asked what to do next, where to start, or what matters most. | They declined your last one and nothing has changed since. |
+| They returned after a gap, or a burst of items just landed. | Everything left is `blocked`, `transferred`, or deliberately parked. |
+| Something finished and the obvious path opened or closed. | They are winding down, and the kind answer is "nothing needs you tonight". |
+| Everything left needs them personally — a click, a key, a yes. | You genuinely cannot tell, and inventing a rationale would be dishonest. |
 
-Most turns fall in the right-hand column. A **Suggested for you** line on every reply is a lecture, and a lecture stops being read by turn four.
+The no-suggestion line is one quiet sentence — `**Outstanding** — nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It is a legitimate outcome, not a failure, and it is what stops the footer from becoming a lecture that nobody reads by turn four.
 
 ## What to weigh
 
@@ -35,30 +37,44 @@ Availability is judged from the user's side, not yours. Something you cannot tou
 
 ## What to say
 
-Two lines maximum: one suggestion line and, only when useful, one plain reason.
+Two lines maximum, plus the live UI link when one exists:
 
 ```text
-**Suggested for you** — OI-4 Focus ring on interactive elements
-Twenty minutes, you are already in that file, and OI-6 reads the same token. The smallest version is the token and one button. Tell me `start OI-4` only if you want the agent to do it.
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+Twenty minutes, and the smallest version is the shared token plus one button.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-- **One item.** A shortlist is a decision handed back to the person who asked you to make it.
+- **One item.** A shortlist is a decision handed back to the person who asked you to make it. One `OI-n` in the footer, and no other.
 - **A small possible first step.** Name the twenty-minute version, so starting is cheap and stopping is allowed.
-- **One plain sentence of reasoning.** Say the real reason: it is quick, they are already there, something depends on it.
-- **Calibrated confidence.** "Probably", "if you have the energy", "it is close between these two" are all better than false certainty.
+- **One plain sentence of reasoning.** Say the real reason: it is quick, they are already there, something depends on it. Drop the sentence entirely when the title says it all.
+- **Calibrated confidence.** "Probably", "if you have the energy", "it is a close call" are all better than false certainty.
 - **The user is the subject.** Write what *they* might do. A line about what the assistant would carry on with is not a next move for the user, and must never appear here.
-- **No structure.** No headings, no bullets, no numbered plan, no framework names, no scores.
+- **No structure.** No headings, no bullets, no numbered plan, no framework names, no scores, no counts.
 - **End open.** Make it obvious that nothing starts without a word from them, without labouring the point every time.
 
 ## When the choice is close
 
-Say so, name the alternative, and let the user decide in one word:
+Say it is close, and leave the runner-up unnamed. Naming a second item turns the footer back into the list it exists to replace, and the whole ledger is one click away in the UI:
 
 ```text
-**Suggested for you** — OI-4, starting with the shared token and one button. It is a close call with OI-5, but OI-6 reads the same token and this is the smaller restart.
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+A close call, but this is the smaller restart and you were already in that file.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-That is still a suggestion. It is not the same as listing everything and calling it a choice.
+If the user wants the alternatives, they will ask — and then you answer in the body of the reply, not by widening the footer.
+
+## Do not offer the same thing twice
+
+A suggestion the user did not take up is answered. Repeating it is nagging, and nagging is how a footer becomes something people skim past.
+
+- **Unanswered.** They replied about something else. Do not re-offer that item; pick a different eligible one, or use the no-suggestion line.
+- **Unless they ask.** "What should I do next?" clears the slate. An explicit request for advice answers every earlier offer, so name the best item even if you named it before.
+- **Declined.** "No", "not that one", "skip link first" — drop it without argument, and never bring it back on your own initiative.
+- **Record it.** Keep `latest_unanswered_suggestion` current, and note the offer against the item, so a task resumed tomorrow does not start the same loop again.
+- **When they act on it**, the record is answered and cleared. The same item may legitimately be suggested again later if it is genuinely the next thing — for example, after the user asked you to implement it and the honest next move is their own verification.
+- **When the pool empties**, that is the no-suggestion line, and the footer goes quiet until something changes. That is the correct behaviour, not a gap to fill.
 
 ## Items that need the user in person
 
@@ -68,13 +84,13 @@ A `waiting-on-you` item is a perfectly good suggestion: they are the one who wou
 - Do not perform it, dispatch it, arrange it, or write to another system to chase it.
 - Do not repeat it every turn because it is small. It is still their decision.
 
-A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall only if it explains why the rest of the list looks the way it does.
+A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall in the body of the reply if it explains why the rest of the list looks the way it does — never in the footer.
 
 ## When to refuse to pick
 
-- **The user already stated a priority.** Record and acknowledge it, leave every status and item order unchanged, and wait for a fresh instruction naming what the agent should start.
+- **The user already stated a priority.** Record and acknowledge it, leave every status and item order unchanged, and wait for a fresh instruction naming what the agent should start. The footer may name that item; it may not name a rival.
 - **The information is not there.** If you genuinely cannot tell, say what you would need to know instead of inventing a rationale.
-- **They are winding down.** "Nothing here needs you tonight" is a legitimate suggestion and often the right one.
+- **They are winding down.** "Nothing here needs you tonight" is a legitimate footer and often the right one.
 - **The honest answer is rest, or a decision that is not yours.** Say it plainly and briefly, once.
 
 ## What a suggestion must never do
@@ -88,29 +104,59 @@ A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall
 | Put the assistant forward as the next move | The line is about the user's work, not about who is busy. |
 | Turn into a plan, a checklist, or a set of numbered phases | That is a proposal to run the person's week. Offer one move. |
 | Repeat the same suggestion every turn | Once is advice, twice is nagging, three times is noise. |
+| Name a runner-up so the user can choose | Two items is a list, and the list is what the footer exists to keep out of the chat. |
+| Invent a pick because the line looks empty | A suggestion nobody believes costs more than an honest silence. |
 | Argue after a "no" | They know things you do not. Drop the suggestion and wait. |
 | Claim certainty about value, effort, or urgency | You are estimating from a transcript. Say so when it matters. |
 | Moralise about the backlog | No commentary on how long something has been open, or on how much is on the list. |
 
 ## Worked shapes
 
+Each of these is the whole footer, at the end of the final response of its turn.
+
 **Asked directly, several things open**
 
-> **Suggested for you** — OI-4 Focus ring on interactive elements. About twenty minutes, you are already in that file, and OI-6 reads the same token. Tell me `start OI-4` if you want me to pick it up.
+```text
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+About twenty minutes, and you are already in that file.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```
 
-**Everything left needs them**
+**Everything left needs them in person**
 
-> **Suggested for you** — OI-8 Approve the staging deploy: click approve in the deploy UI. It is the smallest available user action; OI-9 is blocked upstream and is not a candidate.
+```text
+**Outstanding** — OI-8 Approve the staging deploy — waiting-on-you
+Click approve in the deploy UI; it is the smallest thing on the list that only you can do.
+```
 
 **Returning after a gap**
 
-> **Suggested for you** — you left OI-4 half-done and the test suite still passes, so picking it back up is the cheapest restart. OI-3 is a reminder, not a job; ignore it until you want it.
+```text
+**Outstanding** — OI-4 Focus ring on interactive elements — implemented
+You left it half-done and the suite still passes, so it is the cheapest restart.
+```
 
 **Overloaded**
 
-> **Suggested for you** — just OI-5, and just the first section of it. The other six are not going anywhere and none of them is urgent today.
+```text
+**Outstanding** — OI-5 Skip link — requested
+Just the first section of it, if anything. Nothing here has a date on it.
+```
 
-**The user already decided**
+**They declined the last one, and nothing else is eligible**
+
+```text
+**Outstanding** — nothing new to suggest; your list is unchanged.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```
+
+**Winding down**
+
+```text
+**Outstanding** — nothing here needs you tonight.
+```
+
+**The user already decided** — the body says it, the footer names their choice and nothing else:
 
 > OI-5 is recorded as your priority. Ledger unchanged; tell me `start OI-5` if you want me to work on it.
 

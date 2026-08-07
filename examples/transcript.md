@@ -2,7 +2,11 @@
 
 A synthetic task showing the boundary between remembering, advising, and doing.
 
-This teaching transcript sometimes shows only the changed portion of a reply for brevity. In real use the complete applicable Outstanding footer appears once per turn, at the end of the final response. Progress notes and commentary written before that answer carry no Outstanding block at all.
+Every Outstanding footer here is complete: one suggested item, at most one line
+about it, and the live editor link when one is running. It appears once per turn,
+at the end of the final response. Progress notes and commentary written before
+that answer carry no Outstanding block at all, and no footer anywhere carries a
+list, a count, or a Done section.
 
 ---
 
@@ -12,10 +16,8 @@ This teaching transcript sometimes shows only the changed portion of a reply for
 is implemented but not verified.
 
 ```text
-**Outstanding** (1 for you)
-
-**Outstanding for you**
-- OI-1 Fix the flaky login test — implemented
+**Outstanding** — OI-1 Fix the flaky login test — implemented
+A CI run is the only thing that would prove it; say the word and I will start one.
 ```
 
 The current message explicitly authorized OI-1. It authorized nothing else.
@@ -28,25 +30,28 @@ me to ask the design channel about its empty state.
 **Agent:** Recorded both. Neither has started.
 
 ```text
-**Outstanding** (2 for you · 1 reminder)
-
-**Outstanding for you**
-- OI-1 Fix the flaky login test — implemented
-- OI-2 Add rate-limit docs to the handbook — requested
-
-**Intentional reminders**
-- OI-3 Ask the design channel about the empty state — reminder
+**Outstanding** — OI-2 Add rate-limit docs to the handbook — requested
+Twenty minutes if you want a small one; nothing else waits on it.
 ```
 
-Capturing two items did not resume OI-1 or start OI-2/OI-3.
+Capturing two items did not resume OI-1 or start OI-2/OI-3. OI-1 was last turn's
+suggestion and you answered with something else, so it is not offered again — and
+OI-3 is a reminder you parked on purpose, so it is never promoted to fill a line.
 
 ---
 
 **You:** Where are we?
 
-**Agent:** OI-1 is implemented but unverified; OI-2 and OI-3 are untouched.
+**Agent:** Three open: OI-1 is implemented but unverified, OI-2 is untouched, and
+OI-3 is the design-channel reminder.
 
-The status question causes no tool call and no status change.
+```text
+**Outstanding** — OI-1 Fix the flaky login test — implemented
+CI would settle it in a couple of minutes, if you want that now.
+```
+
+The status question causes no tool call and no status change. Asking about state
+also clears the slate, so OI-1 can be named again.
 
 ---
 
@@ -61,20 +66,14 @@ the answer.
 **Agent** *(final response)*: CI passed the login suite 20 times.
 
 ```text
-**Outstanding** (1 for you · 1 reminder · 1 done)
-
-**Outstanding for you**
-- OI-2 Add rate-limit docs to the handbook — requested
-
-**Intentional reminders**
-- OI-3 Ask the design channel about the empty state — reminder
-
-**Done**
-- ~~OI-1 Fix the flaky login test~~ — verified (CI green 20/20)
+**Outstanding** — OI-2 Add rate-limit docs to the handbook — requested
+Still the only thing on the list you could knock out in one sitting.
 ```
 
 Verification happened only after the fresh named instruction and observed
-evidence.
+evidence. OI-1 is now `verified` in the ledger's Done group, struck through and
+auditable in the editor — the footer never shows a Done section, so finishing
+something does not make the reply longer.
 
 ---
 
@@ -94,23 +93,8 @@ Nothing else in your list changes.
 ```
 
 ```text
-**Outstanding** (5 for you · 1 waiting on you · 1 reminder · 1 done)
-
-**Outstanding for you**
-- OI-2 Add rate-limit docs to the handbook — requested
-- OI-4 Focus ring on interactive elements — requested
-- OI-5 Skip link — requested
-- OI-6 Aria labels on the nav — requested
-- OI-7 Register the design audit memory update — implemented (prepared, not sent)
-
-**Waiting on you**
-- OI-8 Carry the prepared delta to the design audit — waiting-on-you (paste it only if you want that task's memory updated)
-
-**Intentional reminders**
-- OI-3 Ask the design channel about the empty state — reminder
-
-**Done**
-- ~~OI-1 Fix the flaky login test~~ — verified (CI green 20/20)
+**Outstanding** — OI-8 Carry the prepared delta to the design audit — waiting-on-you
+Paste it into that task only if you want its memory updated; nothing sends itself.
 ```
 
 No task-triggering send occurred. The destination received no instruction.
@@ -119,15 +103,12 @@ No task-triggering send occurred. The destination received no instruction.
 
 **You:** This is a lot. What should I do next?
 
-**Agent:** **Suggested for you** — OI-4, about twenty minutes: add the shared
-token and check one button. It also clarifies OI-6. Tell me `start OI-4` if you
-want me to do it.
+**Agent:** OI-4, if you want a short one — the shared token plus one button is
+about twenty minutes, and the nav labels read the same token afterwards.
 
 ```text
-**Outstanding for you**
-- OI-4 Focus ring on interactive elements — requested
-- OI-5 Skip link — requested
-- OI-6 Aria labels on the nav — requested
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+About twenty minutes, and you already have that file open.
 ```
 
 The recommendation changes no item, status, order, or execution state.
@@ -139,7 +120,13 @@ The recommendation changes no item, status, order, or execution state.
 **Agent:** OI-5 is recorded as your priority. The ledger is unchanged. Tell me
 `start OI-5` if you want me to work on it.
 
-A priority choice is not a start instruction.
+```text
+**Outstanding** — OI-5 Skip link — requested
+Your call, recorded. Say `start OI-5` whenever you want it picked up.
+```
+
+A priority choice is not a start instruction. OI-4 was declined, so it is not
+offered again unless you ask.
 
 ---
 
@@ -149,15 +136,15 @@ A priority choice is not a start instruction.
 pending, and no sibling item is authorized.
 
 ```text
-**Outstanding for you**
-- OI-4 Focus ring on interactive elements — requested
-- OI-5 Skip link — implemented (skip link added; browser proof pending)
-- OI-6 Aria labels on the nav — requested
+**Outstanding** — OI-6 Aria labels on the nav — requested
+It reads the token the skip link just used, so it is the cheapest thing next.
 ```
 
 The temporary `in-progress` state was reconciled to `implemented` before the
-reply ended because material work changed. A later turn must receive a new
-named instruction before browser verification or any other OI-5 work resumes.
+reply ended because material work changed: the ledger now reads
+`OI-5 Skip link — implemented (browser proof pending)`. A later turn must
+receive a new named instruction before browser verification or any other OI-5
+work resumes, and suggesting OI-6 is not the agent announcing its own next job.
 
 ---
 
@@ -165,30 +152,25 @@ named instruction before browser verification or any other OI-5 work resumes.
 
 **Agent:** Opened the local editor for `outstanding-items.json`. Hovering a row
 there shows a short note about what that item is. Nothing on the list started.
+Seven open, one of them waiting on you:
 
-```text
-**Outstanding** (5 for you · 1 waiting on you · 1 reminder · 1 done)
-[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
-
-**Outstanding for you**
 - OI-2 Add rate-limit docs to the handbook — requested
+- OI-3 Ask the design channel about the empty state — reminder
 - OI-4 Focus ring on interactive elements — requested
 - OI-5 Skip link — implemented (skip link added; browser proof pending)
 - OI-6 Aria labels on the nav — requested
 - OI-7 Register the design audit memory update — implemented (prepared, not sent)
-
-**Waiting on you**
 - OI-8 Carry the prepared delta to the design audit — waiting-on-you (paste it only if you want that task's memory updated)
 
-**Intentional reminders**
-- OI-3 Ask the design channel about the empty state — reminder
+OI-1 is done and verified; it lives under Done in the editor.
 
-**Done**
-- ~~OI-1 Fix the flaky login test~~ — verified (CI green 20/20)
-
+```text
+**Outstanding** — nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-The same live URL sits directly below the header and after the last section. In
-every earlier turn no editor was running, so neither line appeared and no URL
-was invented to fill the gap.
+The whole list goes in the answer because you asked for it, and the footer stays
+one line. The live URL appears once, on the last line, and only because an editor
+is actually running — in every earlier turn there was none, so no link line
+appeared and no URL was invented to fill the gap. Everything eligible had already
+been offered once, so the footer says so rather than repeating itself.

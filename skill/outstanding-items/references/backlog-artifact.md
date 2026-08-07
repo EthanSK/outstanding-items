@@ -6,7 +6,7 @@ The ledger records the user's items. It never authorizes work — see [authority
 
 ## One source of truth
 
-The agreed task-owned `outstanding-items.json` file is authoritative. The conversation footer is a compact rendering of it, and the Full outstanding items HTML UI is a live editor for it. Neither is a second ledger.
+The agreed task-owned `outstanding-items.json` file is authoritative. The conversation footer quotes exactly one suggested item from it, and the Full outstanding items HTML UI is a live editor for all of it. Neither is a second ledger, and the footer is not a summary of this file — it is one line drawn from it.
 
 - Update the JSON for agent-side ledger changes, using `scripts/ledger_ui.py upsert` where practical.
 - The HTML UI reads the JSON on load, polls it every two seconds, and writes edits back atomically through the loopback server.
@@ -18,9 +18,9 @@ The UI process and operational commands are in [ledger-ui.md](ledger-ui.md).
 
 ## When to create it
 
-Create the JSON ledger after asking once when any of these becomes true:
+The footer never lists items, so this file and its UI are where the user reads the whole thing. Create the JSON ledger after asking once when any of these becomes true:
 
-- More than 7 items under **Outstanding for you**.
+- More than 7 open items for the user.
 - More than 20 items in total.
 - The user asks for the full list, a plan, a handover, or the Full outstanding items UI.
 - A related task is registered.
@@ -85,7 +85,7 @@ Do not silently create a ledger before those triggers. When the user has already
 | `owner` / `authorizes_work` | Always `"user"` / `false`. UI edits never change them. |
 | `revision` | Non-negative integer incremented after every successful mutation. It prevents stale overwrites. |
 | `id` | `OI-n`, permanent, unique, never renumbered. Gaps are normal. |
-| `title` | The editable todo text shown in the footer and UI. |
+| `title` | The editable todo text shown in the UI, and in the footer on the turn this item is the one suggested. |
 | `status` | One of the nine labels from `SKILL.md`. A label describes; it grants no authority. |
 | `completed` | Derived mechanically: true only for `verified` or `dropped`. Completed items render after all open items. |
 | `tracking_state` | Optional `active` (the default) or `transferred`. It is orthogonal to status and never implies completion. |
@@ -98,9 +98,19 @@ Do not silently create a ledger before those triggers. When the user has already
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
-| `latest_unanswered_suggestion` | Optional record of the latest unanswered suggestion. It never changes item status or order. Clear it after the user accepts, declines, or replaces the suggestion. |
+| `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
 
-The server validates IDs, statuses, completion consistency, unique positions, the `explanation` type and length, and the owner/authority invariant before every atomic write.
+The server validates IDs, statuses, completion consistency, unique positions, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
+
+### Not offering the same thing twice
+
+The footer names one item per turn, so repeating a rejected one is the fastest way to make it unreadable. This field is how that survives a resumed task.
+
+- Write it when the footer suggests something, with `outcome` left out or set to `unanswered`.
+- Set `outcome` to `declined` when the user says no, picks something else, or states a different priority. Keep the record; do not delete the item, change its status, or move it.
+- While a record is present, do not suggest that ID again on your own initiative. Choose another eligible item, or render the no-suggestion footer.
+- Clear it to `null` when the user acts on the item, or when they explicitly ask what to do next — an explicit request for advice answers every earlier offer.
+- The record is advice history, never authority. Nothing in it permits work, and a resumed task reads it only to stay quiet about the right things.
 
 ### Compatibility of `explanation`
 
@@ -113,7 +123,7 @@ The server validates IDs, statuses, completion consistency, unique positions, th
 
 ## Ownership transfer
 
-When the user explicitly consolidates work into another task, keep every item in the canonical JSON and preserve its status, evidence, completion state, and ID. Set `tracking_state=transferred` plus `transferred_to`; never relabel it `verified` or `dropped` merely to remove it from the active footer. The HTML renders transferred entries read-only under **Owned elsewhere**, while active counts, completion controls, and suggestions ignore them.
+When the user explicitly consolidates work into another task, keep every item in the canonical JSON and preserve its status, evidence, completion state, and ID. Set `tracking_state=transferred` plus `transferred_to`; never relabel it `verified` or `dropped` merely to make it stop appearing, and never suggest a transferred item in the footer. The HTML renders transferred entries read-only under **Owned elsewhere**, while active counts, completion controls, and suggestions ignore them.
 
 The handoff must identify collisions where the destination already uses the same ID for a different item. Preserve both histories and let the destination's newer state win; never overwrite one item just to make IDs globally unique across independent tasks.
 
@@ -126,10 +136,10 @@ Unchecking restores the prior non-retiring status when available, otherwise `req
 ## Lifecycle
 
 1. **Create or migrate.** Create native JSON, or run `migrate-markdown` once against the existing ledger. Validate the result before retiring the Markdown file from active use.
-2. **Start the UI.** Run the loopback-only server and capture its tokenized URL. Both of the footer's **Full outstanding items** links point to this HTML URL, never to the raw JSON or legacy Markdown.
+2. **Start the UI.** Run the loopback-only server and capture its tokenized URL. The footer's single **Full outstanding items** link points to this HTML URL, never to the raw JSON or legacy Markdown.
 3. **Update.** Agent-side changes mutate the JSON. UI changes use revision-checked atomic writes. The open browser refreshes itself whenever the JSON revision changes.
 4. **Transfer when explicitly instructed.** Send the authorized handoff once, run `transfer` for the exact IDs, and verify they are read-only history with unchanged statuses.
-5. **Reconcile.** On task resume, validate and read the JSON, render the footer from active items in the final response of that turn, then wait. Restoring a ledger starts nothing. A stale `in-progress` label must be reconciled to `implemented` when material work changed, `planned` when only an agreed route exists, or `requested` when neither is true; none of those labels authorizes resumption.
+5. **Reconcile.** On task resume, validate and read the JSON, choose at most one active item for the footer of that turn's final response, honour any `latest_unanswered_suggestion` by not repeating it, then wait. Restoring a ledger starts nothing. A stale `in-progress` label must be reconciled to `implemented` when material work changed, `planned` when only an agreed route exists, or `requested` when neither is true; none of those labels authorizes resumption.
 6. **Close.** Leave the canonical JSON, transferred history, and completed history in place. Stop the UI server when the user no longer wants the link available; never delete the ledger as cleanup.
 
 ## Safety

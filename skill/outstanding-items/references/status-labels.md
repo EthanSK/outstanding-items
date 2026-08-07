@@ -58,10 +58,10 @@ Use `blocked` only after you have exhausted the safe routes inside your scope, u
 
 A `reminder` is an item the user deliberately wants tracked, with no execution request and no deadline. "Remind me to ask the design channel about the empty state" is a reminder. "Ask the design channel today" is a request — and still not a licence to start it without a fresh instruction.
 
-- Keep it visible in the **Intentional reminders** section. It is not a second-class item and it is never hidden to tidy the list.
+- Keep it visible in the ledger's **Intentional reminders** group. It is not a second-class item and it is never hidden to tidy the list.
 - Do not start it. Do not ask clarifying questions about it unless invited.
 - It never moves to Done on its own. Only the user retires it, by acting on it or dropping it.
-- It never becomes a suggestion, unless the user asks for it or something makes it genuinely urgent. At that point it becomes `requested` — which is still not permission.
+- It never becomes the footer's suggestion, unless the user asks for it or something makes it genuinely urgent. At that point it becomes `requested` — which is still not permission.
 - Do not editorialise about how long it has been sitting there. That is the point of it.
 
 An item that is merely unrelated to the current work is not automatically a `reminder`. If the user wants it done eventually and just mentioned it out of order, it is `requested` with a note such as `(unrelated to current work)`. The difference is whether they want it done, not whether it fits the current topic.
@@ -94,13 +94,15 @@ Notes are optional for most labels and mandatory for `in-progress`, `blocked`, `
 - Do not use notes to smuggle in status. `— implemented (basically done)` is not a thing.
 - Never put secrets, tokens, credentials, file contents, or personal identifiers into a note.
 
-## Sections, overflow, and counting
+## Where a status shows up
 
-- The header counts each section: `(3 for you · 1 waiting on you · 2 done)`. Zero-count sections are omitted from the header and from the footer.
-- Membership is mechanical: `waiting-on-you` → **Waiting on you**, `reminder` → **Intentional reminders**, every other open item → **Outstanding for you**, `verified` and `dropped` → **Done**.
-- Show at most 7 lines under **Outstanding for you** and 3 under each other section. Replace the remainder with `- … +N more in <artifact path>`.
-- Never trim the list by dropping items. Trim by pointing at the artifact.
-- If no artifact exists yet and the list has overflowed, create one — see [backlog-artifact.md](backlog-artifact.md).
+The Outstanding footer names one item, so a status no longer decides which chat section an item lands in. It decides how the item reads in the Full outstanding items view, and whether the item can be the one the footer suggests.
+
+- Grouping in the ledger and its UI is mechanical: `waiting-on-you` → **Waiting on you**, `reminder` → **Intentional reminders**, every other open item → **Outstanding for you**, `verified` and `dropped` → **Done**, and anything with `tracking_state=transferred` → the read-only **Owned elsewhere** group.
+- Eligible to be suggested: any open item the user could pick up now, including `waiting-on-you`.
+- Never suggested on your own initiative: `blocked` (nothing they do moves it), `reminder` (parked on purpose), and `transferred` (owned elsewhere now).
+- The footer carries no counts, no section headings, and no overflow row. Nothing is ever trimmed by dropping items, because nothing is listed there in the first place.
+- When the user wants the whole list, give it to them in the body of that reply or open the UI — see [backlog-artifact.md](backlog-artifact.md).
 
 ## Anti-patterns
 

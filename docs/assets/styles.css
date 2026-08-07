@@ -297,25 +297,35 @@ footer nav {
   font-size: 0.72rem;
 }
 
-.agent-reply ul {
+.reply-item {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  padding: 0.38rem 0 0;
 }
 
-.agent-reply li {
-  padding: 0.38rem 0;
-}
-
-.agent-reply li span {
+.reply-item span {
   display: inline-block;
   width: 3.3rem;
   color: var(--purple-dark);
   font-weight: 750;
 }
 
-.agent-reply .reminder {
+.reply-item em {
   color: var(--muted);
+  font-style: normal;
+}
+
+.reply-reason {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.reply-link {
+  margin: 0.7rem 0 0;
+  color: var(--purple-dark);
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .demo-rule {

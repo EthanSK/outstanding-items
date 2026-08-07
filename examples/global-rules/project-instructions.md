@@ -14,24 +14,27 @@ Work in this repository arrives in bursts of half-related requests. Use the
   something from it is never permission to start, resume, investigate, research,
   prepare, do pre-work for, dispatch, route, or complete it. Wait until I name an
   item and tell you to go in the current message.
-- Keep the ledger silently while you work and put one Outstanding footer at the
-  end of the final response of each turn: Outstanding for me, Waiting on me,
-  Intentional reminders, Done. Commentary and progress messages carry none of it.
+- Keep the ledger silently while you work and put one compact Outstanding footer
+  at the end of the final response of each turn: the single item you think I
+  should do next, at most one line about it, and nothing else. No list, no
+  counts, no section headings, no Done section. Commentary and progress messages
+  carry none of it.
 - Capture asides that have nothing to do with the current change. Recording
   something is the whole job when I only asked you to record it.
-- Past seven items under Outstanding for me, ask before writing
-  `outstanding-items.json` and start its local HTML editor. Link it as
-  **Full outstanding items** below the Outstanding header and again
-  after the last section, using the exact URL it printed, and add the private
-  ledger/runtime files to `.git/info/exclude` rather than to `.gitignore`.
+- Past seven open items for me, ask before writing `outstanding-items.json` and
+  start its local HTML editor. Link it as **Full outstanding items** on the
+  footer's last line, using the exact URL it printed, and add the private
+  ledger/runtime files to `.git/info/exclude` rather than to `.gitignore`. That
+  editor is where the rest of the list lives.
 - Never label an item `verified` without a passing check from this repository's
   test suite, and never treat `in-progress` from an earlier turn as a reason to
   carry on in this one.
 - Anything needing a review approval, a merge button, or a secret from me is
   `waiting-on-you` with the exact action. `blocked` means an upstream wall you
   already tried to route around.
-- Suggest a next move only when I ask or when a real decision point appears.
-  One item, one small step, then stop.
+- The footer's one item is a suggestion, not a plan: one item, one small step,
+  then stop. Do not repeat one I ignored or declined, and say there is nothing
+  new to suggest rather than inventing a pick.
 ```
 
 ## Variant: repositories with a strict review culture
@@ -39,12 +42,12 @@ Work in this repository arrives in bursts of half-related requests. Use the
 ```markdown
 ## Task hygiene
 
-Use the `outstanding-items` skill. Each turn ends with one Outstanding footer, in
-the final response only.
+Use the `outstanding-items` skill. Each turn ends with one compact Outstanding
+footer, in the final response only, naming one suggested item and nothing else.
 
 `verified` in this repository means one specific thing: `make check` passed on
 the current working tree, and you saw the output. Anything else is
-`implemented`. Reviewers read the footer, so an inflated status is a review
+`implemented`. Reviewers read that one line, so an inflated status is a review
 problem, not a formatting one.
 
 `blocked` is equally strict: it means an external wall, with the attempted
@@ -63,10 +66,11 @@ Use the `outstanding-items` skill. Requests here are usually vague, plural, and
 arrive out of order — capture them verbatim and do not tidy the phrasing.
 
 Half of what I say is thinking out loud rather than a request. Put it on the
-list, show me the list, and let me choose what gets picked up.
+list, show me one thing at the end of each answer, and let me choose what gets
+picked up. Give me the whole list in the answer itself when I ask for it.
 
 `verified` means I confirmed it, not that the draft reads well. Keep dropped
-items struck through so the reasoning stays legible later.
+items struck through in the ledger so the reasoning stays legible later.
 ```
 
 ## What not to put in a project instruction
@@ -74,4 +78,5 @@ items struck through so the reasoning stays legible later.
 - Real task or session IDs from your own history.
 - Absolute paths from your machine.
 - Anything that turns the ledger into a queue — "work through the open items", "start the top one when you have capacity", "keep going until the list is empty". That is the one thing this skill exists to prevent.
+- Anything that puts the list back throughout the conversation — "show me everything each turn", "include the done items", "add a progress count". The footer is one item on purpose; ask for the full list when you want it.
 - Anything about notifying other tasks. That depends on the harness at runtime, not on the repository.

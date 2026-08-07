@@ -75,7 +75,8 @@ STATUSES = [
     "dropped",
 ]
 
-# Statuses that retire an item into the crossed-out Done section.
+# Statuses that retire an item into the ledger's Done group. They never appear
+# in the conversation footer.
 RETIRING = {"verified", "dropped"}
 
 MARKS = {
@@ -208,6 +209,71 @@ def is_external(target: str) -> bool:
     return target.startswith(
         ("http://", "https://", "mailto:", "data:", "#", "tel:", "//")
     )
+
+
+# ------------------------------------------------------------ footer shapes
+
+# The Outstanding footer is one suggested item, at most one line about it, and
+# at most one live-UI link. Everything else — the other items, the reminders,
+# the counts, and the whole Done history — stays in the ledger and its editor.
+DASH = "—"
+BULLET = "•"
+ELLIPSIS = "…"
+MIDDOT = "·"
+
+FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
+FOOTER_HEADER = "**Outstanding**"
+FOOTER_ITEM_RE = re.compile(
+    rf"^\*\*Outstanding\*\* {DASH} (OI-\d+) (.+) {DASH} ([a-z][a-z-]*)$"
+)
+FOOTER_QUIET_RE = re.compile(rf"^\*\*Outstanding\*\* {DASH} nothing\b.*$")
+FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
+OI_ID_RE = re.compile(r"\bOI-\d+\b")
+LIST_ROW_RE = re.compile(rf"^\s*(?:[-*+{BULLET}]\s|{ELLIPSIS}|\d+[.)]\s)")
+OVERFLOW_RE = re.compile(rf"\+\s*\d+\s+more|{ELLIPSIS}\s*\+")
+
+# A footer only ever suggests something the user could pick up right now.
+# `verified` and `dropped` are Done, `blocked` cannot be moved by them, and
+# `reminder` was parked on purpose.
+SUGGESTIBLE_STATUSES = {
+    "requested",
+    "planned",
+    "in-progress",
+    "implemented",
+    "waiting-on-you",
+}
+
+# Footer shapes that this project deliberately removed. None of them may come
+# back in any shipped file.
+STALE_FOOTER_PROMISES = [
+    (re.compile(r"\*\*Outstanding\*\*\s*\(\s*\d"), "the retired counts header"),
+    (re.compile(r"\*\*Suggested for you\*\*"), "the retired Suggested for you label"),
+    (re.compile(r"link appears twice"), "the retired two-link rule"),
+    (re.compile(r"again after the (?:last|final)"), "the retired second link position"),
+    (re.compile(r"crossed-out Done section", re.I), "a Done section in the footer"),
+    (re.compile(r"Four sections, always in this order"), "the retired four-section footer"),
+    (re.compile(r"at most \d+ lines under", re.I), "the retired per-section line budget"),
+]
+
+
+def squash(text: str) -> str:
+    """Collapse whitespace so a wrapped instruction still matches its phrase."""
+    return re.sub(r"\s+", " ", text)
+
+
+def footer_blocks() -> list[tuple[str, int, list[str]]]:
+    """Every fenced block in the repository that documents an Outstanding footer."""
+    found: list[tuple[str, int, list[str]]] = []
+    for path in text_files():
+        if rel(path) in POLICY_EXEMPT:
+            continue
+        text = read(path)
+        for match in FENCED_BLOCK_RE.finditer(text):
+            lines = match.group(1).splitlines()
+            if not lines or not lines[0].startswith(FOOTER_HEADER):
+                continue
+            found.append((rel(path), text.count("\n", 0, match.start()) + 1, lines))
+    return found
 
 
 # ------------------------------------------------------------------- checks
@@ -387,14 +453,39 @@ def check_authority_matrix() -> list[str]:
     for label in ("implemented", "planned", "requested"):
         if f"`{label}`" not in status_text or f"`{label}`" not in artifact_text:
             problems.append(f"stale in-progress reconciliation no longer covers {label!r}")
-    if "latest unanswered suggestion" not in artifact_text or "Clear it after" not in artifact_text:
-        problems.append("backlog artifact does not clear accepted, declined, or replaced suggestions")
+
+    # A footer that shows one item can only stay honest if a rejected suggestion
+    # never comes back on the agent's own initiative.
+    for phrase in (
+        "latest_unanswered_suggestion",
+        "Set `outcome` to `declined`",
+        "do not suggest that ID again on your own initiative",
+        "Clear it to `null`",
+        "never authority",
+    ):
+        if phrase not in artifact_text:
+            problems.append(f"backlog-artifact.md does not govern repeat suggestions: {phrase!r}")
+
+    for phrase in (
+        "Never suggested on your own initiative",
+        "The footer carries no counts, no section headings, and no overflow row",
+    ):
+        if phrase not in status_text:
+            problems.append(f"status-labels.md no longer states: {phrase!r}")
 
     next_action = read(SKILL_DIR / "references" / "next-action.md")
-    if "OI-9 reads the same token" in next_action:
-        problems.append("next-action.md assigns the shared token dependency to OI-9 instead of OI-6")
-    if "OI-8 is stuck upstream" in next_action:
-        problems.append("next-action.md labels the available user action OI-8 as blocked")
+    for phrase in (
+        "One `OI-n` in the footer, and no other",
+        "leave the runner-up unnamed",
+        "**Unanswered.**",
+        "**Declined.**",
+        "**Unless they ask.**",
+        "no-suggestion line",
+    ):
+        if phrase not in next_action:
+            problems.append(f"next-action.md no longer governs the single suggestion: {phrase!r}")
+    if OI_ID_RE.search(next_action) is None:
+        problems.append("next-action.md shows no worked suggestion")
     return problems
 
 
@@ -420,27 +511,35 @@ def check_public_examples() -> list[str]:
             problems.append(f"well-formed delta {number} does not preserve the rest of the destination")
 
     transcript = read(ROOT / "examples" / "transcript.md")
-    for heading in (
-        "**Outstanding for you**",
-        "**Waiting on you**",
-        "**Intentional reminders**",
-        "**Done**",
-    ):
-        if heading not in transcript:
-            problems.append(f"transcript.md does not demonstrate {heading}")
-    normalized_transcript = re.sub(r"\s+", " ", transcript)
+    normalized_transcript = squash(transcript)
     for required in (
         "No task-triggering send occurred",
         "A priority choice is not a start instruction",
         "The recommendation changes no item, status, order, or execution state",
         "A later turn must receive a new named instruction",
+        # The compact footer's own edge cases, demonstrated end to end.
+        "so it is not offered again",
+        "OI-4 was declined, so it is not offered again unless you ask",
+        "it is never promoted to fill a line",
+        "the footer never shows a Done section",
+        "The whole list goes in the answer because you asked for it, and the footer stays one line",
+        "The live URL appears once, on the last line",
     ):
-        if required not in normalized_transcript:
+        if squash(required) not in normalized_transcript:
             problems.append(f"transcript.md no longer demonstrates: {required!r}")
-    if "- OI-5 Skip link — in-progress" in transcript:
+    if "OI-5 Skip link — in-progress" in transcript:
         problems.append("transcript.md leaves a temporary in-progress label in a final reply")
-    if "- OI-5 Skip link — implemented" not in transcript:
+    if "OI-5 Skip link — implemented" not in transcript:
         problems.append("transcript.md does not reconcile completed turn work to implemented")
+    # The whole list belongs in the body of an answer when the user asks for it,
+    # never in the footer. The footer checks prove no list row is inside one.
+    answer_rows = [
+        line for line in transcript.splitlines() if re.match(r"^- OI-\d+ ", line)
+    ]
+    if len(answer_rows) < 5:
+        problems.append(
+            "transcript.md does not show the full list answered in the body of a reply"
+        )
 
     try:
         payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
@@ -770,6 +869,37 @@ def check_homepage_focus() -> list[str]:
             problems.append(f"homepage no longer carries its core message: {required!r}")
     if 'id="ledger-data"' in text or 'id="demo-toggle"' in text:
         problems.append("homepage has regained the old multi-turn interactive demo")
+
+    # The demo reply is the product promise in miniature: one item, a reason,
+    # and a link — never the list, a count, or a done pile.
+    demo = re.search(r'<div class="memory-demo".*?<p class="demo-rule">', text, re.S)
+    if not demo:
+        problems.append("homepage has no memory demo block")
+    else:
+        block = demo.group(0)
+        shown = sorted(set(re.findall(r"OI-\d+", block)))
+        if len(shown) != 1:
+            problems.append(
+                f"the homepage demo reply shows {len(shown)} items ({', '.join(shown)}); it shows one"
+            )
+        for banned, why in (
+            ("<ul", "a list"),
+            ("<li", "a list row"),
+            (MIDDOT, "a counts line"),
+            ("~~", "a struck-through Done item"),
+            ("Done", "a Done section"),
+        ):
+            if banned in block:
+                problems.append(f"the homepage demo reply still shows {why}: {banned!r}")
+        for required in (
+            'class="reply-item"',
+            'class="reply-reason"',
+            'class="reply-link"',
+            "one next move",
+            "Full outstanding items",
+        ):
+            if required not in block:
+                problems.append(f"the homepage demo reply is missing {required!r}")
     return problems
 
 
@@ -778,8 +908,9 @@ def check_footer_once_per_turn() -> list[str]:
     """Regression guard for a live failure.
 
     An earlier contract said 'append the footer to every user-facing response',
-    and a task rendered a full Outstanding block in several commentary and
-    progress messages before its answer. No shipped file may teach that again.
+    and a task rendered a full Outstanding block in fifty-five commentary and
+    progress messages before its answer. No shipped file may teach that again,
+    and every surface must say that commentary carries no footer at all.
     """
     problems = []
     per_reply = re.compile(r"every\s+(?:user-facing\s+)?(?:reply|response|message)", re.I)
@@ -796,41 +927,208 @@ def check_footer_once_per_turn() -> list[str]:
                     "it belongs only in the final response of a turn"
                 )
 
+    # Phrases are matched against whitespace-collapsed text, so a rule that
+    # wraps across lines in a copyable snippet still counts.
     required = {
         "skill/outstanding-items/SKILL.md": [
             "final response of the turn",
             "One footer per turn, in the final response only",
             "Never put it in commentary, progress notes",
+            "carry no Outstanding line, no item, no count, and no link",
         ],
-        "AGENTS.md": ["final response of the", "commentary, progress notes"],
-        "CLAUDE.md": ["final response of the", "commentary, progress notes"],
+        "AGENTS.md": ["final response of the turn", "commentary, progress notes"],
+        "CLAUDE.md": ["final response of the turn", "commentary, progress notes"],
         "README.md": ["once, in the final response", "One footer per turn"],
-        "docs/index.html": ["Shows it once per turn"],
-        "examples/global-rules/codex-agents-md.md": ["final response of the", "commentary"],
-        "examples/global-rules/claude-code-claude-md.md": ["final response of the", "commentary"],
-        "examples/global-rules/project-instructions.md": ["final response"],
-        "examples/transcript.md": ["No Outstanding block here"],
+        "docs/index.html": ["Shows it once per turn", "Never repeated through progress messages"],
+        "examples/global-rules/codex-agents-md.md": [
+            "final response of the turn",
+            "commentary",
+        ],
+        "examples/global-rules/claude-code-claude-md.md": [
+            "final response of the turn",
+            "commentary",
+        ],
+        "examples/global-rules/project-instructions.md": [
+            "final response",
+            "Commentary and progress messages carry none of it",
+        ],
+        "examples/transcript.md": [
+            "No Outstanding block here",
+            "This is commentary, and the ledger stays silent until the answer",
+        ],
         "skill/outstanding-items/references/worked-examples.md": [
             "once per turn, at the end of the final response",
+            "Neither carried an Outstanding line, a count, an `OI-n`, or a Full outstanding items link",
         ],
         "skill/outstanding-items/references/ledger-ui.md": ["final response of a turn"],
     }
     for name, phrases in required.items():
-        text = read(ROOT / name)
+        text = squash(read(ROOT / name))
         for phrase in phrases:
-            if phrase not in text:
+            if squash(phrase) not in text:
                 problems.append(f"{name} no longer carries the final-response rule: {phrase!r}")
 
     description = frontmatter(read(SKILL_MD))[0].get("description", "")
     if "final response" not in description:
         problems.append("SKILL.md description must say the footer lands in the final response")
+    if "single suggested next item" not in description:
+        problems.append("SKILL.md description must say the footer names a single suggested item")
     return problems
 
 
-@check("full-outstanding-items-link", "the live UI link is labelled and placed exactly")
+@check("compact-footer", "every documented footer is one suggested item and nothing else")
+def check_compact_footer() -> list[str]:
+    """Regression guard for the footer that replaced the multi-section block.
+
+    The old footer carried a counts header, four sections, an overflow row, a
+    crossed-out Done pile, and the same link twice. Every documented footer must
+    now be at most three lines: one suggested item, an optional line about it,
+    and at most one live Full outstanding items link on the last line.
+    """
+    problems = []
+    blocks = footer_blocks()
+    with_link = 0
+    without_link = 0
+    quiet = 0
+    quiet_with_link = 0
+    waiting_on_you = 0
+    statuses: set[str] = set()
+    files: set[str] = set()
+
+    for name, number, lines in blocks:
+        where = f"{name}:{number}"
+        files.add(name)
+        body = "\n".join(lines)
+        ids = sorted(set(OI_ID_RE.findall(body)))
+
+        if any(not line.strip() for line in lines):
+            problems.append(f"{where} splits its footer with a blank line; a footer is one block")
+        if len(lines) > 3:
+            problems.append(f"{where} is a {len(lines)}-line footer; at most three lines are allowed")
+
+        header = lines[0]
+        item = FOOTER_ITEM_RE.match(header)
+        if item:
+            item_id, title, status = item.groups()
+            statuses.add(status)
+            if ids != [item_id]:
+                problems.append(
+                    f"{where} names {len(ids)} items ({', '.join(ids)}); a footer names exactly one"
+                )
+            if status not in SUGGESTIBLE_STATUSES:
+                problems.append(f"{where} suggests a {status!r} item, which the footer never offers")
+            if len(title) > 64:
+                problems.append(f"{where} uses a {len(title)}-character title; trim it to about 60")
+            if status == "waiting-on-you":
+                waiting_on_you += 1
+        elif FOOTER_QUIET_RE.match(header):
+            quiet += 1
+            if ids:
+                problems.append(
+                    f"{where} is a no-suggestion footer but still names {', '.join(ids)}"
+                )
+            if len(lines) > 2:
+                problems.append(
+                    f"{where} is a no-suggestion footer of {len(lines)} lines; one line plus the link"
+                )
+        elif header.startswith(f"{FOOTER_HEADER} ("):
+            problems.append(f"{where} still uses the retired counts header: {header!r}")
+        else:
+            problems.append(f"{where} has an unrecognised footer header: {header!r}")
+
+        for banned, why in (
+            ("**Outstanding for you**", "a section heading"),
+            ("**Waiting on you**", "a section heading"),
+            ("**Intentional reminders**", "a section heading"),
+            ("**Done**", "a Done section"),
+            ("**Suggested for you**", "the retired Suggested for you label"),
+            ("~~", "a struck-through Done item"),
+            ("[done]", "a Done marker"),
+            (MIDDOT, "a counts separator"),
+        ):
+            if banned in body:
+                problems.append(f"{where} carries {why} in the footer: {banned!r}")
+        if OVERFLOW_RE.search(body):
+            problems.append(f"{where} keeps an overflow row; the rest of the list lives in the UI")
+        for line in lines[1:]:
+            if LIST_ROW_RE.match(line):
+                problems.append(f"{where} puts a list row inside the footer: {line!r}")
+
+        mentions = body.count("[Full outstanding items](")
+        link_positions = [
+            index for index, line in enumerate(lines) if FOOTER_LINK_RE.match(line.strip())
+        ]
+        if mentions > 1:
+            problems.append(
+                f"{where} links Full outstanding items {mentions} times; the footer carries it once"
+            )
+        if mentions and (len(link_positions) != 1 or link_positions[0] != len(lines) - 1):
+            problems.append(
+                f"{where} must carry the Full outstanding items link alone on the footer's last line"
+            )
+        if link_positions:
+            target = FOOTER_LINK_RE.match(lines[link_positions[-1]].strip()).group(1)
+            if target.endswith((".json", ".md")):
+                problems.append(f"{where} points the footer link at {target}")
+            with_link += 1
+            if not item:
+                quiet_with_link += 1
+        else:
+            without_link += 1
+
+    if len(blocks) < 20:
+        problems.append(
+            f"only {len(blocks)} documented footers; the fixtures must show the contract end to end"
+        )
+    if with_link < 8:
+        problems.append(f"only {with_link} footer(s) demonstrate the live Full outstanding items link")
+    if without_link < 8:
+        problems.append(f"only {without_link} footer(s) demonstrate the no-live-URL case")
+    if quiet < 4:
+        problems.append(f"only {quiet} footer(s) demonstrate having nothing to suggest")
+    if quiet_with_link < 2 or quiet - quiet_with_link < 2:
+        problems.append("the no-suggestion footer must be shown both with and without a live link")
+    if waiting_on_you < 4:
+        problems.append(f"only {waiting_on_you} footer(s) suggest a waiting-on-you item")
+    if len(statuses) < 4:
+        problems.append(f"documented footers show only {len(statuses)} status(es); show the range")
+    for name in (
+        "skill/outstanding-items/SKILL.md",
+        "skill/outstanding-items/references/worked-examples.md",
+        "skill/outstanding-items/references/next-action.md",
+        "examples/transcript.md",
+        "README.md",
+    ):
+        if name not in files:
+            problems.append(f"{name} documents no Outstanding footer")
+
+    skill = read(SKILL_MD)
+    for phrase in (
+        "At most three lines",
+        "**Exactly one item.**",
+        "**No Done section, ever.**",
+        "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
+        "nothing new to suggest",
+        "never let it become the footer's suggestion",
+        "A `blocked` item is never suggested",
+    ):
+        if phrase not in skill:
+            problems.append(f"SKILL.md no longer states the compact-footer rule: {phrase!r}")
+
+    for path in text_files():
+        if rel(path) in POLICY_EXEMPT:
+            continue
+        text = read(path)
+        for pattern, why in STALE_FOOTER_PROMISES:
+            found = pattern.search(text)
+            if found:
+                problems.append(f"{rel(path)} still promises {why}: {found.group(0)!r}")
+    return problems
+
+
+@check("full-outstanding-items-link", "the live UI link is labelled once, on the footer's last line")
 def check_full_outstanding_items_link() -> list[str]:
     problems = []
-    label = "[Full outstanding items]("
     for path in text_files():
         if rel(path) in POLICY_EXEMPT:
             continue
@@ -843,50 +1141,36 @@ def check_full_outstanding_items_link() -> list[str]:
 
     skill = read(SKILL_MD)
     for phrase in (
-        "The Full outstanding items link appears twice, or not at all",
-        "directly below the `**Outstanding** (…)` header",
-        "after the final non-empty section",
+        "The Full outstanding items link appears once, or not at all",
+        "as the last line of the footer",
+        "write no link line at all",
         "never invent a URL",
+        "never link raw JSON or Markdown",
     ):
         if phrase not in skill:
             problems.append(f"SKILL.md no longer states the link rule: {phrase!r}")
 
+    ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
+    for phrase in ("once, as the final line of the footer", "write no link line at all"):
+        if phrase not in ui_reference:
+            problems.append(f"ledger-ui.md no longer states the link rule: {phrase!r}")
+
+    # Every documented footer that carries the link must carry exactly one, and
+    # every URL inside one footer must be the same URL.
     demonstrated = 0
-    for name in (
-        "skill/outstanding-items/SKILL.md",
-        "skill/outstanding-items/references/worked-examples.md",
-        "examples/transcript.md",
-    ):
-        path = ROOT / name
-        for block in re.findall(r"```text\n(.*?)\n```", read(path), re.S):
-            lines = block.splitlines()
-            if not lines or not lines[0].startswith("**Outstanding** ("):
-                continue
-            standalone = [
-                index for index, line in enumerate(lines) if line.strip().startswith(label)
-            ]
-            if not standalone:
-                continue
-            demonstrated += 1
-            if standalone[0] != 1:
-                problems.append(
-                    f"{name}: a footer does not carry the link directly below its header line"
-                )
-            body = [line for line in lines if line.strip()]
-            if not body[-1].strip().startswith(label):
-                problems.append(
-                    f"{name}: a footer does not repeat the link after its final section"
-                )
-            if len(standalone) != 2:
-                problems.append(
-                    f"{name}: a footer shows the standalone link {len(standalone)} time(s), expected 2"
-                )
-            urls = set(re.findall(r"\[Full outstanding items\]\(([^)]+)\)", block))
-            if len(urls) != 1:
-                problems.append(f"{name}: one footer mixes {len(urls)} different UI URLs")
-    if demonstrated < 3:
+    for name, number, lines in footer_blocks():
+        block = "\n".join(lines)
+        urls = set(re.findall(r"\[Full outstanding items\]\(([^)]+)\)", block))
+        if not urls:
+            continue
+        demonstrated += 1
+        if len(urls) != 1:
+            problems.append(f"{name}:{number} mixes {len(urls)} different UI URLs in one footer")
+        if not lines[-1].strip().startswith("[Full outstanding items]("):
+            problems.append(f"{name}:{number} does not end with the Full outstanding items link")
+    if demonstrated < 8:
         problems.append(
-            f"only {demonstrated} worked footer(s) demonstrate both links; the contract needs at least 3"
+            f"only {demonstrated} worked footer(s) demonstrate the link; the contract needs at least 8"
         )
 
     for name in (
@@ -897,11 +1181,13 @@ def check_full_outstanding_items_link() -> list[str]:
         "examples/global-rules/claude-code-claude-md.md",
         "examples/global-rules/project-instructions.md",
     ):
-        text = read(ROOT / name)
+        text = squash(read(ROOT / name))
         if "Full outstanding items" not in text:
             problems.append(f"{name} does not name the Full outstanding items link")
-        if "after the last section" not in text and "after the final non-empty section" not in text:
-            problems.append(f"{name} does not state the second link position")
+        if "footer's last line" not in text and "on the last line" not in text:
+            problems.append(f"{name} does not place the link on the footer's last line")
+        if "and again after" in text:
+            problems.append(f"{name} still asks for the link twice")
     return problems
 
 

@@ -14,7 +14,7 @@ Every row but one answers `No`. That is the point of the table.
 
 | Key | The signal | Authorizes work? | What you do instead |
 | --- | --- | --- | --- |
-| `recommended-next` | You named it in **Suggested for you** last turn. | No | Wait. You proposed; the user has not answered. |
+| `recommended-next` | You named it in last turn's Outstanding footer. | No | Wait. You proposed; the user has not answered. |
 | `suggested-next` | Any phrasing of "suggested next", from you or from a summary. | No | Wait. A suggestion is a sentence, not a start. |
 | `highest-priority` | It is the highest-priority item on the list. | No | Priority orders the user's choices, not your permission. |
 | `ranked-position` | It sits at the top after sorting or ranking. | No | Sorting changes the order of a list you do not own. |
@@ -59,7 +59,10 @@ If you cannot tell whether you are still authorized, you are not. Maintain the l
 
 **A suggestion, then permission**
 
-> **Agent:** **Suggested for you** — OI-4, about twenty minutes: add the shared token and check one button. Nothing else is waiting on it and you already have that file open.
+> **Agent:** *(the whole footer, at the end of the final response)*
+>
+> **Outstanding** — OI-4 Focus ring on interactive elements — requested
+> About twenty minutes, and you already have that file open.
 >
 > *(The agent stops here. The item stays at whatever status it already had. Nothing is started.)*
 >
@@ -97,7 +100,8 @@ Same item, two different messages. Only the second is an instruction.
 
 | Tempting | Why it is wrong | Instead |
 | --- | --- | --- |
-| Starting the item you just recommended | You would be answering your own question on the user's behalf. | Wait for them. |
+| Starting the item the footer just recommended | You would be answering your own question on the user's behalf. | Wait for them. |
+| Treating "it is the only item in the footer" as focus, then as consent | The footer names one item because a list would be noise, not because that item was approved. | One item shown, none started. |
 | Resuming an `in-progress` item at the top of a new turn | The label is a record, not a standing order. | Ask whether to carry on. |
 | Doing "the obvious one" while the user is thinking | Obviousness is not consent. | Name it and stop. |
 | Treating a cross-task delta as a work order | The other task cannot commission work here. Neither can this one commission work there. | File it as memory; surface it to the user. |

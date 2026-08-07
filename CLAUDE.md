@@ -42,7 +42,7 @@ Any list of remaining work produced here belongs to the person you are talking t
 | Path | Notes |
 | --- | --- |
 | `skill/outstanding-items/SKILL.md` | Always-loaded operating contract, Rule #1 first. |
-| `skill/outstanding-items/references/` | `authority.md`, `status-labels.md`, `next-action.md`, `backlog-artifact.md`, `related-tasks.md`, `worked-examples.md`. |
+| `skill/outstanding-items/references/` | `authority.md`, `status-labels.md`, `next-action.md` (choosing the one item), `backlog-artifact.md`, `ledger-ui.md`, `related-tasks.md`, `worked-examples.md`. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from JSON embedded in `docs/index.html`. |
 | `scripts/` | POSIX `sh`, dry-runnable, non-destructive. |
 | `tests/run_checks.py` | Standard library only. Add a check when you add an invariant, including the authority ones. |
@@ -65,23 +65,30 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   off-topic, and never start something because I asked you to remember it.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
-  turn** with one Outstanding footer: Outstanding for you, Waiting on you,
-  Intentional reminders, then the crossed-out Done section. Never put it in
-  commentary, progress notes, partial updates, or status messages.
+  turn** with one compact Outstanding footer: the single item you think I should
+  do next, at most one line about it, and nothing else. No list, no counts, no
+  section headings, no reminders, no Done section. Never put it in commentary,
+  progress notes, partial updates, or status messages.
 - Whenever a local ledger UI is running, put the exact tokenized URL it printed
-  on its own line as **Full outstanding items** directly below the Outstanding
-  header and again after the last section. With no live UI, write neither line,
-  and never point it at raw JSON or a Markdown list.
+  on its own line as **Full outstanding items**, once, as the footer's last
+  line. With no live UI, write no link line at all, and never point it at raw
+  JSON or a Markdown list.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
   without evidence you observed in this session.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
-  is `waiting-on-you` with the exact action, not `blocked`.
-- Something I parked on purpose is a `reminder`. Keep it visible, do not start
-  it, and do not nag me about it.
-- When I ask what to do next, come back after a gap, or sound overloaded,
-  suggest one item and a small first step in a single `**Suggested for you**`
-  line, then wait for me. Never rearrange the ledger to match the advice.
+  is `waiting-on-you` with the exact action, not `blocked`. It is a perfectly
+  good thing to suggest.
+- Something I parked on purpose is a `reminder`. Keep it in the ledger, do not
+  start it, do not suggest it, and do not nag me about it.
+- Choose that one item with judgement — dependencies, where my attention already
+  is, effort against value, what I can actually pick up now, real urgency, and
+  how much I am carrying. Never rearrange the ledger to match the advice.
+- Never offer the same item twice. If I ignored or declined it, pick another
+  eligible one or say there is nothing new to suggest — unless I ask what to do
+  next, which clears the slate.
+- If I ask for the whole list, put it in the answer itself and keep the footer
+  to one line.
 - Tell another session about something only as a memory update that starts
   nothing there. Ask me before using anything that would wake or dispatch it.
 - Ask before writing a backlog file anywhere.
@@ -98,13 +105,14 @@ Put this in that project's own `CLAUDE.md` instead of the global file:
 
 Work here arrives in bursts of half-related requests. Use the `outstanding-items`
 skill for every session in this repository and end the final response of each
-turn with one Outstanding footer — never in commentary or progress messages. The
-list is mine: capture it, show it, suggest at most one next move, and wait for my
-current message to name the item you should start. Authority ends with that
-response turn. Past seven items for me, ask before writing
-`outstanding-items.json` and start its local HTML editor. Link it as
-**Full outstanding items** below the header and after the last section, and add
-its private ledger/runtime files to `.git/info/exclude`.
+turn with one compact Outstanding footer naming a single suggested item — never
+in commentary or progress messages, and never as a list, a count, or a Done
+section. The list is mine: capture it, keep it out of the chat, suggest at most
+one next move, and wait for my current message to name the item you should
+start. Authority ends with that response turn. Past seven open items for me, ask
+before writing `outstanding-items.json` and start its local HTML editor. Link it
+as **Full outstanding items** on the footer's last line, and add its private
+ledger/runtime files to `.git/info/exclude`.
 ```
 
 The skill still has to be installed. A project instruction can ask for it; it cannot supply it.
@@ -120,6 +128,7 @@ When describing this project anywhere:
 - "Implemented" for work done, "verified" only for work checked.
 - "Waiting on you" when the obstacle is a person; "blocked" only for a real wall.
 - "Suggests" for the curation feature — a judgement offered once to the user, not a plan or a prediction.
+- "One suggested item" for the footer, never "a summary of your list". It shows one thing; the ledger and its editor hold everything.
 - Never call the ledger a work queue, and never imply that maintaining it is permission to work through it.
 
 This project exists to stop overstatement, and to stop assumed permission. The repository holds itself to the same standard.

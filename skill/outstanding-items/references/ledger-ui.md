@@ -13,22 +13,19 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py start \
 
 Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger; otherwise it starts a loopback-only process on an available port.
 
-Use the printed URL for the compact footer, and use it in both places:
+Use the printed URL as the last line of the compact footer:
 
 ```markdown
-**Outstanding** (8 for you · 2 done)
-[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
-
-… sections …
-
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-The label is exactly **Full outstanding items**, on its own line directly below the `**Outstanding** (…)` header line and again on its own line after the last non-empty section. Any overflow line uses the same label and the same verified live URL.
+The label is exactly **Full outstanding items**, on its own line, once, as the final line of the footer. This link is the only place the rest of the ledger appears: the footer names one item, and everything else — the other open items, the intentional reminders, and the whole Done history — lives behind it.
 
-Both links carry the same URL, and both disappear together. If no verified live UI URL exists for this ledger, write neither line: never invent, guess, shorten, or redact a URL, never reuse one from an earlier task, and never link the footer to the raw JSON or an archived Markdown list. Use exactly what `start` printed. The token is local runtime state, not ledger data; do not copy it into a repository file, cross-task delta, or public message.
+If no verified live UI URL exists for this ledger, write no link line at all: never invent, guess, shorten, or redact a URL, never reuse one from an earlier task, and never link the footer to the raw JSON or an archived Markdown list. Use exactly what `start` printed. The token is local runtime state, not ledger data; do not copy it into a repository file, cross-task delta, or public message.
 
-The footer itself, with or without these links, belongs only to the final response of a turn — never to commentary or progress messages.
+The footer itself, with or without that link, belongs only to the final response of a turn — never to commentary or progress messages.
 
 ## Interaction model
 

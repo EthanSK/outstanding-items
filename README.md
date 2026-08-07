@@ -2,11 +2,13 @@
 
 **Outsource your memory — a curated work experience.**
 
-A skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that does two things across a long, branching task — and, deliberately, nothing more.
+A skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that keeps the list of everything you asked for out of your way, and hands you one thing at a time — and, deliberately, nothing more.
 
-**It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and each turn finishes with a compact **Outstanding** footer split into what is outstanding for you, what is waiting on you, what you parked on purpose, and a crossed-out Done section. It appears once, in the final response, so progress chatter never turns into three copies of the same list. The backlog lives in the transcript instead of in your head.
+**It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and every item is captured with a permanent ID. The list itself stays out of the conversation: it lives in the ledger, and in a local editor you can open in one click.
 
-**It curates, and curation proposes.** When it would genuinely help, one line suggests a next move *for you*, says why, and stops. **You decide, and you start it.**
+**It shows you one thing.** Each turn ends with a two- or three-line **Outstanding** footer naming the single item it thinks you should do next, and a link to everything else. It appears once, in the final response, so progress chatter never turns into three copies of the same list — and there is no Done section, no counts, and no wall of items to skim past.
+
+**It curates, and curation proposes.** That one line is a suggestion *for you*, with a small first step and, when it helps, a reason. **You decide, and you start it.**
 
 > ### Rule #1 — the outstanding items belong to you
 >
@@ -25,14 +27,15 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 | Multi-request tracking | Every request in the task gets a permanent `OI-n` ID, in the order you said it. |
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
-| One footer per turn | Four sections — Outstanding for you, Waiting on you, Intentional reminders, Done — rendered once, at the end of the final response. Commentary and progress messages stay clean. |
-| Crossed-out Done section | Finished and cancelled items move to the bottom, struck through, so you can audit what happened. |
+| One footer per turn | Two or three lines at the end of the final response: one suggested item, an optional line about it, and a link to the rest. Commentary and progress messages stay clean. |
+| Nothing else in the chat | No counts, no sections, no reminders, no Done list, no "+7 more". The full ledger is one click away instead of one scroll away. |
+| Crossed-out Done group | Finished and cancelled items move to the bottom of the editor, struck through, so you can audit what happened without reading it every turn. |
 | Honest status labels | `requested` / `in-progress` / `implemented` / `verified` are four different amounts of proof, and the skill may not round them up. |
 | Labels that are not licences | `in-progress` records the instruction that started it. When the turn ends, so does the permission. |
 | Intentional reminders | Something parked on purpose is labelled `reminder` — visible, never started, never quietly retired, never nagged about. |
 | A real difference between stuck and yours | Something needing your click, key, or approval is `waiting-on-you`, with the exact action. `blocked` is reserved for a genuine external wall. |
-| One suggestion, for you | One item, one small possible first step, one sentence of reasoning — then it waits. |
-| Canonical task ledger | Past the overflow threshold the full list lives in one task-owned `outstanding-items.json` — after asking you for a path. |
+| One suggestion, for you | One item, one small possible first step, one sentence of reasoning — then it waits. Ignore it and it picks something else next time, or says nothing. |
+| Canonical task ledger | Once there is more than a handful, the full list lives in one task-owned `outstanding-items.json` — after asking you for a path. |
 | Editable Full outstanding items | A quiet local list: click task text to edit it, drag or use keyboard controls to reorder, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
 | A plain-words tooltip per item | Hover an item, or move keyboard focus to it, and a small note above the row says in ordinary language what that item is about. |
 | Auditable ownership transfer | Moving work to another task preserves its status and notes as read-only history here instead of pretending it was completed. |
@@ -41,43 +44,32 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 A real footer looks like this — once per turn, at the end of the final response:
 
 ```text
-**Outstanding** (2 for you · 1 waiting on you · 1 reminder · 2 done)
-
-**Outstanding for you**
-- OI-4 Fix the flaky login test — implemented
-- OI-5 Add rate-limit docs to the handbook — planned
-
-**Waiting on you**
-- OI-8 Approve the staging deploy — waiting-on-you (click approve in the deploy UI)
-
-**Intentional reminders**
-- OI-7 Ask the design channel about the empty state — reminder
-
-**Suggested for you** — OI-5, about twenty minutes: draft the limits table first. Nothing else is waiting on it and you already have the page open. Tell me `start OI-5` if you want me to start it; nothing begins until you do.
-
-**Done**
-- ~~OI-1 Rename the deploy script~~ — verified
-- ~~OI-3 Drop the legacy feature flag~~ — dropped (superseded by OI-5)
+**Outstanding** — OI-5 Add rate-limit docs to the handbook — planned
+Draft the limits table first, about twenty minutes; nothing else is waiting on it.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing.
+That is the whole thing. One item — the one it thinks you should do next — an optional line saying how to start and why, and a link to everything else. The other nine items, the reminders you parked, and everything you finished are all still there; they are in the editor, not in your chat.
 
-Once a local editor is running for that task, the same footer carries its link twice — directly under the header and again after the last section, so it is there whichever end you are reading from:
+The link is the exact URL the local editor printed. If no editor is running, that line simply is not there — the skill does not invent a URL to fill the space:
 
 ```text
-**Outstanding** (8 for you · 1 reminder · 2 done)
-[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+**Outstanding** — OI-8 Approve the staging deploy — waiting-on-you
+Click approve in the deploy UI; it is the one thing left that only you can do.
+```
 
-… your sections …
+And when there is honestly nothing to suggest — you ignored the last one, everything left is blocked or parked, or you are winding down — it says that instead of inventing a pick:
 
+```text
+**Outstanding** — nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-Both links are the exact URL the editor printed. If no editor is running, neither line appears — the skill does not invent a URL to fill the space.
+IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing. And if you want the whole list in the chat, ask for it — you get it in the answer, once, and the footer stays one line.
 
 ## Full outstanding items is an editor, not a raw file
 
-When the compact footer overflows, **Full outstanding items** opens a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is just its checkbox and task text. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is just its checkbox and task text. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short paragraph in ordinary words about what the item is. It comes from the item's own optional `explanation` field, written by the agent for a moment when the title alone is not enough. Items saved before that field existed still get a plain sentence based on their status, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 
@@ -131,15 +123,15 @@ Full definitions, transitions, and anti-patterns: [`references/status-labels.md`
 
 ## Outsource your memory — a curated work experience
 
-The second half of the skill. The ledger knows what is outstanding; curation is a suggestion about what to do with it — offered to you, decided by you.
-
-When you ask what to do next, come back after time away, sound overloaded, or hit a natural decision point, the footer gains a single line:
+The second half of the skill, and the reason the footer is one line. The ledger knows what is outstanding; curation decides which single item is worth putting in front of you — offered to you, decided by you.
 
 ```text
-**Suggested for you** — OI-4, about twenty minutes, and it settles OI-6 at the same time. Tell me `start OI-4` if you want me to pick it up.
+**Outstanding** — OI-4 Focus ring on interactive elements — requested
+About twenty minutes, and you already have that file open.
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-What goes into it — weighed as judgement, never as a score:
+What goes into that choice — weighed as judgement, never as a score:
 
 | Weighed | Meaning |
 | --- | --- |
@@ -154,13 +146,13 @@ What goes into it — weighed as judgement, never as a score:
 And the rules that keep it from becoming a productivity lecture:
 
 - **It proposes, then waits.** The suggestion is never a plan the agent carries out, and never permission to begin.
-- **One item, one small step, one sentence.** No frameworks, no scores, no numbered plans.
+- **One item, one small step, one sentence.** No frameworks, no scores, no numbered plans, no runner-up, no counts.
 - **It is addressed to you.** A line about what the assistant would carry on with is not your next move, and is not allowed there.
-- **Not every turn.** Most replies carry no suggestion at all. A footer that advises constantly stops being read.
-- **It never edits the ledger.** Nothing is dropped, reordered, merged, hidden, or deprioritised out of existence because it was not the thing chosen.
+- **It never edits the ledger.** Nothing is dropped, reordered, merged, hidden, or deprioritised out of existence because it was not the thing chosen. An item that was not suggested is exactly as open as it was.
 - **Your priorities win.** Say what you want and it stops, immediately and without a counter-proposal.
-- **Calibrated, not confident.** If it is a close call it says so and names the alternative.
-- **Advice, once.** Ignore it and it drops the subject — it does not repeat it, and it certainly does not start it.
+- **Calibrated, not confident.** If it is a close call it says so — and leaves the alternative in the editor rather than turning the line into a menu.
+- **Advice, once.** Ignore it and it moves on to something else next turn, or says nothing at all. It does not repeat it, and it certainly does not start it.
+- **Silence is a legitimate answer.** When everything left is blocked, parked, or already offered, the footer says "nothing new to suggest" instead of inventing a pick.
 
 Weighing, wording, and the cases where it should refuse to pick: [`references/next-action.md`](skill/outstanding-items/references/next-action.md).
 
@@ -235,15 +227,18 @@ Codex — append to `~/.codex/AGENTS.md`:
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
 keep the ledger silently while you work, and end the final response of each turn
-with one Outstanding footer and its crossed-out Done section — never in
-commentary or progress messages. When a local ledger UI is running, link it as
-**Full outstanding items** below the header and after the last section, using the
-exact URL it printed. Anything needing my click, key, or approval is
+with one compact Outstanding footer: the single item you think I should do next,
+at most one line about it, and nothing else — no list, no counts, no reminders,
+no Done section. Never put it in commentary or progress messages. When a local
+ledger UI is running, put **Full outstanding items** on the footer's last line
+using the exact URL it printed; with no live UI, write no link at all. Do not
+repeat a suggestion I ignored or declined — pick another one, or say there is
+nothing new to suggest. Anything needing my click, key, or approval is
 `waiting-on-you`, not `blocked`. Never start, resume, investigate, research,
 prepare, do pre-work for, dispatch, route, hand off, continue, or complete an
 item unless my current message names it and tells you to. That authority ends
-with the response turn. When I ask what to do next, suggest one thing and a
-small first step, then wait for me.
+with the response turn. If I ask for the whole list, give it to me in the answer
+and keep the footer to one line.
 ```
 
 Claude Code — append to `~/.claude/CLAUDE.md`:
@@ -252,14 +247,14 @@ Claude Code — append to `~/.claude/CLAUDE.md`:
 ## Outstanding items
 Use the `outstanding-items` skill in any session with more than one request.
 The list is mine. Maintain it silently while you work and end the final response
-of each turn with one Outstanding footer — never in commentary or progress
-messages — link a running local UI as **Full outstanding items** below the header
-and after the last section, never
-label an item `verified` without evidence you observed in this session, and never
-label something `blocked` when it is really waiting on me. Being on the list,
-being suggested, or being labelled `in-progress` is never permission to work on
-something — only my current message naming the item is, and that authority ends
-with the response turn.
+of each turn with one compact Outstanding footer naming a single suggested item
+— never in commentary or progress messages, and never as a list, a count, or a
+Done section. Link a running local UI as **Full outstanding items** on the
+footer's last line, never label an item `verified` without evidence you observed
+in this session, and never label something `blocked` when it is really waiting on
+me. Being on the list, being suggested, or being labelled `in-progress` is never
+permission to work on something — only my current message naming the item is, and
+that authority ends with the response turn.
 ```
 
 Ready-to-paste copies live in [`examples/global-rules/`](examples/global-rules/). Repository-level integration examples: [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
@@ -271,7 +266,7 @@ sh scripts/check.sh              # validate this repository
 sh scripts/check.sh --installed  # also validate the copies in your home directory
 ```
 
-`check.sh` needs only `sh` and `python3`. It validates required files, frontmatter and YAML basics, internal links, site base paths, asset integrity, the synthetic-ID privacy rule, the honesty guards, and the ownership and authority contract — including adversarial cases where a status, a ranking, or a cross-task delta might be mistaken for permission. It also exercises Markdown migration, JSON validation, atomic edit/check/reorder operations, stale-revision rejection, token gating, and external JSON refresh. There are no third-party dependencies and it makes no outbound network requests.
+`check.sh` needs only `sh` and `python3`. It validates required files, frontmatter and YAML basics, internal links, site base paths, asset integrity, the synthetic-ID privacy rule, the honesty guards, the compact-footer contract — every documented footer must be one suggested item, at most one link, and no counts, sections, or Done entries — and the ownership and authority contract, including adversarial cases where a status, a ranking, or a cross-task delta might be mistaken for permission. It also exercises Markdown migration, JSON validation, atomic edit/check/reorder operations, stale-revision rejection, token gating, and external JSON refresh. There are no third-party dependencies and it makes no outbound network requests.
 
 ## What this does not do
 
@@ -292,7 +287,7 @@ Stated plainly, because these are the assumptions people arrive with:
 | Path | Purpose |
 | --- | --- |
 | `skill/outstanding-items/SKILL.md` | The canonical operating contract, Rule #1 first. Single source of truth. |
-| `skill/outstanding-items/references/` | Seven one-level references: authority, status labels, suggesting a next move, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
+| `skill/outstanding-items/references/` | Seven one-level references: authority, status labels, choosing the one item, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
 | `skill/outstanding-items/assets/` | Generic local ledger HTML, CSS, and JavaScript. It contains no user data. |
 | `skill/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
 | `skill/outstanding-items/agents/openai.yaml` | Codex packaging metadata. |
@@ -321,8 +316,8 @@ Fork it and change four things:
 
 1. **The `description` in `SKILL.md`** — trigger phrases decide when the skill loads. Put your own vocabulary in it ("chuck that on the list", "next thing").
 2. **The status labels** — if your work has a different pipeline, replace the table. Keep the requested / implemented / verified split, keep `waiting-on-you` separate from `blocked`, and keep every label descriptive; those are the parts that prevent optimistic reporting and silent stalling. If you would rather the ledger addressed you by name, rename the label — `waiting-on-ada` reads just as well, it only has to be consistent across `SKILL.md` and the references.
-3. **The thresholds** — the 7-line / 20-total overflow rule and the footer line budgets live in `SKILL.md` and [`references/status-labels.md`](skill/outstanding-items/references/status-labels.md).
-4. **What a suggestion means to you** — the weighing in [`references/next-action.md`](skill/outstanding-items/references/next-action.md) is deliberately human. If your work needs deadlines to dominate, or wants suggestions only when asked, say so there.
+3. **The thresholds** — when the ledger moves into its own JSON file and editor (7 open items / 20 total) lives in `SKILL.md` and [`references/backlog-artifact.md`](skill/outstanding-items/references/backlog-artifact.md). The footer stays one item whatever you set.
+4. **What a suggestion means to you** — the weighing in [`references/next-action.md`](skill/outstanding-items/references/next-action.md) is deliberately human. If your work needs deadlines to dominate, or you would rather see nothing unless you ask, say so there.
 
 What not to change: Rule #1. If you rewrite the ownership model so that a list entry, a status, or a ranking implies permission, this stops being the same tool, and the checks in `tests/run_checks.py` will say so.
 
