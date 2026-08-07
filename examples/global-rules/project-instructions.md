@@ -21,6 +21,9 @@ Work in this repository arrives in bursts of half-related requests. Use the
   carry none of it.
 - Capture asides that have nothing to do with the current change. Recording
   something is the whole job when I only asked you to record it.
+- Record `user-requested`, `agent-added`, or `unknown-legacy` provenance when an
+  item is created; never infer that I asked for an older item when the source is
+  not provable.
 - Past seven open items for me, ask before writing `outstanding-items.json` and
   start its local HTML editor. Link it as **Full outstanding items** on the
   footer's last line, using the exact URL it printed, and add the private

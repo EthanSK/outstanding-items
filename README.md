@@ -18,7 +18,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **prompt-level skill** with one small optional local editor: one `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. Cross-task propagation happens only when the harness exposes task tools, and only as a memory update that starts nothing; otherwise the skill registers the relationship and hands you the exact text to carry across yourself.
+Working, and simple on purpose. This is a **prompt-level skill** with one small optional local editor: one `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
 
 ## What it actually does
 
@@ -39,7 +39,7 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 | Editable Full outstanding items | A quiet local list: click task text to edit it, drag or use keyboard controls to reorder, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
 | A plain-words tooltip per item | Hover an item, or move keyboard focus to it, and a small note above the row says in ordinary language what that item is about. |
 | Auditable ownership transfer | Moving work to another task preserves its status and notes as read-only history here instead of pretending it was completed. |
-| Registered related tasks | Another conversation is resolved once, stored by title plus stable ID, and receives memory-only deltas that authorize nothing. |
+| Registered related tasks | A useful relationship may be stored locally by title plus stable ID. It contacts nothing; a separately authorized memory-only delta still starts nothing. |
 
 A real footer looks like this — once per turn, at the end of the final response:
 
@@ -69,7 +69,7 @@ IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns
 
 ## Full outstanding items is an editor, not a raw file
 
-Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is just its checkbox and task text. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is its checkbox, task text, and one small provenance badge: **You asked**, **Agent added**, or **Source unknown** for an older item whose origin cannot be proved. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short paragraph in ordinary words about what the item is. It comes from the item's own optional `explanation` field, written by the agent for a moment when the title alone is not enough. Items saved before that field existed still get a plain sentence based on their status, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 

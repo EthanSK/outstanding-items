@@ -300,6 +300,19 @@ footer nav {
   font-style: normal;
 }
 
+.reply-provenance {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.38rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .reply-reason {
   margin: 0.35rem 0 0;
   color: var(--muted);

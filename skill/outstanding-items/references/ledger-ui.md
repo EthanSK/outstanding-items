@@ -56,11 +56,14 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
   --id OI-12 \
   --title "Confirm the release" \
   --status waiting-on-you \
+  --provenance user-requested \
   --group "Release" \
   --explanation "The release is built and ready; it just needs your yes before it goes out. One click in the release page is the whole job."
 ```
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. The command atomically increments the revision, and an open UI sees it within two seconds.
+
+`--provenance` is required when creating a new item. Use `user-requested` only when the user's explicit words caused the capture, `agent-added` for an agent's proactive addition, and `unknown-legacy` only when migrating an older item whose source cannot be proved. Later updates may omit the flag; provenance is preserved and cannot be rewritten.
 
 ## Writing the explanation
 
@@ -107,13 +110,14 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 
 ## Persistence and live updates
 
-- `outstanding-items.json` is the single editable record.
+- `outstanding-items.json` is the single editable record. Version 3 ledgers upgrade atomically to version 4 with conservative `unknown-legacy` provenance and no item-state or order change.
 - Every browser mutation carries the revision it read. A stale mutation gets HTTP 409 and the new ledger, so it cannot erase an agent-side update.
 - Writes are validated and atomic.
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
 - The HTML, CSS, and JavaScript are a generic shell installed with the skill. They contain no task items and never need regeneration when ledger data changes.
 - Transferred items render read-only under **Owned elsewhere** and are excluded from active open/done counts without being deleted.
 - `explanation` is an optional per-item string of at most 600 characters. It travels with the rest of the ledger, needs no schema bump, and an item or ledger without it stays valid; the browser supplies the status fallback at render time and stores nothing of its own.
+- `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, and transfer mutations. The browser cannot change it.
 
 ## Stop or inspect
 

@@ -30,7 +30,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
+PREVIOUS_SCHEMA_VERSION = 3
 STATUSES = {
     "requested",
     "planned",
@@ -44,6 +45,7 @@ STATUSES = {
 }
 DONE_STATUSES = {"verified", "dropped"}
 TRACKING_STATES = {"active", "transferred"}
+PROVENANCES = {"user-requested", "agent-added", "unknown-legacy"}
 ID_RE = re.compile(r"^OI-\d+$")
 ITEM_HEADING_RE = re.compile(r"^###\s+(OI-\d+)\s+(.+?)\s*$")
 DONE_ITEM_RE = re.compile(r"^-\s+~~(OI-\d+)\s+(.+?)~~\s*(.*?)\s*$")
@@ -65,8 +67,42 @@ def read_json(path: pathlib.Path) -> dict[str, Any]:
         raise ValueError(f"ledger does not exist: {path}") from exc
     except json.JSONDecodeError as exc:
         raise ValueError(f"ledger is not valid JSON: {exc}") from exc
-    validate_ledger(data)
+    migrated = migrate_schema(data)
+    if migrated:
+        atomic_write_json(path, data)
+    else:
+        validate_ledger(data)
     return data
+
+
+def migrate_schema(data: Any) -> bool:
+    """Upgrade the one supported prior schema without inventing provenance."""
+    if not isinstance(data, dict):
+        raise ValueError("ledger root must be an object")
+    version = data.get("schema_version")
+    if version == SCHEMA_VERSION:
+        validate_ledger(data)
+        return False
+    if version != PREVIOUS_SCHEMA_VERSION:
+        raise ValueError(
+            f"schema_version must be {SCHEMA_VERSION} or supported legacy version "
+            f"{PREVIOUS_SCHEMA_VERSION}"
+        )
+    items = data.get("items")
+    if not isinstance(items, list):
+        raise ValueError("items must be an array")
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError("every legacy item must be an object")
+        item["provenance"] = "unknown-legacy"
+    revision = data.get("revision")
+    if not isinstance(revision, int) or revision < 0:
+        raise ValueError("revision must be a non-negative integer")
+    data["schema_version"] = SCHEMA_VERSION
+    data["revision"] = revision + 1
+    data["updated_at"] = utc_now()
+    validate_ledger(data)
+    return True
 
 
 def atomic_write_json(path: pathlib.Path, data: dict[str, Any]) -> None:
@@ -131,6 +167,9 @@ def validate_ledger(data: Any) -> None:
             raise ValueError(f"{item_id} completed must be boolean")
         if completed != (status in DONE_STATUSES):
             raise ValueError(f"{item_id} completed and status disagree")
+        provenance = item.get("provenance")
+        if provenance not in PROVENANCES:
+            raise ValueError(f"{item_id} has unsupported provenance {provenance!r}")
         tracking_state = item.get("tracking_state", "active")
         if tracking_state not in TRACKING_STATES:
             raise ValueError(f"{item_id} has unsupported tracking_state {tracking_state!r}")
@@ -239,6 +278,7 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
                 "state_text": state_text,
                 "details_markdown": details,
                 "explanation": "",
+                "provenance": "unknown-legacy",
                 "completed_at": None,
                 "completed_session_id": None,
             }
@@ -745,11 +785,17 @@ def command_upsert(args: argparse.Namespace) -> int:
     item = next((entry for entry in data["items"] if entry["id"] == args.id), None)
     if item is not None and item.get("tracking_state") == "transferred":
         raise ValueError(f"{args.id} is transferred history and cannot be updated in this task")
+    provenance = getattr(args, "provenance", None)
     if item is None:
         if not args.title:
             raise ValueError("--title is required when adding a new item")
         if not ID_RE.fullmatch(args.id):
             raise ValueError("--id must look like OI-35")
+        if provenance is None:
+            raise ValueError(
+                "--provenance is required when adding a new item; choose "
+                "user-requested, agent-added, or unknown-legacy"
+            )
         open_position = sum(not entry["completed"] for entry in data["items"])
         item = {
             "id": args.id,
@@ -761,10 +807,16 @@ def command_upsert(args: argparse.Namespace) -> int:
             "state_text": args.status or "requested",
             "details_markdown": "",
             "explanation": "",
+            "provenance": provenance,
             "completed_at": utc_now() if (args.status or "requested") in DONE_STATUSES else None,
             "completed_session_id": args.session_id if (args.status or "requested") in DONE_STATUSES else None,
         }
         data["items"].append(item)
+    elif provenance is not None and provenance != item["provenance"]:
+        raise ValueError(
+            f"{args.id} provenance is immutable ({item['provenance']}); "
+            "do not rewrite item origin"
+        )
     if args.title:
         item["title"] = args.title.strip()
     if args.explanation is not None:
@@ -844,6 +896,11 @@ def parser() -> argparse.ArgumentParser:
     upsert.add_argument("--id", required=True)
     upsert.add_argument("--title")
     upsert.add_argument("--status", choices=sorted(STATUSES))
+    upsert.add_argument(
+        "--provenance",
+        choices=sorted(PROVENANCES),
+        help="required for a new item; records who caused the item to enter the ledger",
+    )
     upsert.add_argument("--group")
     upsert.add_argument(
         "--explanation",

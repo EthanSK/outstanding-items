@@ -29,11 +29,11 @@ Prefer, in order: a path the user names; a task/session scratch directory; `outs
 
 Do not silently create a ledger before those triggers. When the user has already explicitly asked for the Full outstanding items UI or durable ledger file, that request supplies the path-creation authority; choose the task-owned output directory when one exists and report it.
 
-## Schema version 3
+## Schema version 4
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "owner": "user",
   "authorizes_work": false,
   "title": "Outstanding items",
@@ -54,6 +54,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "state_text": "implemented; CI proof pending",
       "details_markdown": "Retried 20x locally, not on CI.",
       "explanation": "This is the login test that passes locally and fails at random on CI. The fix is in, and a green CI run is what would settle it.",
+      "provenance": "user-requested",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -66,6 +67,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "group": "Done",
       "state_text": "verified",
       "details_markdown": "`./deploy.sh --help` ran clean.",
+      "provenance": "unknown-legacy",
       "completed_at": "2026-05-04T11:10:00Z",
       "completed_session_id": "sess_EXAMPLE_9d21"
     }
@@ -81,7 +83,7 @@ Do not silently create a ledger before those triggers. When the user has already
 
 | Field | Rule |
 | --- | --- |
-| `schema_version` | Exactly `3` for this implementation. Reject unknown versions. |
+| `schema_version` | Exactly `4` after loading. Version 3 is upgraded atomically; other unknown versions are rejected. |
 | `owner` / `authorizes_work` | Always `"user"` / `false`. UI edits never change them. |
 | `revision` | Non-negative integer incremented after every successful mutation. It prevents stale overwrites. |
 | `id` | `OI-n`, permanent, unique, never renumbered. Gaps are normal. |
@@ -95,12 +97,17 @@ Do not silently create a ledger before those triggers. When the user has already
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |
 | `explanation` | Optional. One short, plain-language paragraph (600 characters or fewer) describing what the item is about, shown as the hover/focus tooltip in the UI. Plain text only — no Markdown, evidence, paths, or next steps. Absent or empty is valid, and the UI then falls back to a sentence based on `status`. |
+| `provenance` | Required. `user-requested` only when the user's explicit words caused capture, `agent-added` when an agent proactively created the item, or `unknown-legacy` when an older item's origin cannot be proved. It is immutable after creation. |
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
 | `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
 
-The server validates IDs, statuses, completion consistency, unique positions, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
+The server validates IDs, statuses, completion consistency, unique positions, provenance, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
+
+### Version 3 migration
+
+Loading a valid version 3 ledger upgrades it atomically to version 4, increments its revision, and writes `provenance: "unknown-legacy"` on every existing item. The migration deliberately does not guess from titles, status labels, notes, or conversational wording. Item order, status, completion, tracking/transfer state, evidence, and all other item content stay unchanged. Future items must supply provenance explicitly when they are first created.
 
 ### Not offering the same thing twice
 

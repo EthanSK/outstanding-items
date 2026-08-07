@@ -20,6 +20,9 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   off-topic. If I say "add this to outstanding items" or "remember this", record
   it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
+- Record each item's source when it is created: `user-requested` only when my
+  words caused the capture, `agent-added` for a proactive agent addition, and
+  `unknown-legacy` only when an older item's source cannot be proved.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation that starts directly with the single item you think I should
   do next, at most one line about it, and nothing else. No list, no counts, no
@@ -49,8 +52,9 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   real urgency, and how much I am carrying. Name a small first step, address it
   to me, then wait. Never rearrange the ledger to match it, and never start it
   yourself.
-- Anything another session should know is a memory update that starts nothing
-  there. Ask me first before using a tool that would wake or dispatch it.
+- You may record a genuinely useful relationship to another session locally.
+  That link alone never authorizes messaging, waking, starting, reprioritising,
+  or altering the other session; ask me separately before any memory update.
 - Ask before writing a backlog file anywhere.
 ```
 

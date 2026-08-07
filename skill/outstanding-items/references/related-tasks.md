@@ -2,11 +2,15 @@
 
 Registry schema, the delivery gate, relevance filter, delta format, loop prevention, and failure wording. Load when the user connects this work to another conversation.
 
-Cross-task propagation is **memory only**. A delta updates another task's ledger or registry. It authorizes no implementation there, it must not wake, resume, or dispatch anything, and it grants nothing here either — see [authority.md](authority.md).
+Recording a useful task relationship is **local metadata only**. You may add the other task's stable title and ID to this ledger without asking when the relationship is genuinely useful, but that link alone never authorizes waking, starting, messaging, reprioritising, or altering the other task. A fresh explicit user instruction is required before sending even a memory-only delta. Any authorized delta still grants no implementation there or here — see [authority.md](authority.md).
 
-## The two gates, first
+## The three gates, first
 
-### 1. Capability
+### 1. Authority
+
+Creating or updating the local registry row needs no separate approval when the relationship is genuinely useful. Stop there unless the user separately and explicitly asks for a memory update to be sent. A stored relationship, relevant change, available tool, or previous delta never supplies that sending authority.
+
+### 2. Capability
 
 | Question | If the answer is no |
 | --- | --- |
@@ -15,7 +19,7 @@ Cross-task propagation is **memory only**. A delta updates another task's ledger
 | Does it expose a tool to leave a note in another task? | You cannot propagate. Register the link and hand the user ready-to-carry text. |
 | Did the call you made actually return success? | It failed. Say so in the reply, verbatim. |
 
-### 2. Delivery
+### 3. Delivery
 
 Before using any send tool, answer this: **would delivery start a turn in the destination?**
 

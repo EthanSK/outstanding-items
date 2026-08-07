@@ -27,13 +27,14 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 1. **Capture everything.** Every distinct request, correction, deferral, or "while you're there" aside becomes an item — including requests unrelated to the current work. Never refuse a reminder because it is off-topic; capture it without changing the execution state of any item.
 2. **Capturing is not accepting a job.** "Add this to outstanding items" and "remember this" ask you to record, and nothing more. Record it, say so, and stop.
 3. **Assign a stable ID.** Items are `OI-1`, `OI-2`, … in the order first seen. IDs are never reused and never renumbered, so deltas stay compact and references stay valid.
-4. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn** while any item is open. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
-5. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
-6. **Close the loop.** When an item is finished, move it to the ledger's Done group instead of deleting it, so the user can audit what happened in the Full outstanding items view.
-7. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
-8. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
-9. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
-10. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
+4. **Record provenance at creation.** Set `provenance` to `user-requested` only when the user's words explicitly caused the item to be captured, or `agent-added` when an agent proactively created it. Use `unknown-legacy` only for older records whose source cannot be proved; never infer authorization from the title, status, or notes.
+5. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn** while any item is open. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
+6. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
+7. **Close the loop.** When an item is finished, move it to the ledger's Done group instead of deleting it, so the user can audit what happened in the Full outstanding items view.
+8. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
+9. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
+10. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
+11. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
 
 ## The compact recommendation
 
@@ -132,13 +133,14 @@ Give each item a short `explanation`: one warm, plain sentence or two saying wha
 
 A related task is another conversation whose own ledger should learn about some of these items. Register it once, then reuse the reference.
 
-1. **Memory only.** A delta updates the other task's ledger or registry. It authorizes no implementation there, and it must say so in its own words. Never dispatch, wake, resume, or route work for execution.
-2. **Resolve once.** Identify the related task once, then store its visible title plus stable task/session ID in the canonical ledger's `sections` registry. Never re-resolve by searching again; a title alone is not an identity.
-3. **Filter.** Only propagate updates relevant to that task's scope. Silence is correct for everything else.
-4. **Send deltas only.** Additive, compact, self-describing: what changed, which IDs, one line each. Never send the whole ledger.
-5. **Preserve the destination.** Never restate, reorder, reprioritise, or overwrite the other task's pre-existing scope, and never tell it to start anything.
-6. **Prevent loops.** Record what you sent. Never re-send an unchanged delta, never forward something that arrived from that same task, and never let two tasks echo an item back and forth.
-7. **Report failures.** If a send fails, say so plainly, show the exact text you tried to send, and keep the registry entry. Never delete a registry entry because a send failed.
+1. **Record useful links locally.** When a relationship is genuinely useful, you may add its stable title and task/session ID to this ledger's `sections` registry without asking first. That link is record-only metadata: by itself it never authorizes waking, starting, messaging, reprioritising, or altering the other task.
+2. **Message only when separately authorized.** A fresh explicit user instruction is required before sending even a memory-only delta. The delta authorizes no implementation there, and it must say so in its own words. Never dispatch, wake, resume, or route work for execution.
+3. **Resolve once.** Identify the related task once, then store its visible title plus stable task/session ID in the canonical ledger's `sections` registry. Never re-resolve by searching again; a title alone is not an identity.
+4. **Filter.** Only propagate separately authorized updates relevant to that task's scope. Silence is correct for everything else.
+5. **Send deltas only.** Additive, compact, self-describing: what changed, which IDs, one line each. Never send the whole ledger.
+6. **Preserve the destination.** Never restate, reorder, reprioritise, or overwrite the other task's pre-existing scope, and never tell it to start anything.
+7. **Prevent loops.** Record what you sent. Never re-send an unchanged delta, never forward something that arrived from that same task, and never let two tasks echo an item back and forth.
+8. **Report failures.** If a send fails, say so plainly, show the exact text you tried to send, and keep the registry entry. Never delete a registry entry because a send failed.
 
 An explicit ownership-transfer instruction is stronger than an ordinary memory delta: send the complete authorized handoff once, record the destination on every transferred item, preserve ID collisions instead of overwriting either side, and stop advancing those items in the source task. Transfer does not mark anything done and does not authorize the destination to implement it.
 

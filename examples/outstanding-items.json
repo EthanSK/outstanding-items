@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "owner": "user",
   "authorizes_work": false,
   "title": "Synthetic outstanding items",
@@ -22,6 +22,7 @@
       "state_text": "requested",
       "details_markdown": "Shared token is a possible route, not permission.",
       "explanation": "This is the one about buttons and links showing a clear outline when you tab to them. Right now that outline is missing in places, so keyboard users lose track of where they are on the page.",
+      "provenance": "user-requested",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -35,6 +36,7 @@
       "state_text": "waiting-on-you",
       "details_markdown": "Paste the prepared note only if wanted.",
       "explanation": "A short note is written and waiting for you to carry across to the design audit, so that task's list knows about the shared token. Pasting it is the whole job, and only if you want it there.",
+      "provenance": "agent-added",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -48,6 +50,7 @@
       "state_text": "reminder",
       "details_markdown": "Parked on purpose; no deadline.",
       "explanation": "You wanted to ask the design channel what the empty state should say before anyone builds it. You parked this one deliberately, so it simply stays visible until you feel like raising it.",
+      "provenance": "user-requested",
       "completed_at": null,
       "completed_session_id": null
     },
@@ -60,6 +63,7 @@
       "group": "Done",
       "state_text": "verified",
       "details_markdown": "CI run 481: login suite green 20/20.",
+      "provenance": "unknown-legacy",
       "completed_at": "2026-05-04T11:10:00Z",
       "completed_session_id": "sess_EXAMPLE_9d21"
     }

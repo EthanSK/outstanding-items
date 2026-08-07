@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 import pathlib
@@ -29,7 +30,7 @@ SPEC.loader.exec_module(ledger_ui)
 
 def sample_ledger() -> dict:
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "owner": "user",
         "authorizes_work": False,
         "title": "Synthetic full ledger",
@@ -49,6 +50,7 @@ def sample_ledger() -> dict:
                 "state_text": "requested",
                 "details_markdown": "Synthetic note one.",
                 "explanation": "A synthetic item kept here so the tooltip has something plain to say.",
+                "provenance": "user-requested",
                 "completed_at": None,
                 "completed_session_id": None,
             },
@@ -61,6 +63,7 @@ def sample_ledger() -> dict:
                 "group": "Outstanding for you",
                 "state_text": "planned",
                 "details_markdown": "Synthetic note two.",
+                "provenance": "agent-added",
                 "completed_at": None,
                 "completed_session_id": None,
             },
@@ -73,6 +76,7 @@ def sample_ledger() -> dict:
                 "group": "Done",
                 "state_text": "verified",
                 "details_markdown": "Synthetic proof.",
+                "provenance": "unknown-legacy",
                 "completed_at": "2026-08-07T10:00:00Z",
                 "completed_session_id": "sess_EXAMPLE_1234",
             },
@@ -83,6 +87,37 @@ def sample_ledger() -> dict:
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_v3_ledger_migrates_to_unknown_legacy_without_item_state_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            legacy = sample_ledger()
+            legacy["schema_version"] = 3
+            legacy["revision"] = 8
+            for item in legacy["items"]:
+                item.pop("provenance")
+            before = copy.deepcopy(legacy["items"])
+            ledger.write_text(json.dumps(legacy), encoding="utf-8")
+
+            migrated = ledger_ui.read_json(ledger)
+
+            self.assertEqual(migrated["schema_version"], 4)
+            self.assertEqual(migrated["revision"], 9)
+            self.assertTrue(all(item["provenance"] == "unknown-legacy" for item in migrated["items"]))
+            after = copy.deepcopy(migrated["items"])
+            for item in after:
+                item.pop("provenance")
+            self.assertEqual(after, before)
+            self.assertEqual(json.loads(ledger.read_text(encoding="utf-8"))["schema_version"], 4)
+
+    def test_current_schema_requires_supported_provenance(self) -> None:
+        data = sample_ledger()
+        data["items"][0].pop("provenance")
+        with self.assertRaisesRegex(ValueError, "unsupported provenance"):
+            ledger_ui.validate_ledger(data)
+        data["items"][0]["provenance"] = "probably-user"
+        with self.assertRaisesRegex(ValueError, "unsupported provenance"):
+            ledger_ui.validate_ledger(data)
+
     def test_markdown_migration_preserves_items_notes_and_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = pathlib.Path(temp) / "legacy.md"
@@ -99,6 +134,9 @@ class LedgerModelTests(unittest.TestCase):
             self.assertIn("Keep this detail", data["items"][0]["details_markdown"])
             self.assertFalse(data["items"][0]["completed"])
             self.assertTrue(data["items"][1]["completed"])
+            self.assertTrue(
+                all(item["provenance"] == "unknown-legacy" for item in data["items"])
+            )
             self.assertTrue(any(section["title"] == "Related tasks" for section in data["sections"]))
             ledger_ui.validate_ledger(data)
 
@@ -159,6 +197,7 @@ class LedgerModelTests(unittest.TestCase):
                 id="OI-9",
                 title="A newly captured item",
                 status="requested",
+                provenance="user-requested",
                 group=None,
                 explanation="  A gentle sentence\n  spread over two lines.  ",
                 notes_file=None,
@@ -169,18 +208,54 @@ class LedgerModelTests(unittest.TestCase):
                 item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == "OI-9"
             )
             self.assertEqual(created["explanation"], "A gentle sentence spread over two lines.")
+            self.assertEqual(created["provenance"], "user-requested")
 
             args.explanation = None
             args.title = "A renamed item"
+            args.provenance = None
             self.assertEqual(ledger_ui.command_upsert(args), 0)
             kept = next(
                 item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == "OI-9"
             )
             self.assertEqual(kept["title"], "A renamed item")
             self.assertEqual(kept["explanation"], "A gentle sentence spread over two lines.")
+            self.assertEqual(kept["provenance"], "user-requested")
 
             args.explanation = "y" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
             with self.assertRaisesRegex(ValueError, "at most"):
+                ledger_ui.command_upsert(args)
+
+    def test_new_item_requires_provenance_and_existing_origin_is_immutable(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-9",
+                title="A newly captured item",
+                status="requested",
+                provenance=None,
+                group=None,
+                explanation=None,
+                notes_file=None,
+                session_id=None,
+            )
+            with self.assertRaisesRegex(ValueError, "--provenance is required"):
+                ledger_ui.command_upsert(args)
+
+            for provenance in sorted(ledger_ui.PROVENANCES):
+                args.id = f"OI-{10 + len(ledger_ui.read_json(ledger)['items'])}"
+                args.provenance = provenance
+                ledger_ui.command_upsert(args)
+                created = next(
+                    item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == args.id
+                )
+                self.assertEqual(created["provenance"], provenance)
+
+            args.id = "OI-1"
+            args.title = None
+            args.provenance = "agent-added"
+            with self.assertRaisesRegex(ValueError, "provenance is immutable"):
                 ledger_ui.command_upsert(args)
 
     def test_migration_leaves_the_explanation_empty_for_the_ui_fallback(self) -> None:
@@ -211,6 +286,8 @@ class LedgerModelTests(unittest.TestCase):
             by_id = {item["id"]: item for item in data["items"]}
             self.assertEqual(by_id["OI-1"]["status"], "requested")
             self.assertEqual(by_id["OI-3"]["status"], "verified")
+            self.assertEqual(by_id["OI-1"]["provenance"], "user-requested")
+            self.assertEqual(by_id["OI-3"]["provenance"], "unknown-legacy")
             self.assertEqual(by_id["OI-1"]["tracking_state"], "transferred")
             self.assertEqual(by_id["OI-3"]["transferred_to"]["task_id"], "task_EXAMPLE_target")
             self.assertNotEqual(by_id["OI-2"].get("tracking_state"), "transferred")
@@ -333,6 +410,7 @@ class LedgerServerTests(unittest.TestCase):
         item = next(item for item in completed["items"] if item["id"] == "OI-2")
         self.assertTrue(item["completed"])
         self.assertEqual(item["status"], "verified")
+        self.assertEqual(item["provenance"], "agent-added")
 
         status, reopened = self.request(
             "POST",
@@ -343,6 +421,7 @@ class LedgerServerTests(unittest.TestCase):
         item = next(item for item in reopened["items"] if item["id"] == "OI-2")
         self.assertFalse(item["completed"])
         self.assertEqual(item["status"], "planned")
+        self.assertEqual(item["provenance"], "agent-added")
 
         external = ledger_ui.read_json(self.ledger)
         external["title"] = "Externally updated title"
@@ -419,6 +498,25 @@ class LedgerServerTests(unittest.TestCase):
         self.assertEqual(item["title"], "Edited title only")
         self.assertEqual(item["explanation"], original)
 
+    def test_browser_mutation_cannot_rewrite_provenance(self) -> None:
+        original = next(
+            item for item in ledger_ui.read_json(self.ledger)["items"] if item["id"] == "OI-1"
+        )["provenance"]
+        status, payload = self.request(
+            "POST",
+            "/api/mutate",
+            {
+                "base_revision": 1,
+                "action": "edit",
+                "id": "OI-1",
+                "title": "Edited title only",
+                "provenance": "agent-added",
+            },
+        )
+        self.assertEqual(status, 200)
+        item = next(entry for entry in payload["items"] if entry["id"] == "OI-1")
+        self.assertEqual(item["provenance"], original)
+
     def test_html_assets_and_token_gate(self) -> None:
         status, html = self.request("GET", "/")
         self.assertEqual(status, 200)
@@ -448,6 +546,21 @@ class LedgerAssetTests(unittest.TestCase):
             self.assertIn(f'action: "{action}"', script)
         self.assertIn("window.setInterval", script)
         self.assertIn("tracking_state === \"transferred\"", script)
+
+    def test_every_row_has_a_compact_accessible_provenance_badge(self) -> None:
+        html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
+        script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+        style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
+
+        self.assertEqual(html.count('class="provenance-badge"'), 1)
+        for value in ("user-requested", "agent-added", "unknown-legacy"):
+            self.assertIn(f'"{value}"', script)
+        for label in ("You asked", "Agent added", "Source unknown"):
+            self.assertIn(label, script)
+        self.assertIn('badge.setAttribute("aria-label"', script)
+        self.assertIn("attachProvenance(node, item)", script)
+        self.assertIn("grid-template-columns: minmax(0, 1fr) auto", style)
+        self.assertIn("white-space: nowrap", style)
 
     def test_every_row_carries_an_accessible_explanation_tooltip(self) -> None:
         html = (ASSETS / "ledger.html").read_text(encoding="utf-8")

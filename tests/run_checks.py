@@ -342,6 +342,9 @@ def check_skill_contract() -> list[str]:
         "Resolve once",
         "Report failures",
         "Prevent loops",
+        "Record useful links locally",
+        "Message only when separately authorized",
+        "by itself it never authorizes waking, starting, messaging, reprioritising, or altering the other task",
         # User ownership and curation guards.
         "the outstanding items belong to the user",
         "never authorizes you to start",
@@ -491,7 +494,7 @@ def check_authority_matrix() -> list[str]:
     return problems
 
 
-@check("public-examples", "copy-paste examples preserve user ownership and schema v3")
+@check("public-examples", "copy-paste examples preserve user ownership and schema v4")
 def check_public_examples() -> list[str]:
     problems = []
 
@@ -548,8 +551,8 @@ def check_public_examples() -> list[str]:
     except json.JSONDecodeError as exc:
         problems.append(f"example backlog JSON is invalid: {exc}")
     else:
-        if payload.get("schema_version") != 3:
-            problems.append("example backlog JSON must use schema version 3")
+        if payload.get("schema_version") != 4:
+            problems.append("example backlog JSON must use schema version 4")
         if payload.get("owner") != "user" or payload.get("authorizes_work") is not False:
             problems.append("example backlog JSON must say owner=user and authorizes_work=false")
         items = payload.get("items")
@@ -572,6 +575,64 @@ def check_public_examples() -> list[str]:
     legacy = read(ROOT / "examples" / "outstanding-items.md")
     if "Legacy migration fixture" not in legacy or "not a writable or canonical ledger" not in legacy:
         problems.append("examples/outstanding-items.md must be labelled as a frozen legacy fixture")
+    return problems
+
+
+@check("item-provenance", "every item records and displays an honest immutable origin")
+def check_item_provenance() -> list[str]:
+    problems = []
+    supported = {"user-requested", "agent-added", "unknown-legacy"}
+    payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
+    items = payload.get("items", [])
+    present = {item.get("provenance") for item in items if isinstance(item, dict)}
+    if present != supported:
+        problems.append(f"example ledger provenance values are {sorted(present)!r}, expected all three")
+
+    html_text = read(SKILL_DIR / "assets" / "ledger.html")
+    script = read(SKILL_DIR / "assets" / "ledger.js")
+    style = read(SKILL_DIR / "assets" / "ledger.css")
+    runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
+    if 'class="provenance-badge"' not in html_text:
+        problems.append("ledger.html has no provenance badge in the shared row template")
+    for fragment in (
+        "You asked",
+        "Agent added",
+        "Source unknown",
+        'badge.setAttribute("aria-label"',
+        "attachProvenance(node, item)",
+    ):
+        if fragment not in script:
+            problems.append(f"ledger.js is missing provenance UI wiring: {fragment!r}")
+    for fragment in (".provenance-badge", "white-space: nowrap"):
+        if fragment not in style:
+            problems.append(f"ledger.css is missing compact provenance styling: {fragment!r}")
+    for fragment in (
+        "PROVENANCES",
+        "unknown-legacy",
+        '"--provenance"',
+        "provenance is immutable",
+        "migrate_schema",
+    ):
+        if fragment not in runtime:
+            problems.append(f"ledger_ui.py is missing provenance enforcement: {fragment!r}")
+
+    artifact = read(SKILL_DIR / "references" / "backlog-artifact.md")
+    ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
+    skill = read(SKILL_MD)
+    for text, phrase, name in (
+        (artifact, "| `provenance` |", "backlog-artifact.md"),
+        (artifact, "Version 3 migration", "backlog-artifact.md"),
+        (ui_reference, "--provenance", "ledger-ui.md"),
+        (skill, "Record provenance at creation", "SKILL.md"),
+    ):
+        if phrase not in text:
+            problems.append(f"{name} does not document provenance rule {phrase!r}")
+
+    homepage = read(DOCS / "index.html")
+    if 'class="reply-provenance"' not in homepage:
+        problems.append("homepage demo does not show the compact provenance badge")
+    if 'class="reply-title"' in homepage or ">Outstanding<" in homepage:
+        problems.append("homepage demo restored the retired Outstanding header")
     return problems
 
 

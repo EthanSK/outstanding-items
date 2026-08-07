@@ -76,6 +76,21 @@
   const TOOLTIP_FALLBACK =
     "This one is on your list, and it stays here until you decide what happens with it.";
 
+  const PROVENANCE = {
+    "user-requested": {
+      label: "You asked",
+      description: "You explicitly asked for this item to be added.",
+    },
+    "agent-added": {
+      label: "Agent added",
+      description: "An agent added this item proactively.",
+    },
+    "unknown-legacy": {
+      label: "Source unknown",
+      description: "This older item's source could not be verified.",
+    },
+  };
+
   function apiUrl(path) {
     const query = new URLSearchParams({ token });
     return `${path}?${query.toString()}`;
@@ -221,6 +236,15 @@
     });
   }
 
+  function attachProvenance(node, item) {
+    const badge = node.querySelector(".provenance-badge");
+    const provenance = PROVENANCE[item.provenance] || PROVENANCE["unknown-legacy"];
+    badge.textContent = provenance.label;
+    badge.dataset.provenance = item.provenance || "unknown-legacy";
+    badge.setAttribute("aria-label", `Provenance: ${provenance.description}`);
+    badge.title = provenance.description;
+  }
+
   function beginEdit(node, item, initialValue = item.title) {
     if (item.tracking_state === "transferred") return;
     if (state.editing && state.editing.id !== item.id) state.editing.cancel();
@@ -305,6 +329,7 @@
     node.dataset.id = item.id;
     node.dataset.status = item.status;
     node.classList.toggle("transferred", transferred);
+    attachProvenance(node, item);
 
     const checkbox = node.querySelector(".item-check");
     checkbox.checked = completed;
