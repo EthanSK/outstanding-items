@@ -65,7 +65,7 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   off-topic, and never start something because I asked you to remember it.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
-  turn** with one compact Outstanding footer: the single item you think I should
+  turn** with one compact recommendation: the single item you think I should
   do next, at most one line about it, and nothing else. No list, no counts, no
   section headings, no reminders, no Done section. Never put it in commentary,
   progress notes, partial updates, or status messages.
@@ -105,7 +105,7 @@ Put this in that project's own `CLAUDE.md` instead of the global file:
 
 Work here arrives in bursts of half-related requests. Use the `outstanding-items`
 skill for every session in this repository and end the final response of each
-turn with one compact Outstanding footer naming a single suggested item — never
+turn with one compact recommendation naming a single suggested item — never
 in commentary or progress messages, and never as a list, a count, or a Done
 section. The list is mine: capture it, keep it out of the chat, suggest at most
 one next move, and wait for my current message to name the item you should

@@ -213,7 +213,7 @@ def is_external(target: str) -> bool:
 
 # ------------------------------------------------------------ footer shapes
 
-# The Outstanding footer is one suggested item, at most one line about it, and
+# The compact recommendation is one suggested item, at most one line about it, and
 # at most one live-UI link. Everything else — the other items, the reminders,
 # the counts, and the whole Done history — stays in the ledger and its editor.
 DASH = "—"
@@ -222,11 +222,10 @@ ELLIPSIS = "…"
 MIDDOT = "·"
 
 FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
-FOOTER_HEADER = "**Outstanding**"
 FOOTER_ITEM_RE = re.compile(
-    rf"^\*\*Outstanding\*\* {DASH} (OI-\d+) (.+) {DASH} ([a-z][a-z-]*)$"
+    rf"^\*\*(OI-\d+) (.+)\*\* {DASH} ([a-z][a-z-]*)$"
 )
-FOOTER_QUIET_RE = re.compile(rf"^\*\*Outstanding\*\* {DASH} nothing\b.*$")
+FOOTER_QUIET_RE = re.compile(r"^Nothing\b.*$")
 FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
 OI_ID_RE = re.compile(r"\bOI-\d+\b")
 LIST_ROW_RE = re.compile(rf"^\s*(?:[-*+{BULLET}]\s|{ELLIPSIS}|\d+[.)]\s)")
@@ -246,6 +245,7 @@ SUGGESTIBLE_STATUSES = {
 # Footer shapes that this project deliberately removed. None of them may come
 # back in any shipped file.
 STALE_FOOTER_PROMISES = [
+    (re.compile(r"^\*\*Outstanding\*\*\s*—", re.M), "the retired Outstanding heading"),
     (re.compile(r"\*\*Outstanding\*\*\s*\(\s*\d"), "the retired counts header"),
     (re.compile(r"\*\*Suggested for you\*\*"), "the retired Suggested for you label"),
     (re.compile(r"link appears twice"), "the retired two-link rule"),
@@ -262,7 +262,7 @@ def squash(text: str) -> str:
 
 
 def footer_blocks() -> list[tuple[str, int, list[str]]]:
-    """Every fenced block in the repository that documents an Outstanding footer."""
+    """Every fenced block in the repository that documents a compact recommendation."""
     found: list[tuple[str, int, list[str]]] = []
     for path in text_files():
         if rel(path) in POLICY_EXEMPT:
@@ -270,7 +270,9 @@ def footer_blocks() -> list[tuple[str, int, list[str]]]:
         text = read(path)
         for match in FENCED_BLOCK_RE.finditer(text):
             lines = match.group(1).splitlines()
-            if not lines or not lines[0].startswith(FOOTER_HEADER):
+            if not lines or not (
+                FOOTER_ITEM_RE.match(lines[0]) or FOOTER_QUIET_RE.match(lines[0])
+            ):
                 continue
             found.append((rel(path), text.count("\n", 0, match.start()) + 1, lines))
     return found
@@ -888,6 +890,8 @@ def check_homepage_focus() -> list[str]:
             (MIDDOT, "a counts line"),
             ("~~", "a struck-through Done item"),
             ("Done", "a Done section"),
+            ('class="reply-title"', "a heading row"),
+            (">Outstanding<", "the retired Outstanding heading"),
         ):
             if banned in block:
                 problems.append(f"the homepage demo reply still shows {why}: {banned!r}")
@@ -895,7 +899,6 @@ def check_homepage_focus() -> list[str]:
             'class="reply-item"',
             'class="reply-reason"',
             'class="reply-link"',
-            "one next move",
             "Full outstanding items",
         ):
             if required not in block:
@@ -932,9 +935,9 @@ def check_footer_once_per_turn() -> list[str]:
     required = {
         "skill/outstanding-items/SKILL.md": [
             "final response of the turn",
-            "One footer per turn, in the final response only",
+            "One recommendation per turn, in the final response only",
             "Never put it in commentary, progress notes",
-            "carry no Outstanding line, no item, no count, and no link",
+            "carry no recommendation, item, count, or link",
         ],
         "AGENTS.md": ["final response of the turn", "commentary, progress notes"],
         "CLAUDE.md": ["final response of the turn", "commentary, progress notes"],
@@ -953,12 +956,12 @@ def check_footer_once_per_turn() -> list[str]:
             "Commentary and progress messages carry none of it",
         ],
         "examples/transcript.md": [
-            "No Outstanding block here",
+            "No recommendation block here",
             "This is commentary, and the ledger stays silent until the answer",
         ],
         "skill/outstanding-items/references/worked-examples.md": [
             "once per turn, at the end of the final response",
-            "Neither carried an Outstanding line, a count, an `OI-n`, or a Full outstanding items link",
+            "Neither carried a recommendation, count, `OI-n`, or Full outstanding items link",
         ],
         "skill/outstanding-items/references/ledger-ui.md": ["final response of a turn"],
     }
@@ -1031,7 +1034,7 @@ def check_compact_footer() -> list[str]:
                 problems.append(
                     f"{where} is a no-suggestion footer of {len(lines)} lines; one line plus the link"
                 )
-        elif header.startswith(f"{FOOTER_HEADER} ("):
+        elif header.startswith("**Outstanding**"):
             problems.append(f"{where} still uses the retired counts header: {header!r}")
         else:
             problems.append(f"{where} has an unrecognised footer header: {header!r}")
@@ -1100,7 +1103,7 @@ def check_compact_footer() -> list[str]:
         "README.md",
     ):
         if name not in files:
-            problems.append(f"{name} documents no Outstanding footer")
+            problems.append(f"{name} documents no compact recommendation")
 
     skill = read(SKILL_MD)
     for phrase in (
@@ -1108,7 +1111,7 @@ def check_compact_footer() -> list[str]:
         "**Exactly one item.**",
         "**No Done section, ever.**",
         "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
-        "nothing new to suggest",
+        "Nothing new to suggest",
         "never let it become the footer's suggestion",
         "A `blocked` item is never suggested",
     ):

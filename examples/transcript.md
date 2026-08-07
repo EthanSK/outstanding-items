@@ -2,10 +2,10 @@
 
 A synthetic task showing the boundary between remembering, advising, and doing.
 
-Every Outstanding footer here is complete: one suggested item, at most one line
+Every compact recommendation here is complete: one suggested item, at most one line
 about it, and the live editor link when one is running. It appears once per turn,
 at the end of the final response. Progress notes and commentary written before
-that answer carry no Outstanding block at all, and no footer anywhere carries a
+that answer carry no recommendation block at all, and no block anywhere carries a
 list, a count, or a Done section.
 
 ---
@@ -16,7 +16,7 @@ list, a count, or a Done section.
 is implemented but not verified.
 
 ```text
-**Outstanding** — OI-1 Fix the flaky login test — implemented
+**OI-1 Fix the flaky login test** — implemented
 A CI run is the only thing that would prove it; say the word and I will start one.
 ```
 
@@ -30,7 +30,7 @@ me to ask the design channel about its empty state.
 **Agent:** Recorded both. Neither has started.
 
 ```text
-**Outstanding** — OI-2 Add rate-limit docs to the handbook — requested
+**OI-2 Add rate-limit docs to the handbook** — requested
 Twenty minutes if you want a small one; nothing else waits on it.
 ```
 
@@ -46,7 +46,7 @@ OI-3 is a reminder you parked on purpose, so it is never promoted to fill a line
 OI-3 is the design-channel reminder.
 
 ```text
-**Outstanding** — OI-1 Fix the flaky login test — implemented
+**OI-1 Fix the flaky login test** — implemented
 CI would settle it in a couple of minutes, if you want that now.
 ```
 
@@ -60,13 +60,13 @@ also clears the slate, so OI-1 can be named again.
 **Agent** *(progress note, while the suite runs)*: CI is running the login
 suite now.
 
-No Outstanding block here. This is commentary, and the ledger stays silent until
+No recommendation block here. This is commentary, and the ledger stays silent until
 the answer.
 
 **Agent** *(final response)*: CI passed the login suite 20 times.
 
 ```text
-**Outstanding** — OI-2 Add rate-limit docs to the handbook — requested
+**OI-2 Add rate-limit docs to the handbook** — requested
 Still the only thing on the list you could knock out in one sitting.
 ```
 
@@ -93,7 +93,7 @@ Nothing else in your list changes.
 ```
 
 ```text
-**Outstanding** — OI-8 Carry the prepared delta to the design audit — waiting-on-you
+**OI-8 Carry the prepared delta to the design audit** — waiting-on-you
 Paste it into that task only if you want its memory updated; nothing sends itself.
 ```
 
@@ -107,7 +107,7 @@ No task-triggering send occurred. The destination received no instruction.
 about twenty minutes, and the nav labels read the same token afterwards.
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 About twenty minutes, and you already have that file open.
 ```
 
@@ -121,7 +121,7 @@ The recommendation changes no item, status, order, or execution state.
 `start OI-5` if you want me to work on it.
 
 ```text
-**Outstanding** — OI-5 Skip link — requested
+**OI-5 Skip link** — requested
 Your call, recorded. Say `start OI-5` whenever you want it picked up.
 ```
 
@@ -136,7 +136,7 @@ offered again unless you ask.
 pending, and no sibling item is authorized.
 
 ```text
-**Outstanding** — OI-6 Aria labels on the nav — requested
+**OI-6 Aria labels on the nav** — requested
 It reads the token the skip link just used, so it is the cheapest thing next.
 ```
 
@@ -165,7 +165,7 @@ Seven open, one of them waiting on you:
 OI-1 is done and verified; it lives under Done in the editor.
 
 ```text
-**Outstanding** — nothing new to suggest; your list is unchanged.
+Nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 

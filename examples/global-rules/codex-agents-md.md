@@ -21,7 +21,7 @@ Use the `outstanding-items` skill in any task where I make more than one request
   record it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
-  turn** with one compact Outstanding footer: the single item you think I should
+  turn** with one compact recommendation that starts directly with the single item you think I should
   do next, at most one line about it, and nothing else. No list, no counts, no
   section headings, no reminders, no Done section. Never put it in commentary,
   progress notes, partial updates, or status messages.
@@ -62,7 +62,7 @@ If your global instructions are already crowded:
 ## Outstanding items
 Use the `outstanding-items` skill whenever I make more than one request in a task.
 Capture unrelated asides too, and end the final response of each turn with one
-compact Outstanding footer naming a single suggested item — never in commentary
+compact recommendation naming a single suggested item — never in commentary
 or progress messages, and never as a list, a count, or a Done section. Link a
 running local editor as **Full outstanding items** on the last line, or write no
 link at all. The list is mine: never start, resume, continue, investigate,
@@ -78,7 +78,7 @@ Say so in the task. The skill stops appending the footer when asked and keeps th
 
 ## Checking it worked
 
-Start a task, make two unrelated requests, and look at the end of the final response. If there is no `**Outstanding**` line:
+Start a task, make two unrelated requests, and look at the end of the final response. If it does not start directly with one `**OI-n …** — status` recommendation:
 
 1. Confirm the file exists: `ls ~/.codex/skills/outstanding-items/SKILL.md`
 2. Confirm the frontmatter is intact — `name:` and `description:` between `---` fences.

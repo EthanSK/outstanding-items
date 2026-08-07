@@ -1,6 +1,6 @@
 # Choosing the one item
 
-How to choose the single item the Outstanding footer names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when you suspect the honest answer is "nothing new".
+How to choose the single item the compact recommendation names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when you suspect the honest answer is "nothing new".
 
 The footer is one suggestion addressed to the person. It proposes and then waits. It is never a plan you carry out, and it never becomes authority to start — see [authority.md](authority.md).
 
@@ -16,7 +16,7 @@ While any item is open, the final response carries the footer. What varies is wh
 | Something finished and the obvious path opened or closed. | They are winding down, and the kind answer is "nothing needs you tonight". |
 | Everything left needs them personally — a click, a key, a yes. | You genuinely cannot tell, and inventing a rationale would be dishonest. |
 
-The no-suggestion line is one quiet sentence — `**Outstanding** — nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It is a legitimate outcome, not a failure, and it is what stops the footer from becoming a lecture that nobody reads by turn four.
+The no-suggestion line is one quiet sentence — `Nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It is a legitimate outcome, not a failure, and it is what stops the recommendation from becoming a lecture that nobody reads by turn four.
 
 ## What to weigh
 
@@ -40,7 +40,7 @@ Availability is judged from the user's side, not yours. Something you cannot tou
 Two lines maximum, plus the live UI link when one exists:
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 Twenty minutes, and the smallest version is the shared token plus one button.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -58,7 +58,7 @@ Twenty minutes, and the smallest version is the shared token plus one button.
 Say it is close, and leave the runner-up unnamed. Naming a second item turns the footer back into the list it exists to replace, and the whole ledger is one click away in the UI:
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 A close call, but this is the smaller restart and you were already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -117,7 +117,7 @@ Each of these is the whole footer, at the end of the final response of its turn.
 **Asked directly, several things open**
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 About twenty minutes, and you are already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -125,35 +125,35 @@ About twenty minutes, and you are already in that file.
 **Everything left needs them in person**
 
 ```text
-**Outstanding** — OI-8 Approve the staging deploy — waiting-on-you
+**OI-8 Approve the staging deploy** — waiting-on-you
 Click approve in the deploy UI; it is the smallest thing on the list that only you can do.
 ```
 
 **Returning after a gap**
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — implemented
+**OI-4 Focus ring on interactive elements** — implemented
 You left it half-done and the suite still passes, so it is the cheapest restart.
 ```
 
 **Overloaded**
 
 ```text
-**Outstanding** — OI-5 Skip link — requested
+**OI-5 Skip link** — requested
 Just the first section of it, if anything. Nothing here has a date on it.
 ```
 
 **They declined the last one, and nothing else is eligible**
 
 ```text
-**Outstanding** — nothing new to suggest; your list is unchanged.
+Nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 **Winding down**
 
 ```text
-**Outstanding** — nothing here needs you tonight.
+Nothing here needs you tonight.
 ```
 
 **The user already decided** — the body says it, the footer names their choice and nothing else:

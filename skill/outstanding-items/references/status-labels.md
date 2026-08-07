@@ -96,7 +96,7 @@ Notes are optional for most labels and mandatory for `in-progress`, `blocked`, `
 
 ## Where a status shows up
 
-The Outstanding footer names one item, so a status no longer decides which chat section an item lands in. It decides how the item reads in the Full outstanding items view, and whether the item can be the one the footer suggests.
+The compact recommendation names one item, so a status no longer decides which chat section an item lands in. It decides how the item reads in the Full outstanding items view, and whether the item can be the one the recommendation suggests.
 
 - Grouping in the ledger and its UI is mechanical: `waiting-on-you` → **Waiting on you**, `reminder` → **Intentional reminders**, every other open item → **Outstanding for you**, `verified` and `dropped` → **Done**, and anything with `tracking_state=transferred` → the read-only **Owned elsewhere** group.
 - Eligible to be suggested: any open item the user could pick up now, including `waiting-on-you`.

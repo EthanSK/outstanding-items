@@ -2,7 +2,7 @@
 
 Annotated synthetic transcripts. Every name, task ID, and session ID is invented. Load when you want to see the behaviour end to end — especially where the ledger stops and the user's authority begins.
 
-Every footer below is the whole footer: one suggested item, at most one line about it, and the live UI link when an editor is running. It appears once per turn, at the end of the final response — never in the commentary or progress messages that come before it, and never with a list, a count, or a Done section.
+Every recommendation below is the whole compact block: one suggested item, at most one line about it, and the live UI link when an editor is running. It appears once per turn, at the end of the final response — never in the commentary or progress messages that come before it, never with an `Outstanding` heading, and never with a list, count, or Done section.
 
 ---
 
@@ -15,7 +15,7 @@ That is a fresh, explicit instruction naming a specific thing, so the work is au
 **Agent** *(does the work, then)*:
 
 ```text
-**Outstanding** — OI-1 Fix the flaky login test — implemented
+**OI-1 Fix the flaky login test** — implemented
 The retry loop changed; a CI run is the thing that would settle it, if you want one.
 ```
 
@@ -26,7 +26,7 @@ The retry loop changed; a CI run is the thing that would settle it, if you want 
 **Agent (body):** Noted — I have not started it.
 
 ```text
-**Outstanding** — OI-2 Add rate-limit docs to the handbook — requested
+**OI-2 Add rate-limit docs to the handbook** — requested
 Twenty minutes if you want a small one. Nothing depends on it either way.
 ```
 
@@ -37,7 +37,7 @@ Twenty minutes if you want a small one. Nothing depends on it either way.
 > Unrelated is fine. Capture it, do not start it, and do not change the execution state of anything else. It is a `reminder` rather than a `requested` item because there is no execution request and no deadline — the user wants it held, not done.
 
 ```text
-**Outstanding** — nothing new to suggest; your list is unchanged.
+Nothing new to suggest; your list is unchanged.
 ```
 
 > Both open items have now been offered once and left unanswered, and OI-3 was parked on purpose, so a reminder is never promoted to fill the line. The honest footer is the quiet one. Nothing was hidden, dropped, or reordered to produce it.
@@ -47,7 +47,7 @@ Twenty minutes if you want a small one. Nothing depends on it either way.
 **Agent (body):** Three things are open. OI-1 is implemented but unproven — CI would settle it. OI-2 is untouched. OI-3 is the design-channel reminder you parked.
 
 ```text
-**Outstanding** — OI-1 Fix the flaky login test — implemented
+**OI-1 Fix the flaky login test** — implemented
 CI is the cheapest thing left on it; say the word and I will run it.
 ```
 
@@ -62,7 +62,7 @@ CI is the cheapest thing left on it; say the word and I will run it.
 **Agent** runs CI, and the login test passes 20 times.
 
 ```text
-**Outstanding** — OI-2 Add rate-limit docs to the handbook — planned
+**OI-2 Add rate-limit docs to the handbook** — planned
 The approach is agreed, so the limits table is a short first pass.
 ```
 
@@ -71,7 +71,7 @@ The approach is agreed, so the limits table is a short first pass.
 **Turn 6 — User:** Actually forget the handbook thing, we're deleting that page.
 
 ```text
-**Outstanding** — nothing here needs you right now.
+Nothing here needs you right now.
 ```
 
 > OI-2 is struck through and kept in the ledger's Done group with the reason and who decided. The only thing still open is an intentional reminder, and promoting it to fill the line would be nagging, so the footer says what is true. Dropped items are never deleted, and never shown here.
@@ -91,12 +91,12 @@ Eight open items for the user, past the point where the ledger should live only 
 **Turn 12 — User:** Yeah do it.
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-> "Yeah do it" authorized the canonical JSON and its editor, and nothing on the list. Eight items were created in one final response — the file creation itself produced no interim Outstanding block.
+> "Yeah do it" authorized the canonical JSON and its editor, and nothing on the list. Eight items were created in one final response — the file creation itself produced no interim recommendation block.
 >
 > The chat gets one of them. The other seven, the reminder, and both completed items are one click away in the editor instead of eleven more lines of conversation. OI-9 is `blocked` on an upstream bug, so it is never the suggestion: nothing the user does moves it. The UI is live, so the exact URL `start` printed sits on the last line — and it would be absent entirely if no editor were running.
 
@@ -109,7 +109,7 @@ Twenty minutes, and the shared token is the whole first step.
 The pipeline requires a human. The agent cannot press the button, and no in-scope workaround exists that would be safe to take alone.
 
 ```text
-**Outstanding** — OI-12 Approve the staging deploy — waiting-on-you
+**OI-12 Approve the staging deploy** — waiting-on-you
 Click approve in the deploy UI; it is the one thing here that only you can do.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -138,7 +138,7 @@ Nothing else in your list changes.
 Registry row: `Design system audit · task_EXAMPLE_8f31 · outbound · prepared (not sent)`.
 
 ```text
-**Outstanding** — OI-13 Carry the focus-token note to the design audit — waiting-on-you
+**OI-13 Carry the focus-token note to the design audit** — waiting-on-you
 Paste the prepared note there only if you want that task's memory updated.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -165,7 +165,7 @@ Availability from the user's side: OI-9 is `blocked`, so nothing they do moves i
 **Agent (body):** OI-4, if you want a short one. You were already in that file, it is about twenty minutes, and OI-6 reads the same token, so doing it once settles two. Nothing here has a date on it.
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 About twenty minutes, and you were already in that file this morning.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -183,7 +183,7 @@ What the suggestion did **not** do:
 **Agent (body):** OI-5 is recorded as your priority. The ledger is unchanged. Tell me `start OI-5` if you want me to work on it.
 
 ```text
-**Outstanding** — OI-5 Skip link — requested
+**OI-5 Skip link** — requested
 Your call, recorded. Say `start OI-5` whenever you want it picked up.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -194,10 +194,10 @@ Your call, recorded. Say `start OI-5` whenever you want it picked up.
 
 Now there is a fresh, explicit instruction naming one item. The agent adds the skip link during this turn; browser proof remains outstanding.
 
-While the work was under way the agent posted two short progress notes — "reading the layout template", then "skip link added, checking the tab order". Neither carried an Outstanding line, a count, an `OI-n`, or a Full outstanding items link. The ledger was updated silently, and the footer appeared once, here, at the end of the final response:
+While the work was under way the agent posted two short progress notes — "reading the layout template", then "skip link added, checking the tab order". Neither carried a recommendation, count, `OI-n`, or Full outstanding items link. The ledger was updated silently, and the compact block appeared once, here, at the end of the final response:
 
 ```text
-**Outstanding** — OI-6 Aria labels on the nav — requested
+**OI-6 Aria labels on the nav** — requested
 It reads the token you just added, so it is the cheapest thing to carry on with.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -229,7 +229,7 @@ It reads the token you just added, so it is the cheapest thing to carry on with.
 Everything completed is in the editor under Done: [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 
 ```text
-**Outstanding** — OI-7 Muted-text contrast — requested
+**OI-7 Muted-text contrast** — requested
 A short one, and the only item nobody has offered you yet.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -267,7 +267,7 @@ A short one, and the only item nobody has offered you yet.
 | Waking another task to deliver a delta | A note that arrives as an instruction commissions work nobody authorized. | `prepared (not sent)`, and hand the text over. |
 | "I've let the design system audit know" with no successful call | Unverifiable claim. | `registered (manual)` plus the text to carry. |
 | Creating `outstanding-items.json` without asking | Files appear in someone's repository unannounced. | Ask once, propose a path, offer the exclusion. |
-| Repeating the Outstanding footer in every progress message | The turn becomes three near-identical footers, and the answer disappears between them. | Maintain the ledger silently; render one footer in the final response. |
+| Repeating the compact recommendation in every progress message | The turn becomes three near-identical blocks, and the answer disappears between them. | Maintain the ledger silently; render one recommendation in the final response. |
 | Writing a **Full outstanding items** link because the footer looks bare | An invented or stale URL sends the user nowhere. | Link only the exact URL `start` printed, once, or write no link line at all. |
 | Adding the other items under the suggested one, "just for context" | That is the list again, and the list is what the footer exists to keep out of the chat. | One item. The rest is in the editor, or in the body when they ask. |
 | Ending the footer with the Done section | Finished work is an audit trail, not a next move, and it doubles the length of each answer. | Keep completions in the ledger's Done group and in the editor. |

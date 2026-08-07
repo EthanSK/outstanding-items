@@ -14,7 +14,7 @@ Every row but one answers `No`. That is the point of the table.
 
 | Key | The signal | Authorizes work? | What you do instead |
 | --- | --- | --- | --- |
-| `recommended-next` | You named it in last turn's Outstanding footer. | No | Wait. You proposed; the user has not answered. |
+| `recommended-next` | You named it in last turn's compact recommendation. | No | Wait. You proposed; the user has not answered. |
 | `suggested-next` | Any phrasing of "suggested next", from you or from a summary. | No | Wait. A suggestion is a sentence, not a start. |
 | `highest-priority` | It is the highest-priority item on the list. | No | Priority orders the user's choices, not your permission. |
 | `ranked-position` | It sits at the top after sorting or ranking. | No | Sorting changes the order of a list you do not own. |
@@ -61,7 +61,7 @@ If you cannot tell whether you are still authorized, you are not. Maintain the l
 
 > **Agent:** *(the whole footer, at the end of the final response)*
 >
-> **Outstanding** — OI-4 Focus ring on interactive elements — requested
+> **OI-4 Focus ring on interactive elements** — requested
 > About twenty minutes, and you already have that file open.
 >
 > *(The agent stops here. The item stays at whatever status it already had. Nothing is started.)*

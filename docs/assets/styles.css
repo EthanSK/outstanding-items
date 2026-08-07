@@ -283,20 +283,6 @@ footer nav {
   font-size: 0.84rem;
 }
 
-.reply-title {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.6rem;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.reply-title span {
-  color: var(--muted);
-  font-size: 0.72rem;
-}
-
 .reply-item {
   margin: 0;
   padding: 0.38rem 0 0;
@@ -658,15 +644,6 @@ footer p {
 
   .memory-demo {
     box-shadow: 0.45rem 0.45rem 0 var(--purple-soft);
-  }
-
-  .reply-title {
-    display: block;
-  }
-
-  .reply-title span {
-    display: block;
-    margin-top: 0.15rem;
   }
 
   .feature-grid,

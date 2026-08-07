@@ -1,6 +1,6 @@
 ---
 name: outstanding-items
-description: Hold the user's ledger of outstanding items so nothing is dropped, keep the whole list out of the chat, and end the final response of each turn with one compact Outstanding line naming a single suggested next item plus a link to the editable HTML Full outstanding items view. The items belong to the user, so listing, ranking, syncing, or recommending one never authorizes starting it. Use when the user makes multiple requests, says also, don't forget, later, remind me, add that to the list, what's left, full outstanding items, full ledger, or where are we; when a task has run long enough that requests may have fallen out of context; when the user asks what to do next; or when the user asks to register, update, or notify a related task.
+description: Hold the user's ledger of outstanding items so nothing is dropped, keep the whole list out of the chat, and end the final response of each turn with one compact recommendation naming a single suggested next item plus a link to the editable HTML Full outstanding items view. The items belong to the user, so listing, ranking, syncing, or recommending one never authorizes starting it. Use when the user makes multiple requests, says also, don't forget, later, remind me, add that to the list, what's left, full outstanding items, full ledger, or where are we; when a task has run long enough that requests may have fallen out of context; when the user asks what to do next; or when the user asks to register, update, or notify a related task.
 ---
 
 # Outstanding Items
@@ -27,7 +27,7 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 1. **Capture everything.** Every distinct request, correction, deferral, or "while you're there" aside becomes an item — including requests unrelated to the current work. Never refuse a reminder because it is off-topic; capture it without changing the execution state of any item.
 2. **Capturing is not accepting a job.** "Add this to outstanding items" and "remember this" ask you to record, and nothing more. Record it, say so, and stop.
 3. **Assign a stable ID.** Items are `OI-1`, `OI-2`, … in the order first seen. IDs are never reused and never renumbered, so deltas stay compact and references stay valid.
-4. **Show one line, once per turn.** Maintain the ledger silently while you work, then append the compact Outstanding footer to the **final response of the turn** while any item is open. It carries one suggested item, never the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
+4. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn** while any item is open. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
 5. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
 6. **Close the loop.** When an item is finished, move it to the ledger's Done group instead of deleting it, so the user can audit what happened in the Full outstanding items view.
 7. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
@@ -35,12 +35,12 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 9. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
 10. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
 
-## The Outstanding footer
+## The compact recommendation
 
 One small block at the very end of the **final** response of the turn, after your normal answer, separated by a blank line. At most three lines: the one item you suggest next, an optional line saying how to start it and why, and the live UI link when one exists. Everything else stays in the ledger, out of the chat.
 
 ```text
-**Outstanding** — OI-5 Add rate-limit docs to the handbook — planned
+**OI-5 Add rate-limit docs to the handbook** — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](<live local UI URL>)
 ```
@@ -48,23 +48,24 @@ Draft the limits table first, about twenty minutes; nothing else is waiting on i
 With no live UI, the link line is simply absent and nothing replaces it:
 
 ```text
-**Outstanding** — OI-8 Approve the staging deploy — waiting-on-you
+**OI-8 Approve the staging deploy** — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
 When nothing can honestly be suggested — the last suggestion is still unanswered, the user declined it, everything left is blocked or deliberately parked, or they are winding down — say so in one quiet line instead of inventing a pick:
 
 ```text
-**Outstanding** — nothing new to suggest; your list is unchanged.
+Nothing new to suggest; your list is unchanged.
 [Full outstanding items](<live local UI URL>)
 ```
 
 Rules:
 
-- **One footer per turn, in the final response only.** Update the ledger silently while working. Commentary, progress notes, partial updates, and status lines carry no Outstanding line, no item, no count, and no link.
+- **One recommendation per turn, in the final response only.** Update the ledger silently while working. Commentary, progress notes, partial updates, and status lines carry no recommendation, item, count, or link.
+- **No heading or label.** Start immediately with the item itself. Never prefix the block with `Outstanding`, `Suggested for you`, `Next`, or another heading.
 - **Exactly one item.** One `OI-n` appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
 - **No Done section, ever.** A `verified`, `dropped`, or `transferred` item never appears in the footer — not as a line, not struck through, not as a count, not as a heading. Completions live in the ledger's Done group and in the Full outstanding items view, which is where the user audits them.
-- Line one is `**Outstanding** — OI-n <short title> — <status>`, using the user's own words trimmed to roughly 60 characters, or the honest no-suggestion line above.
+- Line one is `**OI-n <short title>** — <status>`, using the user's own words trimmed to roughly 60 characters, or the honest no-suggestion line above.
 - Line two is optional and never more than one line: a small first step, one plain reason, or the exact action a `waiting-on-you` item needs. Leave it out when it adds nothing.
 - **The Full outstanding items link appears once, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line as the last line of the footer, using the exact URL `ledger_ui.py start` printed. With no live UI, write no link line at all: never invent a URL, and never link raw JSON or Markdown.
 - **Never repeat a suggestion the user ignored, declined, or has not answered.** Choose a different eligible item, or use the no-suggestion line. When the user asks what to do next, the slate is clear and the best item may be named again. Once is advice; twice is nagging.

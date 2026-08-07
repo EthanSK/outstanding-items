@@ -16,7 +16,7 @@ Use the equivalent `~/.claude/skills/` path under Claude Code. The command print
 Use the printed URL as the last line of the compact footer:
 
 ```markdown
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```

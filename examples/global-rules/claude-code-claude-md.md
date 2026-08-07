@@ -21,7 +21,7 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
-  turn** with one compact Outstanding footer: the single item you think I should
+  turn** with one compact recommendation that starts directly with the single item you think I should
   do next, at most one line about it, and nothing else. No list, no counts, no
   section headings, no reminders, no Done section. Never put it in commentary,
   progress notes, partial updates, or status messages.
@@ -60,7 +60,7 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 ## Outstanding items
 Use the `outstanding-items` skill whenever I make more than one request in a session.
 Capture unrelated asides too, and end the final response of each turn with one
-compact Outstanding footer naming a single suggested item — never in commentary
+compact recommendation naming a single suggested item — never in commentary
 or progress messages, and never as a list, a count, or a Done section. Link a
 running local editor as **Full outstanding items** on the last line, or write no
 link at all. The list is mine: never start, resume, continue, investigate,
@@ -76,7 +76,7 @@ Say so. The skill stops appending the footer when asked and keeps the ledger for
 
 ## Checking it worked
 
-Make two unrelated requests in one session and look at the end of the final response. If there is no `**Outstanding**` line — or if it comes back as a multi-section list, a count, or a Done pile — or if the same block also shows up in the progress messages before it:
+Make two unrelated requests in one session and look at the end of the final response. If it does not start directly with one `**OI-n …** — status` recommendation — or if it comes back as a labelled heading, multi-section list, count, or Done pile — or if the same block also shows up in the progress messages before it:
 
 1. Confirm the file exists: `ls ~/.claude/skills/outstanding-items/SKILL.md`
 2. Run `/skills` and look for `outstanding-items` in the list.

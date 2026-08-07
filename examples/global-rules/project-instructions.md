@@ -14,8 +14,8 @@ Work in this repository arrives in bursts of half-related requests. Use the
   something from it is never permission to start, resume, investigate, research,
   prepare, do pre-work for, dispatch, route, or complete it. Wait until I name an
   item and tell you to go in the current message.
-- Keep the ledger silently while you work and put one compact Outstanding footer
-  at the end of the final response of each turn: the single item you think I
+- Keep the ledger silently while you work and put one compact recommendation
+  at the end of the final response of each turn, starting directly with the single item you think I
   should do next, at most one line about it, and nothing else. No list, no
   counts, no section headings, no Done section. Commentary and progress messages
   carry none of it.
@@ -42,8 +42,8 @@ Work in this repository arrives in bursts of half-related requests. Use the
 ```markdown
 ## Task hygiene
 
-Use the `outstanding-items` skill. Each turn ends with one compact Outstanding
-footer, in the final response only, naming one suggested item and nothing else.
+Use the `outstanding-items` skill. Each turn ends with one compact recommendation
+in the final response only, starting directly with one suggested item and nothing else.
 
 `verified` in this repository means one specific thing: `make check` passed on
 the current working tree, and you saw the output. Anything else is

@@ -6,7 +6,7 @@ A skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](http
 
 **It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and every item is captured with a permanent ID. The list itself stays out of the conversation: it lives in the ledger, and in a local editor you can open in one click.
 
-**It shows you one thing.** Each turn ends with a two- or three-line **Outstanding** footer naming the single item it thinks you should do next, and a link to everything else. It appears once, in the final response, so progress chatter never turns into three copies of the same list — and there is no Done section, no counts, and no wall of items to skim past.
+**It shows you one thing.** Each turn ends with a two- or three-line recommendation that starts directly with the single item it thinks you should do next, plus a link to everything else. There is no heading to read past. It appears once, in the final response, so progress chatter never turns into three copies of the same list — and there is no Done section, no counts, and no wall of items to skim past.
 
 **It curates, and curation proposes.** That one line is a suggestion *for you*, with a small first step and, when it helps, a reason. **You decide, and you start it.**
 
@@ -44,7 +44,7 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 A real footer looks like this — once per turn, at the end of the final response:
 
 ```text
-**Outstanding** — OI-5 Add rate-limit docs to the handbook — planned
+**OI-5 Add rate-limit docs to the handbook** — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -54,14 +54,14 @@ That is the whole thing. One item — the one it thinks you should do next — a
 The link is the exact URL the local editor printed. If no editor is running, that line simply is not there — the skill does not invent a URL to fill the space:
 
 ```text
-**Outstanding** — OI-8 Approve the staging deploy — waiting-on-you
+**OI-8 Approve the staging deploy** — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
 And when there is honestly nothing to suggest — you ignored the last one, everything left is blocked or parked, or you are winding down — it says that instead of inventing a pick:
 
 ```text
-**Outstanding** — nothing new to suggest; your list is unchanged.
+Nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
@@ -126,7 +126,7 @@ Full definitions, transitions, and anti-patterns: [`references/status-labels.md`
 The second half of the skill, and the reason the footer is one line. The ledger knows what is outstanding; curation decides which single item is worth putting in front of you — offered to you, decided by you.
 
 ```text
-**Outstanding** — OI-4 Focus ring on interactive elements — requested
+**OI-4 Focus ring on interactive elements** — requested
 About twenty minutes, and you already have that file open.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -227,7 +227,7 @@ Codex — append to `~/.codex/AGENTS.md`:
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
 keep the ledger silently while you work, and end the final response of each turn
-with one compact Outstanding footer: the single item you think I should do next,
+with one compact recommendation: the single item you think I should do next,
 at most one line about it, and nothing else — no list, no counts, no reminders,
 no Done section. Never put it in commentary or progress messages. When a local
 ledger UI is running, put **Full outstanding items** on the footer's last line
@@ -247,7 +247,7 @@ Claude Code — append to `~/.claude/CLAUDE.md`:
 ## Outstanding items
 Use the `outstanding-items` skill in any session with more than one request.
 The list is mine. Maintain it silently while you work and end the final response
-of each turn with one compact Outstanding footer naming a single suggested item
+of each turn with one compact recommendation naming a single suggested item
 — never in commentary or progress messages, and never as a list, a count, or a
 Done section. Link a running local UI as **Full outstanding items** on the
 footer's last line, never label an item `verified` without evidence you observed
