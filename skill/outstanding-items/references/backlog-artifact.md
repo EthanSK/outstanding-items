@@ -92,7 +92,7 @@ Do not silently create a ledger before those triggers. When the user has already
 | `completed` | Derived mechanically: true only for `verified` or `dropped`. Completed items render after all open items. |
 | `tracking_state` | Optional `active` (the default) or `transferred`. It is orthogonal to status and never implies completion. |
 | `transferred_to` | Required only when transferred: exact destination task ID/title, transfer timestamp, and optional handoff path. |
-| `position` | Contiguous zero-based ordering inside the open or completed group. Dragging changes open positions only. |
+| `position` | Contiguous zero-based ordering inside the open or completed group. A new open item is inserted at `0`; dragging changes open positions only. |
 | `group` | A display label preserving the originating queue/category. It does not determine execution or section membership. |
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |

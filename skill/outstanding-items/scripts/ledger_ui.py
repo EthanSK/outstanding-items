@@ -804,20 +804,30 @@ def command_upsert(args: argparse.Namespace) -> int:
                 "--provenance is required when adding a new item; choose "
                 "user-requested, agent-added, or unknown-legacy"
             )
-        open_position = sum(not entry["completed"] for entry in data["items"])
+        initial_status = args.status or "requested"
+        initial_completed = initial_status in DONE_STATUSES
+        if initial_completed:
+            initial_position = sum(entry["completed"] for entry in data["items"])
+        else:
+            # New work should be visible immediately where the Open view begins.
+            # Preserve the relative order of every existing open item beneath it.
+            for entry in data["items"]:
+                if not entry["completed"]:
+                    entry["position"] += 1
+            initial_position = 0
         item = {
             "id": args.id,
             "title": args.title.strip(),
-            "status": args.status or "requested",
-            "completed": (args.status or "requested") in DONE_STATUSES,
-            "position": open_position,
+            "status": initial_status,
+            "completed": initial_completed,
+            "position": initial_position,
             "group": args.group or "Outstanding for you",
-            "state_text": args.status or "requested",
+            "state_text": initial_status,
             "details_markdown": "",
             "explanation": "",
             "provenance": provenance,
-            "completed_at": utc_now() if (args.status or "requested") in DONE_STATUSES else None,
-            "completed_session_id": args.session_id if (args.status or "requested") in DONE_STATUSES else None,
+            "completed_at": utc_now() if initial_completed else None,
+            "completed_session_id": args.session_id if initial_completed else None,
         }
         data["items"].append(item)
     elif provenance is not None and provenance != item["provenance"]:

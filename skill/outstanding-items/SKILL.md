@@ -60,13 +60,20 @@ Nothing new to suggest; your list is unchanged.
 [Full outstanding items](<live local UI URL>)
 ```
 
+When the ledger has no open items at all, say that plainly and in bold:
+
+```text
+**No outstanding items**
+[Full outstanding items](<live local UI URL>)
+```
+
 Rules:
 
 - **One recommendation per turn, in the final response only.** Update the ledger silently while working. Commentary, progress notes, partial updates, and status lines carry no recommendation, item, count, or link.
 - **No heading or label.** Start immediately with the item itself. Never prefix the block with `Outstanding`, `Suggested for you`, `Next`, or another heading.
 - **Exactly one item.** One `OI-n` appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
 - **No Done section, ever.** A `verified`, `dropped`, or `transferred` item never appears in the footer — not as a line, not struck through, not as a count, not as a heading. Completions live in the ledger's Done group and in the Full outstanding items view, which is where the user audits them.
-- Line one is `**OI-n <short title>** — <status>`, using the user's own words trimmed to roughly 60 characters, or the honest no-suggestion line above.
+- Line one is `**OI-n <short title>**` for the default `requested` state, or `**OI-n <short title>** — <status>` for any other state. Use the user's own words trimmed to roughly 60 characters. Use the quiet no-suggestion line when open items exist but none should be offered; use `**No outstanding items**` only when zero items remain open. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
 - Line two is optional and never more than one line: a small first step, one plain reason, or the exact action a `waiting-on-you` item needs. Leave it out when it adds nothing.
 - **The Full outstanding items link appears once, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line as the last line of the footer, using the exact URL `ledger_ui.py start` printed. With no live UI, write no link line at all: never invent a URL, and never link raw JSON or Markdown.
 - **Never repeat a suggestion the user ignored, declined, or has not answered.** Choose a different eligible item, or use the no-suggestion line. When the user asks what to do next, the slate is clear and the best item may be named again. Once is advice; twice is nagging.

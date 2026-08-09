@@ -231,6 +231,10 @@ h1 {
   white-space: nowrap;
 }
 
+.provenance-badge[hidden] {
+  display: none;
+}
+
 .provenance-badge[data-provenance="user-requested"] {
   border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
   color: color-mix(in srgb, var(--accent) 78%, var(--ink));

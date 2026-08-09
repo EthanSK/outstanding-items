@@ -65,11 +65,13 @@ Nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
+If the ledger has no open items at all, the same footer says `**No outstanding items**` instead. That wording is reserved for a genuinely empty Open list; it is not used merely because the agent has nothing new to recommend.
+
 IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing. And if you want the whole list in the chat, ask for it — you get it in the answer, once, and the footer stays one line.
 
 ## Full outstanding items is an editor, not a raw file
 
-Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is its checkbox, task text, and one small provenance badge: **You asked**, **Agent added**, or **Source unknown** for an older item whose origin cannot be proved. Click the text to create an inline editor; no blank input exists before that interaction. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is its checkbox and task text. A compact **You asked** or **Agent added** badge appears only when the origin is known; older items keep their honest legacy provenance in the data without adding a noisy badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Newly recorded open items appear at the top. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short paragraph in ordinary words about what the item is. It comes from the item's own optional `explanation` field, written by the agent for a moment when the title alone is not enough. Items saved before that field existed still get a plain sentence based on their status, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 
@@ -126,7 +128,7 @@ Full definitions, transitions, and anti-patterns: [`references/status-labels.md`
 The second half of the skill, and the reason the footer is one line. The ledger knows what is outstanding; curation decides which single item is worth putting in front of you — offered to you, decided by you.
 
 ```text
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 About twenty minutes, and you already have that file open.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```

@@ -85,10 +85,6 @@
       label: "Agent added",
       description: "An agent added this item proactively.",
     },
-    "unknown-legacy": {
-      label: "Source unknown",
-      description: "This older item's source could not be verified.",
-    },
   };
 
   function apiUrl(path) {
@@ -238,9 +234,18 @@
 
   function attachProvenance(node, item) {
     const badge = node.querySelector(".provenance-badge");
-    const provenance = PROVENANCE[item.provenance] || PROVENANCE["unknown-legacy"];
+    const provenance = PROVENANCE[item.provenance];
+    if (!provenance) {
+      badge.hidden = true;
+      badge.textContent = "";
+      badge.removeAttribute("data-provenance");
+      badge.removeAttribute("aria-label");
+      badge.removeAttribute("title");
+      return;
+    }
+    badge.hidden = false;
     badge.textContent = provenance.label;
-    badge.dataset.provenance = item.provenance || "unknown-legacy";
+    badge.dataset.provenance = item.provenance;
     badge.setAttribute("aria-label", `Provenance: ${provenance.description}`);
     badge.title = provenance.description;
   }

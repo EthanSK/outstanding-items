@@ -223,9 +223,10 @@ MIDDOT = "·"
 
 FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
 FOOTER_ITEM_RE = re.compile(
-    rf"^\*\*(OI-\d+) (.+)\*\* {DASH} ([a-z][a-z-]*)$"
+    rf"^\*\*(OI-\d+) (.+)\*\*(?: {DASH} ([a-z][a-z-]*))?$"
 )
 FOOTER_QUIET_RE = re.compile(r"^Nothing\b.*$")
+FOOTER_EMPTY_RE = re.compile(r"^\*\*No outstanding items\*\*$")
 FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
 OI_ID_RE = re.compile(r"\bOI-\d+\b")
 LIST_ROW_RE = re.compile(rf"^\s*(?:[-*+{BULLET}]\s|{ELLIPSIS}|\d+[.)]\s)")
@@ -271,7 +272,9 @@ def footer_blocks() -> list[tuple[str, int, list[str]]]:
         for match in FENCED_BLOCK_RE.finditer(text):
             lines = match.group(1).splitlines()
             if not lines or not (
-                FOOTER_ITEM_RE.match(lines[0]) or FOOTER_QUIET_RE.match(lines[0])
+                FOOTER_ITEM_RE.match(lines[0])
+                or FOOTER_QUIET_RE.match(lines[0])
+                or FOOTER_EMPTY_RE.match(lines[0])
             ):
                 continue
             found.append((rel(path), text.count("\n", 0, match.start()) + 1, lines))
@@ -578,7 +581,7 @@ def check_public_examples() -> list[str]:
     return problems
 
 
-@check("item-provenance", "every item records and displays an honest immutable origin")
+@check("item-provenance", "every item records an honest origin; only known origins add badges")
 def check_item_provenance() -> list[str]:
     problems = []
     supported = {"user-requested", "agent-added", "unknown-legacy"}
@@ -597,12 +600,15 @@ def check_item_provenance() -> list[str]:
     for fragment in (
         "You asked",
         "Agent added",
-        "Source unknown",
         'badge.setAttribute("aria-label"',
         "attachProvenance(node, item)",
+        "badge.hidden = true",
+        "badge.hidden = false",
     ):
         if fragment not in script:
             problems.append(f"ledger.js is missing provenance UI wiring: {fragment!r}")
+    if "Source unknown" in script:
+        problems.append("ledger.js visibly labels legacy provenance instead of leaving it unobtrusive")
     for fragment in (".provenance-badge", "white-space: nowrap"):
         if fragment not in style:
             problems.append(f"ledger.css is missing compact provenance styling: {fragment!r}")
@@ -1073,7 +1079,8 @@ def check_compact_footer() -> list[str]:
         header = lines[0]
         item = FOOTER_ITEM_RE.match(header)
         if item:
-            item_id, title, status = item.groups()
+            item_id, title, visible_status = item.groups()
+            status = visible_status or "requested"
             statuses.add(status)
             if ids != [item_id]:
                 problems.append(
@@ -1081,11 +1088,13 @@ def check_compact_footer() -> list[str]:
                 )
             if status not in SUGGESTIBLE_STATUSES:
                 problems.append(f"{where} suggests a {status!r} item, which the footer never offers")
+            if visible_status == "requested":
+                problems.append(f"{where} visibly prints the redundant default status 'requested'")
             if len(title) > 64:
                 problems.append(f"{where} uses a {len(title)}-character title; trim it to about 60")
             if status == "waiting-on-you":
                 waiting_on_you += 1
-        elif FOOTER_QUIET_RE.match(header):
+        elif FOOTER_QUIET_RE.match(header) or FOOTER_EMPTY_RE.match(header):
             quiet += 1
             if ids:
                 problems.append(
@@ -1173,6 +1182,7 @@ def check_compact_footer() -> list[str]:
         "**No Done section, ever.**",
         "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
         "Nothing new to suggest",
+        "**No outstanding items**",
         "never let it become the footer's suggestion",
         "A `blocked` item is never suggested",
     ):

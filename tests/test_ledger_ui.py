@@ -222,6 +222,11 @@ class LedgerModelTests(unittest.TestCase):
             )
             self.assertEqual(created["explanation"], "A gentle sentence spread over two lines.")
             self.assertEqual(created["provenance"], "user-requested")
+            open_items = sorted(
+                (item for item in ledger_ui.read_json(ledger)["items"] if not item["completed"]),
+                key=lambda item: item["position"],
+            )
+            self.assertEqual([item["id"] for item in open_items], ["OI-9", "OI-1", "OI-2"])
 
             args.explanation = None
             args.title = "A renamed item"
@@ -237,6 +242,35 @@ class LedgerModelTests(unittest.TestCase):
             args.explanation = "y" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
             with self.assertRaisesRegex(ValueError, "at most"):
                 ledger_ui.command_upsert(args)
+
+    def test_new_completed_history_does_not_reorder_open_items(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-9",
+                title="A completed historical item",
+                status="verified",
+                provenance="user-requested",
+                group="Done",
+                explanation=None,
+                notes_file=None,
+                session_id="sess_EXAMPLE_9012",
+            )
+
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            data = ledger_ui.read_json(ledger)
+            open_items = sorted(
+                (item for item in data["items"] if not item["completed"]),
+                key=lambda item: item["position"],
+            )
+            done_items = sorted(
+                (item for item in data["items"] if item["completed"]),
+                key=lambda item: item["position"],
+            )
+            self.assertEqual([item["id"] for item in open_items], ["OI-1", "OI-2"])
+            self.assertEqual([item["id"] for item in done_items], ["OI-3", "OI-9"])
 
     def test_status_update_clears_the_matching_unanswered_suggestion(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -584,16 +618,21 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("window.setInterval", script)
         self.assertIn("tracking_state === \"transferred\"", script)
 
-    def test_every_row_has_a_compact_accessible_provenance_badge(self) -> None:
+    def test_known_provenance_has_a_compact_badge_and_legacy_unknown_stays_hidden(self) -> None:
         html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
         script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
         style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
 
         self.assertEqual(html.count('class="provenance-badge"'), 1)
-        for value in ("user-requested", "agent-added", "unknown-legacy"):
+        for value in ("user-requested", "agent-added"):
             self.assertIn(f'"{value}"', script)
-        for label in ("You asked", "Agent added", "Source unknown"):
+        for label in ("You asked", "Agent added"):
             self.assertIn(label, script)
+        self.assertNotIn("Source unknown", script)
+        self.assertIn('class="provenance-badge" hidden', html)
+        self.assertIn("badge.hidden = true", script)
+        self.assertIn("badge.hidden = false", script)
+        self.assertIn(".provenance-badge[hidden]", style)
         self.assertIn('badge.setAttribute("aria-label"', script)
         self.assertIn("attachProvenance(node, item)", script)
         self.assertIn("grid-template-columns: minmax(0, 1fr) auto", style)

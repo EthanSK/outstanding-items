@@ -6,7 +6,7 @@ The footer is one suggestion addressed to the person. It proposes and then waits
 
 ## The footer always ends the turn; the suggestion does not always exist
 
-While any item is open, the final response carries the footer. What varies is whether it can honestly name an item.
+The final response carries the footer. What varies is whether it can honestly name an item. If nothing remains open, use `**No outstanding items**`; that is different from having open items that should not be suggested again.
 
 | Name an item | Use the no-suggestion line |
 | --- | --- |
@@ -16,7 +16,7 @@ While any item is open, the final response carries the footer. What varies is wh
 | Something finished and the obvious path opened or closed. | They are winding down, and the kind answer is "nothing needs you tonight". |
 | Everything left needs them personally — a click, a key, a yes. | You genuinely cannot tell, and inventing a rationale would be dishonest. |
 
-The no-suggestion line is one quiet sentence — `Nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It is a legitimate outcome, not a failure, and it is what stops the recommendation from becoming a lecture that nobody reads by turn four.
+The no-suggestion line is one quiet sentence — `Nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It means open items still exist but none should be offered now. When zero items remain open, use the distinct bold line `**No outstanding items**`. Both are legitimate outcomes, not failures.
 
 ## What to weigh
 
@@ -40,7 +40,7 @@ Availability is judged from the user's side, not yours. Something you cannot tou
 Two lines maximum, plus the live UI link when one exists:
 
 ```text
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 Twenty minutes, and the smallest version is the shared token plus one button.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -58,7 +58,7 @@ Twenty minutes, and the smallest version is the shared token plus one button.
 Say it is close, and leave the runner-up unnamed. Naming a second item turns the footer back into the list it exists to replace, and the whole ledger is one click away in the UI:
 
 ```text
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 A close call, but this is the smaller restart and you were already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -74,7 +74,8 @@ A suggestion the user did not take up is answered. Repeating it is nagging, and 
 - **Declined.** "No", "not that one", "skip link first" — drop it without argument, and never bring it back on your own initiative.
 - **Record it.** Keep `latest_unanswered_suggestion` current, and note the offer against the item, so a task resumed tomorrow does not start the same loop again.
 - **When they act on it**, the record is answered and cleared. The same item may legitimately be suggested again later if it is genuinely the next thing — for example, after the user asked you to implement it and the honest next move is their own verification.
-- **When the pool empties**, that is the no-suggestion line, and the footer goes quiet until something changes. That is the correct behaviour, not a gap to fill.
+- **When the eligible pool empties but work remains open**, use the no-suggestion line and let the footer go quiet until something changes.
+- **When the ledger itself has zero open items**, use `**No outstanding items**`. Do not use it merely because suggestions were declined, blocked, or exhausted.
 
 ## Items that need the user in person
 
@@ -117,7 +118,7 @@ Each of these is the whole footer, at the end of the final response of its turn.
 **Asked directly, several things open**
 
 ```text
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 About twenty minutes, and you are already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -139,7 +140,7 @@ You left it half-done and the suite still passes, so it is the cheapest restart.
 **Overloaded**
 
 ```text
-**OI-5 Skip link** — requested
+**OI-5 Skip link**
 Just the first section of it, if anything. Nothing here has a date on it.
 ```
 
@@ -154,6 +155,13 @@ Nothing new to suggest; your list is unchanged.
 
 ```text
 Nothing here needs you tonight.
+```
+
+**Everything is complete**
+
+```text
+**No outstanding items**
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 **The user already decided** — the body says it, the footer names their choice and nothing else:

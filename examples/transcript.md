@@ -30,7 +30,7 @@ me to ask the design channel about its empty state.
 **Agent:** Recorded both. Neither has started.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook** — requested
+**OI-2 Add rate-limit docs to the handbook**
 Twenty minutes if you want a small one; nothing else waits on it.
 ```
 
@@ -66,7 +66,7 @@ the answer.
 **Agent** *(final response)*: CI passed the login suite 20 times.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook** — requested
+**OI-2 Add rate-limit docs to the handbook**
 Still the only thing on the list you could knock out in one sitting.
 ```
 
@@ -107,7 +107,7 @@ No task-triggering send occurred. The destination received no instruction.
 about twenty minutes, and the nav labels read the same token afterwards.
 
 ```text
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 About twenty minutes, and you already have that file open.
 ```
 
@@ -121,7 +121,7 @@ The recommendation changes no item, status, order, or execution state.
 `start OI-5` if you want me to work on it.
 
 ```text
-**OI-5 Skip link** — requested
+**OI-5 Skip link**
 Your call, recorded. Say `start OI-5` whenever you want it picked up.
 ```
 
@@ -136,7 +136,7 @@ offered again unless you ask.
 pending, and no sibling item is authorized.
 
 ```text
-**OI-6 Aria labels on the nav** — requested
+**OI-6 Aria labels on the nav**
 It reads the token the skip link just used, so it is the cheapest thing next.
 ```
 
@@ -174,3 +174,10 @@ one line. The live URL appears once, on the last line, and only because an edito
 is actually running — in every earlier turn there was none, so no link line
 appeared and no URL was invented to fill the gap. Everything eligible had already
 been offered once, so the footer says so rather than repeating itself.
+
+After the final open item is completed, the footer becomes:
+
+```text
+**No outstanding items**
+[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```

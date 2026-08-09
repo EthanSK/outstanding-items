@@ -61,7 +61,7 @@ If you cannot tell whether you are still authorized, you are not. Maintain the l
 
 > **Agent:** *(the whole footer, at the end of the final response)*
 >
-> **OI-4 Focus ring on interactive elements** — requested
+> **OI-4 Focus ring on interactive elements**
 > About twenty minutes, and you already have that file open.
 >
 > *(The agent stops here. The item stays at whatever status it already had. Nothing is started.)*

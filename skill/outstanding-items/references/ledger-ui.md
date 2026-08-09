@@ -16,7 +16,7 @@ Use the equivalent `~/.claude/skills/` path under Claude Code. The command print
 Use the printed URL as the last line of the compact footer:
 
 ```markdown
-**OI-4 Focus ring on interactive elements** — requested
+**OI-4 Focus ring on interactive elements**
 Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -63,7 +63,9 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. The command atomically increments the revision, and an open UI sees it within two seconds.
 
-`--provenance` is required when creating a new item. Use `user-requested` only when the user's explicit words caused the capture, `agent-added` for an agent's proactive addition, and `unknown-legacy` only when migrating an older item whose source cannot be proved. Later updates may omit the flag; provenance is preserved and cannot be rewritten.
+`--provenance` is required when creating a new item. Use `user-requested` only when the user's explicit words caused the capture, `agent-added` for an agent's proactive addition, and `unknown-legacy` only when migrating an older item whose source cannot be proved. Later updates may omit the flag; provenance is preserved and cannot be rewritten. The UI shows a compact badge only for the two known origins. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
+
+A newly created open item is inserted at position `0`, so it appears at the top of Open as soon as the page refreshes. Existing open items retain their relative order underneath it. Creating a completed historical item does not disturb Open.
 
 ## Writing the explanation
 
