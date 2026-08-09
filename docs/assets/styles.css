@@ -331,7 +331,6 @@ footer nav {
 }
 
 .core,
-.steps,
 .install,
 .limits {
   padding-block: clamp(4rem, 8vw, 7rem);
@@ -380,81 +379,6 @@ footer nav {
   color: var(--purple-dark);
   font-family: var(--mono);
   font-weight: 800;
-}
-
-.rule {
-  width: 100%;
-  max-width: none;
-  display: grid;
-  grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 0.65fr);
-  gap: clamp(2rem, 7vw, 7rem);
-  align-items: center;
-  padding: clamp(3.5rem, 8vw, 6.5rem) max(var(--gutter), calc((100vw - var(--max)) / 2));
-  background: var(--night);
-  color: #f7f9ff;
-}
-
-.rule .kicker {
-  color: #bfb6ff;
-}
-
-.rule h2 {
-  margin-bottom: 0.6rem;
-}
-
-.rule p:last-child {
-  max-width: 42rem;
-  margin-bottom: 0;
-  color: #c5cce0;
-  font-size: 1.12rem;
-}
-
-.rule-number {
-  margin: 0;
-  color: #a99dff;
-  font-family: var(--display);
-  font-size: clamp(5rem, 13vw, 10rem);
-  font-weight: 800;
-  line-height: 0.8;
-  text-align: right;
-}
-
-.steps ol {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(1.5rem, 4vw, 4rem);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: steps;
-}
-
-.steps li {
-  counter-increment: steps;
-}
-
-.steps li::before {
-  content: "0" counter(steps);
-  display: block;
-  margin-bottom: 0.8rem;
-  color: var(--purple-dark);
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  font-weight: 750;
-}
-
-.steps strong,
-.steps span {
-  display: block;
-}
-
-.steps strong {
-  margin-bottom: 0.3rem;
-  font-size: 1.15rem;
-}
-
-.steps span {
-  color: var(--muted);
 }
 
 .install {
@@ -619,10 +543,6 @@ footer p {
     padding-right: 0;
   }
 
-  .rule {
-    grid-template-columns: 0.3fr 0.7fr;
-  }
-
   .install-links {
     grid-column: auto;
   }
@@ -654,8 +574,7 @@ footer p {
     box-shadow: 0.45rem 0.45rem 0 var(--purple-soft);
   }
 
-  .feature-grid,
-  .steps ol {
+  .feature-grid {
     grid-template-columns: 1fr;
   }
 
@@ -671,24 +590,6 @@ footer p {
 
   .feature-grid article:last-child {
     border-bottom: 0;
-  }
-
-  .rule {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .rule-number {
-    text-align: left;
-  }
-
-  .steps li {
-    display: grid;
-    grid-template-columns: 2.3rem 1fr;
-  }
-
-  .steps li::before {
-    grid-row: 1 / span 2;
   }
 
   .code-block pre {

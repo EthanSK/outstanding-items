@@ -1051,13 +1051,20 @@ def check_homepage_focus() -> list[str]:
         "Shows it once per turn",
         "Suggests one next move",
         "Keeps a full ledger",
-        "The list belongs to you.",
         "Install the plugin",
     ):
         if required not in text:
             problems.append(f"homepage no longer carries its core message: {required!r}")
     if 'id="ledger-data"' in text or 'id="demo-toggle"' in text:
         problems.append("homepage has regained the old multi-turn interactive demo")
+    for removed in (
+        'class="rule"',
+        'class="steps"',
+        "The list belongs to you.",
+        "Talk. See the list. Choose.",
+    ):
+        if removed in text:
+            problems.append(f"homepage restored a removed explanatory section: {removed!r}")
 
     # The demo reply is the product promise in miniature: one item, a reason,
     # and a link — never the list, a count, or a done pile.
@@ -1788,7 +1795,7 @@ def check_docs_consistency() -> list[str]:
     for status in STATUSES:
         if status not in readme:
             problems.append(f"README.md does not document the {status!r} label")
-    for summary in ("stable ID", "honest status", "Read the full documentation"):
+    for summary in ("Read the full documentation",):
         if summary not in index:
             problems.append(f"docs/index.html no longer links the simple story to detail: {summary!r}")
     for phrase in (
