@@ -27,7 +27,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 | Multi-request tracking | Every request in the task gets a permanent `OI-n` ID, in the order you said it. |
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
-| No invented chores | An agent adds its own item only for a concrete useful loose end that would otherwise be lost — never to fill the ledger with possible work. |
+| No lost loose ends | Any concrete unresolved review, decision, input, verification, or follow-up for you is captured automatically as **Agent**. The agent still never invents filler or speculative projects. |
 | Strict source badges | **You** means you explicitly asked for that ledger entry. A normal work request captured automatically is **Agent**. |
 | One footer per turn | Two or three lines at the end of the final response: one suggested item, an optional line about it, and a link to the rest. Commentary and progress messages stay clean. |
 | Nothing else in the chat | No counts, no sections, no reminders, no Done list, no "+7 more". The full ledger is one click away instead of one scroll away. |
@@ -67,7 +67,7 @@ Nothing new to suggest; your list is unchanged.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-If the ledger has no open items at all, the same footer says `**No outstanding items**` instead. That wording is reserved for a genuinely empty Open list; it is not used merely because the agent has nothing new to recommend.
+If the ledger has no open items at all, the agent first checks the current request, results, blockers, decisions, and unverified outcomes for anything concrete you still need to look at. A real loose end is added as **Agent**. Only a genuinely empty list says `**No outstanding items**`; the agent does not invent filler merely to avoid that honest result.
 
 IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing. And if you want the whole list in the chat, ask for it — you get it in the answer, once, and the footer stays one line.
 
@@ -230,7 +230,8 @@ Codex — append to `~/.codex/AGENTS.md`:
 ## Outstanding items
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
-add agent-created items only for concrete useful loose ends that would otherwise be lost,
+automatically add every concrete unresolved thing I still need to review, decide, provide, verify, or return to as `Agent`,
+check for such loose ends before saying there are no outstanding items, and never invent filler when nothing remains,
 use `You` only when I explicitly asked to add that entry to Outstanding Items
 (a normal work request captured automatically is `Agent`),
 keep the ledger silently while you work, and end the final response of each turn

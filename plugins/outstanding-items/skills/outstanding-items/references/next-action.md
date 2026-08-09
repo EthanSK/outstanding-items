@@ -6,7 +6,7 @@ The footer is one suggestion addressed to the person. It proposes and then waits
 
 ## The footer always ends the turn; the suggestion does not always exist
 
-The final response carries the footer. What varies is whether it can honestly name an item. If nothing remains open, use `**No outstanding items**`; that is different from having open items that should not be suggested again.
+The final response carries the footer. What varies is whether it can honestly name an item. Before treating the ledger as empty, scan the current request, results, blockers, decisions, and unverified outcomes. If any concrete unresolved thing still needs the user to review, decide, provide, verify, or return to, add it as `agent-added` and consider it normally. If nothing remains after that scan, use `**No outstanding items**`; that is different from having open items that should not be suggested again.
 
 | Name an item | Use the no-suggestion line |
 | --- | --- |
@@ -75,7 +75,7 @@ A suggestion the user did not take up is answered. Repeating it is nagging, and 
 - **Record it.** Keep `latest_unanswered_suggestion` current, and note the offer against the item, so a task resumed tomorrow does not start the same loop again.
 - **When they act on it**, the record is answered and cleared. The same item may legitimately be suggested again later if it is genuinely the next thing — for example, after the user asked you to implement it and the honest next move is their own verification.
 - **When the eligible pool empties but work remains open**, use the no-suggestion line and let the footer go quiet until something changes.
-- **When the ledger itself has zero open items**, use `**No outstanding items**`. Do not use it merely because suggestions were declined, blocked, or exhausted.
+- **When the ledger itself has zero open items after the loose-end scan**, use `**No outstanding items**`. Do not use it merely because suggestions were declined, blocked, or exhausted, and never let a concrete user-facing follow-up disappear just to make the ledger look empty.
 
 ## Items that need the user in person
 

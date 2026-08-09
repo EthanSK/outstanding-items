@@ -25,9 +25,11 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   merely request or discuss the work and you capture it automatically, use
   `agent-added`. Use `unknown-legacy` only when an older capture source cannot
   be proved.
-- Add an `agent-added` item only for a concrete loose end, dependency, risk, or
-  follow-up that is genuinely useful to me and would otherwise be lost. Do not
-  fill my ledger with speculative improvements or possible work.
+- Automatically add every concrete unresolved thing I still need to review,
+  decide, provide, verify, or return to as `agent-added`, even when I did not
+  ask to add it to Outstanding Items. Before saying there are no outstanding
+  items, check the current results, blockers, decisions, and unverified outcomes
+  for such a loose end. Never invent filler or speculative work when nothing remains.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation that starts directly with the single item you think I should
   do next, immediately followed by a compact `You` or `Agent` source marker,

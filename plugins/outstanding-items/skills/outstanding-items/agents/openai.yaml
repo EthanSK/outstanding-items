@@ -4,6 +4,6 @@
 interface:
   display_name: "Outstanding Items"
   short_description: "Hold the user's outstanding-items ledger"
-  default_prompt: "Use $outstanding-items to keep my outstanding items recorded and honestly labelled, end each final response with one compact line naming a single suggested next item rather than the whole list, and never start, continue, or hand off an item without a fresh instruction from me naming it."
+  default_prompt: "Use $outstanding-items to keep my requests and every concrete user-facing loose end recorded and honestly labelled, check for omitted loose ends before calling the ledger empty, end each final response with one compact line naming a single suggested next item rather than the whole list, and never start, continue, or hand off an item without a fresh instruction from me naming it."
 policy:
   allow_implicit_invocation: true

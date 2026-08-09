@@ -70,9 +70,11 @@ Use the `outstanding-items` skill in any task where I make more than one request
   are unrelated to what you are currently doing. Never refuse a reminder for
   being off-topic, and never start something just because I asked you to
   remember it.
-- Add an agent-created item only for a concrete loose end, dependency, risk, or
-  follow-up that is genuinely useful and would otherwise be lost. Never clutter
-  my ledger with speculative improvements or possible work.
+- Automatically add every concrete unresolved thing I still need to review,
+  decide, provide, verify, or return to as `Agent`, even when I did not ask to
+  add it to Outstanding Items. Before saying there are no outstanding items,
+  check the current results, blockers, decisions, and unverified outcomes for
+  such a loose end. Never invent filler or speculative work when nothing remains.
 - Use `You` / `user-requested` only when I explicitly tell you to add that
   specific thing to Outstanding Items. If I merely request or discuss the work
   and you capture it automatically, use `Agent` / `agent-added`.

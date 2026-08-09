@@ -25,8 +25,10 @@ Work in this repository arrives in bursts of half-related requests. Use the
   to Outstanding Items. A normal work request captured automatically is
   `agent-added`; use `unknown-legacy` only when an old capture source cannot be
   proved.
-- Add an `agent-added` item only when it is a concrete useful loose end that
-  would otherwise be lost. Do not clutter the ledger with speculative work.
+- Automatically add every concrete unresolved thing I still need to review,
+  decide, provide, verify, or return to as `agent-added`. Before saying there
+  are no outstanding items, check current results, blockers, decisions, and
+  unverified outcomes for anything omitted. Never invent filler or speculative work.
 - Past seven open items for me, ask before writing `outstanding-items.json` and
   start its local HTML editor. Link it as **Full outstanding items** on the
   footer's last line, using the exact URL it printed, and add the private
