@@ -1,0 +1,28 @@
+{
+  "name": "outstanding-items",
+  "version": "0.1.0",
+  "description": "Keep a user-owned ledger out of the chat and suggest one next item without starting it.",
+  "author": {
+    "name": "EthanSK",
+    "url": "https://github.com/EthanSK"
+  },
+  "homepage": "https://ethansk.github.io/outstanding-items/",
+  "repository": "https://github.com/EthanSK/outstanding-items",
+  "license": "MIT",
+  "keywords": ["memory", "tasks", "ledger", "productivity", "skills"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Outstanding Items",
+    "shortDescription": "Outsource your memory, one item at a time.",
+    "longDescription": "Capture every request in a user-owned ledger, keep the full list out of the conversation, and offer one small next move without treating it as permission to start.",
+    "developerName": "EthanSK",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "websiteURL": "https://ethansk.github.io/outstanding-items/",
+    "defaultPrompt": [
+      "Track these requests without starting anything I only ask you to remember.",
+      "Show me the full outstanding items ledger.",
+      "Suggest one outstanding item for me to do next."
+    ]
+  }
+}

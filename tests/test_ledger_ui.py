@@ -20,8 +20,9 @@ import urllib.request
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SCRIPT = ROOT / "skill" / "outstanding-items" / "scripts" / "ledger_ui.py"
-ASSETS = ROOT / "skill" / "outstanding-items" / "assets"
+SKILL_DIR = ROOT / "plugins" / "outstanding-items" / "skills" / "outstanding-items"
+SCRIPT = SKILL_DIR / "scripts" / "ledger_ui.py"
+ASSETS = SKILL_DIR / "assets"
 SPEC = importlib.util.spec_from_file_location("ledger_ui", SCRIPT)
 assert SPEC and SPEC.loader
 ledger_ui = importlib.util.module_from_spec(SPEC)

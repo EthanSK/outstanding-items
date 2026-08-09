@@ -25,7 +25,8 @@ import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
-SKILL_DIR = ROOT / "skill" / "outstanding-items"
+PLUGIN_DIR = ROOT / "plugins" / "outstanding-items"
+SKILL_DIR = PLUGIN_DIR / "skills" / "outstanding-items"
 SKILL_MD = SKILL_DIR / "SKILL.md"
 
 SITE_BASE = "https://ethansk.github.io/outstanding-items/"
@@ -99,6 +100,8 @@ REQUIRED_FILES = [
     "CLAUDE.md",
     "LICENSE",
     "README.md",
+    ".agents/plugins/marketplace.json",
+    ".claude-plugin/marketplace.json",
     "docs/.nojekyll",
     "docs/404.html",
     "docs/assets/app.js",
@@ -121,19 +124,21 @@ REQUIRED_FILES = [
     "scripts/install.sh",
     "scripts/serve.sh",
     "scripts/uninstall.sh",
-    "skill/outstanding-items/SKILL.md",
-    "skill/outstanding-items/agents/openai.yaml",
-    "skill/outstanding-items/assets/ledger.css",
-    "skill/outstanding-items/assets/ledger.html",
-    "skill/outstanding-items/assets/ledger.js",
-    "skill/outstanding-items/references/authority.md",
-    "skill/outstanding-items/references/backlog-artifact.md",
-    "skill/outstanding-items/references/ledger-ui.md",
-    "skill/outstanding-items/references/next-action.md",
-    "skill/outstanding-items/references/related-tasks.md",
-    "skill/outstanding-items/references/status-labels.md",
-    "skill/outstanding-items/references/worked-examples.md",
-    "skill/outstanding-items/scripts/ledger_ui.py",
+    "plugins/outstanding-items/.codex-plugin/plugin.json",
+    "plugins/outstanding-items/.claude-plugin/plugin.json",
+    "plugins/outstanding-items/skills/outstanding-items/SKILL.md",
+    "plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml",
+    "plugins/outstanding-items/skills/outstanding-items/assets/ledger.css",
+    "plugins/outstanding-items/skills/outstanding-items/assets/ledger.html",
+    "plugins/outstanding-items/skills/outstanding-items/assets/ledger.js",
+    "plugins/outstanding-items/skills/outstanding-items/references/authority.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/backlog-artifact.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/ledger-ui.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/next-action.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/related-tasks.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/status-labels.md",
+    "plugins/outstanding-items/skills/outstanding-items/references/worked-examples.md",
+    "plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py",
     "tests/test_ledger_ui.py",
     "tests/run_checks.py",
     "tests/run_tests.sh",
@@ -737,6 +742,99 @@ def check_codex_packaging() -> list[str]:
     return problems
 
 
+@check("plugin-packaging", "OpenAI and Claude Code package one canonical skill")
+def check_plugin_packaging() -> list[str]:
+    problems = []
+
+    codex_manifest_path = PLUGIN_DIR / ".codex-plugin" / "plugin.json"
+    claude_manifest_path = PLUGIN_DIR / ".claude-plugin" / "plugin.json"
+    codex_marketplace_path = ROOT / ".agents" / "plugins" / "marketplace.json"
+    claude_marketplace_path = ROOT / ".claude-plugin" / "marketplace.json"
+
+    loaded: dict[str, object] = {}
+    for label, path in (
+        ("OpenAI plugin manifest", codex_manifest_path),
+        ("Claude Code plugin manifest", claude_manifest_path),
+        ("OpenAI marketplace", codex_marketplace_path),
+        ("Claude Code marketplace", claude_marketplace_path),
+    ):
+        try:
+            loaded[label] = json.loads(read(path))
+        except (OSError, json.JSONDecodeError) as exc:
+            problems.append(f"{label} is not valid JSON: {exc}")
+
+    if problems:
+        return problems
+
+    codex_manifest = loaded["OpenAI plugin manifest"]
+    claude_manifest = loaded["Claude Code plugin manifest"]
+    codex_marketplace = loaded["OpenAI marketplace"]
+    claude_marketplace = loaded["Claude Code marketplace"]
+    assert isinstance(codex_manifest, dict)
+    assert isinstance(claude_manifest, dict)
+    assert isinstance(codex_marketplace, dict)
+    assert isinstance(claude_marketplace, dict)
+
+    for label, manifest in (
+        ("OpenAI plugin manifest", codex_manifest),
+        ("Claude Code plugin manifest", claude_manifest),
+    ):
+        if manifest.get("name") != SKILL_NAME:
+            problems.append(f"{label} name must be {SKILL_NAME!r}")
+        if not manifest.get("description"):
+            problems.append(f"{label} is missing a description")
+
+    codex_version = codex_manifest.get("version")
+    claude_version = claude_manifest.get("version")
+    semver = re.compile(r"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$")
+    if not isinstance(codex_version, str) or not semver.fullmatch(codex_version):
+        problems.append("OpenAI plugin manifest must carry a semantic version")
+    if not isinstance(claude_version, str) or not semver.fullmatch(claude_version):
+        problems.append("Claude Code plugin manifest must carry a semantic version")
+    if codex_version != claude_version:
+        problems.append("OpenAI and Claude Code plugin versions must stay synchronized")
+
+    if codex_manifest.get("skills") != "./skills/":
+        problems.append("OpenAI plugin manifest must discover the canonical ./skills/ directory")
+    if "skills" in claude_manifest:
+        problems.append(
+            "Claude Code manifest should use its default skills/ discovery instead of a second path"
+        )
+
+    for label, marketplace in (
+        ("OpenAI marketplace", codex_marketplace),
+        ("Claude Code marketplace", claude_marketplace),
+    ):
+        if marketplace.get("name") != SKILL_NAME:
+            problems.append(f"{label} name must be {SKILL_NAME!r}")
+        entries = marketplace.get("plugins")
+        if not isinstance(entries, list) or len(entries) != 1:
+            problems.append(f"{label} must contain exactly one plugin entry")
+            continue
+        if entries[0].get("name") != SKILL_NAME:
+            problems.append(f"{label} plugin entry must be named {SKILL_NAME!r}")
+
+    codex_entries = codex_marketplace.get("plugins", [])
+    if codex_entries and codex_entries[0].get("source") != {
+        "source": "local",
+        "path": "./plugins/outstanding-items",
+    }:
+        problems.append("OpenAI marketplace must point at ./plugins/outstanding-items")
+
+    claude_entries = claude_marketplace.get("plugins", [])
+    if claude_entries and claude_entries[0].get("source") != "./plugins/outstanding-items":
+        problems.append("Claude Code marketplace must point at ./plugins/outstanding-items")
+
+    frontmatter_name = frontmatter(read(SKILL_MD))[0].get("name")
+    if frontmatter_name != SKILL_NAME:
+        problems.append("the canonical bundled skill name must match both plugin manifests")
+
+    legacy = ROOT / "skill" / SKILL_NAME
+    if legacy.exists():
+        problems.append("legacy skill/outstanding-items exists; keep one canonical bundled skill")
+    return problems
+
+
 @check("markdown-links", "every relative Markdown link resolves")
 def check_markdown_links() -> list[str]:
     problems = []
@@ -946,7 +1044,7 @@ def check_homepage_focus() -> list[str]:
         "Suggests one next move",
         "Keeps a full ledger",
         "The list belongs to you.",
-        "Install the skill",
+        "Install the plugin",
     ):
         if required not in text:
             problems.append(f"homepage no longer carries its core message: {required!r}")
@@ -1014,7 +1112,7 @@ def check_footer_once_per_turn() -> list[str]:
     # Phrases are matched against whitespace-collapsed text, so a rule that
     # wraps across lines in a copyable snippet still counts.
     required = {
-        "skill/outstanding-items/SKILL.md": [
+        "plugins/outstanding-items/skills/outstanding-items/SKILL.md": [
             "final response of the turn",
             "One recommendation per turn, in the final response only",
             "Never put it in commentary, progress notes",
@@ -1040,11 +1138,11 @@ def check_footer_once_per_turn() -> list[str]:
             "No recommendation block here",
             "This is commentary, and the ledger stays silent until the answer",
         ],
-        "skill/outstanding-items/references/worked-examples.md": [
+        "plugins/outstanding-items/skills/outstanding-items/references/worked-examples.md": [
             "once per turn, at the end of the final response",
             "Neither carried a recommendation, count, `OI-n`, or Full outstanding items link",
         ],
-        "skill/outstanding-items/references/ledger-ui.md": ["final response of a turn"],
+        "plugins/outstanding-items/skills/outstanding-items/references/ledger-ui.md": ["final response of a turn"],
     }
     for name, phrases in required.items():
         text = squash(read(ROOT / name))
@@ -1180,9 +1278,9 @@ def check_compact_footer() -> list[str]:
     if len(statuses) < 4:
         problems.append(f"documented footers show only {len(statuses)} status(es); show the range")
     for name in (
-        "skill/outstanding-items/SKILL.md",
-        "skill/outstanding-items/references/worked-examples.md",
-        "skill/outstanding-items/references/next-action.md",
+        "plugins/outstanding-items/skills/outstanding-items/SKILL.md",
+        "plugins/outstanding-items/skills/outstanding-items/references/worked-examples.md",
+        "plugins/outstanding-items/skills/outstanding-items/references/next-action.md",
         "examples/transcript.md",
         "README.md",
     ):
@@ -1452,7 +1550,7 @@ def check_honesty() -> list[str]:
             "does not guarantee automatic invocation",
             "no project-owned outbound application requests",
         ],
-        "skill/outstanding-items/SKILL.md": [
+        "plugins/outstanding-items/skills/outstanding-items/SKILL.md": [
             "does not start a background daemon",
             "does not create a cross-task message bus",
             "does not create a persistent database",
@@ -1465,7 +1563,7 @@ def check_honesty() -> list[str]:
         ],
     }
     required["README.md"].append("does not know what you have the appetite for")
-    required["skill/outstanding-items/SKILL.md"].append(
+    required["plugins/outstanding-items/skills/outstanding-items/SKILL.md"].append(
         "does not know what the user actually has the appetite for"
     )
     for name, phrases in required.items():

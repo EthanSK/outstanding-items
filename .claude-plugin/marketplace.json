@@ -1,0 +1,22 @@
+{
+  "name": "outstanding-items",
+  "description": "Outsource your memory with one user-owned outstanding-items ledger.",
+  "owner": {
+    "name": "EthanSK"
+  },
+  "plugins": [
+    {
+      "name": "outstanding-items",
+      "source": "./plugins/outstanding-items",
+      "description": "Keep a user-owned ledger out of the chat and suggest one next item without starting it.",
+      "author": {
+        "name": "EthanSK"
+      },
+      "homepage": "https://ethansk.github.io/outstanding-items/",
+      "repository": "https://github.com/EthanSK/outstanding-items",
+      "license": "MIT",
+      "keywords": ["memory", "tasks", "ledger", "productivity", "skills"],
+      "category": "Productivity"
+    }
+  ]
+}

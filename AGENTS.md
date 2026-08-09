@@ -4,7 +4,7 @@ Instructions for agents working **in this repository**, plus the integration sni
 
 ## What this repository is
 
-A prompt-level skill, a static public website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. The canonical skill, generic HTML editor assets, and loopback server live in `skill/outstanding-items/` and are copied verbatim into a harness skills directory by `scripts/install.sh`.
+A skills-only OpenAI plugin, a Claude Code plugin, a standalone cross-harness skill, a static public website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; `scripts/install.sh` can also copy that folder verbatim into a harness skills directory.
 
 The product it describes has one non-negotiable rule, and every file here has to agree with it:
 
@@ -12,7 +12,7 @@ The product it describes has one non-negotiable rule, and every file here has to
 
 ## Ground rules for changes here
 
-1. **`skill/outstanding-items/SKILL.md` is the source of truth.** Do not edit an installed copy in `~/.codex/skills/` or `~/.claude/skills/` and expect it to survive. Edit here, then reinstall.
+1. **`plugins/outstanding-items/skills/outstanding-items/SKILL.md` is the source of truth.** Do not edit an installed copy in `~/.codex/skills/`, `~/.claude/skills/`, or a plugin cache and expect it to survive. Edit here, then reinstall.
 2. **Rule #1 stays at the top of `SKILL.md`,** above everything except the title, and ahead of the continuous-improvement contract. Nothing you add may weaken it, and nothing may imply that a ledger entry, a status, a ranking, or a delta is permission.
 3. **Keep safeguards in `SKILL.md`.** References are for schemas, examples, and edge cases. If a rule prevents harm, prevents a false claim, or protects the user's authority, it belongs in the core file.
 4. **References stay one level deep.** `references/*.md`, linked directly from `SKILL.md`. No reference-of-a-reference chains.
@@ -21,7 +21,8 @@ The product it describes has one non-negotiable rule, and every file here has to
 7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, cross-task bus, or database. Do not claim guaranteed invocation. The public site has no analytics, third-party runtime dependencies, or outbound application requests. `tests/run_checks.py` enforces these boundaries.
 8. **The site has no runtime dependencies.** No CDN, no analytics, no fonts fetched over the network, no framework. All internal links are relative so the site works under `/outstanding-items/`.
 9. **Keep the public surfaces synchronized.** Whenever user-visible behaviour, setup, status, or limitations change, review `README.md` and `docs/` in the same change and update both wherever the public story changed. If either surface needs no edit, record what was checked rather than assuming. When publication is authorized, do not stop at a successful push: wait for the GitHub Pages build, verify the live HTTPS page comes from the expected commit, and compare deterministic live/local bytes where practical.
-10. **Run the checks before you claim anything works.**
+10. **Keep plugin versions synchronized.** Whenever anything inside `plugins/outstanding-items/` changes for a public update, bump the semantic version in both plugin manifests to the same value. OpenAI and Claude Code cache installed plugin versions; leaving the version unchanged can strand users on stale files.
+11. **Run the checks before you claim anything works.**
 
 ```sh
 ./scripts/check.sh
@@ -35,11 +36,15 @@ If a task here produces a list of remaining work, that list is the user's. Write
 
 | Path | Notes |
 | --- | --- |
-| `skill/outstanding-items/SKILL.md` | Always-loaded operating contract. Keep it imperative and short. |
-| `skill/outstanding-items/references/` | Conditional detail: authority, status labels, choosing the one item the footer names, backlog artifact, related tasks, worked examples. |
-| `skill/outstanding-items/scripts/ledger_ui.py` | Canonical JSON validation/migration, atomic persistence API, and loopback-only editor lifecycle. |
-| `skill/outstanding-items/assets/` | Generic Full outstanding items HTML, CSS, and JavaScript. Never put a real ledger here. |
-| `skill/outstanding-items/agents/openai.yaml` | Codex packaging metadata using the supported `interface` schema. It must stay truthful about the user-owned ledger and must not imply automatic execution. |
+| `plugins/outstanding-items/.codex-plugin/plugin.json` | OpenAI plugin identity and presentation metadata. |
+| `plugins/outstanding-items/.claude-plugin/plugin.json` | Claude Code plugin identity; no duplicate workflow content. |
+| `plugins/outstanding-items/skills/outstanding-items/SKILL.md` | Always-loaded operating contract. Keep it imperative and short. |
+| `plugins/outstanding-items/skills/outstanding-items/references/` | Conditional detail: authority, status labels, choosing the one item the footer names, backlog artifact, related tasks, worked examples. |
+| `plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py` | Canonical JSON validation/migration, atomic persistence API, and loopback-only editor lifecycle. |
+| `plugins/outstanding-items/skills/outstanding-items/assets/` | Generic Full outstanding items HTML, CSS, and JavaScript. Never put a real ledger here. |
+| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | Standalone Codex skill metadata. Claude Code ignores it. |
+| `.agents/plugins/marketplace.json` | OpenAI repo marketplace pointing at the plugin package. |
+| `.claude-plugin/marketplace.json` | Claude Code repo marketplace pointing at that same package. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from the JSON in `docs/index.html`. |
 | `scripts/` | POSIX `sh`. Dry-runnable, non-destructive. |
 | `tests/run_checks.py` | Python standard library only. Add a check when you add an invariant — especially an authority invariant. |

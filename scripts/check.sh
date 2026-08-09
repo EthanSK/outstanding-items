@@ -72,7 +72,7 @@ done
 
 if command -v node >/dev/null 2>&1; then
   printf '== javascript syntax\n'
-  for f in "$REPO_ROOT"/docs/assets/*.js "$REPO_ROOT"/skill/outstanding-items/assets/*.js; do
+  for f in "$REPO_ROOT"/docs/assets/*.js "$REPO_ROOT"/plugins/outstanding-items/skills/outstanding-items/assets/*.js; do
     [ -f "$f" ] || continue
     if node --check "$f" >/dev/null 2>&1; then
       printf '   ok    %s\n' "${f#"$REPO_ROOT"/}"

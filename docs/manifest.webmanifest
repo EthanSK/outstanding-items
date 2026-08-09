@@ -1,7 +1,7 @@
 {
   "name": "Outstanding Items",
   "short_name": "Outstanding",
-  "description": "A skill for Codex and Claude Code that keeps a running ledger of every outstanding request and shows it at the end of each turn.",
+  "description": "A plugin and standalone skill for Codex and Claude Code that keeps a running ledger of every outstanding request and shows one suggestion at the end of each turn.",
   "lang": "en",
   "dir": "ltr",
   "start_url": ".",

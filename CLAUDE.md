@@ -4,7 +4,7 @@ Instructions for Claude Code working **in this repository**, plus the integratio
 
 ## What this repository is
 
-A prompt-level skill, a static website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. The canonical skill, generic editor assets, and loopback server live in `skill/outstanding-items/` and are copied verbatim into `~/.claude/skills/outstanding-items/` by `scripts/install.sh --target claude`.
+A skills-only OpenAI plugin, a Claude Code plugin, a standalone cross-harness skill, a static website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; `scripts/install.sh --target claude` can also copy that folder verbatim into `~/.claude/skills/outstanding-items/`.
 
 Everything here is built around one rule:
 
@@ -12,7 +12,7 @@ Everything here is built around one rule:
 
 ## Ground rules for changes here
 
-1. **`skill/outstanding-items/SKILL.md` is the source of truth.** Never edit the installed copy under `~/.claude/skills/`; edit here and reinstall.
+1. **`plugins/outstanding-items/skills/outstanding-items/SKILL.md` is the source of truth.** Never edit the installed copy under `~/.claude/skills/` or a plugin cache; edit here and reinstall.
 2. **Rule #1 stays at the top of `SKILL.md`,** ahead of the continuous-improvement contract. Nothing may imply that a backlog entry, a status, a ranking, or a cross-task delta is permission to act.
 3. **Keep safeguards in `SKILL.md`.** References carry schemas, worked examples, and edge cases. Anything that prevents harm, prevents a false claim, or protects the user's authority stays in the core file.
 4. **References stay one level deep** and are linked directly from `SKILL.md`.
@@ -21,7 +21,8 @@ Everything here is built around one rule:
 7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, message bus, or database. There is no guaranteed invocation. The public website has no analytics, third-party runtime dependencies, or outbound application requests.
 8. **No runtime dependencies on the site**, and all internal links relative so it works under `/outstanding-items/`.
 9. **Keep the public surfaces synchronized.** Whenever user-visible behaviour, setup, status, or limitations change, review `README.md` and `docs/` in the same change and update both wherever the public story changed. If either surface needs no edit, record what was checked rather than assuming. When publication is authorized, do not stop at a successful push: wait for the GitHub Pages build, verify the live HTTPS page comes from the expected commit, and compare deterministic live/local bytes where practical.
-10. **Run the checks before claiming success:**
+10. **Keep plugin versions synchronized.** Whenever anything inside `plugins/outstanding-items/` changes for a public update, bump the semantic version in both plugin manifests to the same value. OpenAI and Claude Code cache installed plugin versions; leaving the version unchanged can strand users on stale files.
+11. **Run the checks before claiming success:**
 
 ```sh
 ./scripts/check.sh
@@ -36,14 +37,19 @@ Any list of remaining work produced here belongs to the person you are talking t
 - Claude Code discovers skills from the YAML frontmatter `name` and `description`. The description is the only thing read before the skill loads, so trigger conditions must live inside it — and so must the ownership claim, because a description that reads like a task queue invites exactly the failure this skill prevents.
 - The body of `SKILL.md` should read as an operating contract — imperative, short, scannable. It is loaded into context whole.
 - Progressive disclosure is the point of `references/`: the model reads them only when a decision needs them. Do not inline their content back into `SKILL.md`.
-- `agents/openai.yaml` sits in the same directory. Claude Code ignores it; leave it in place so a single source tree serves both harnesses.
+- `agents/openai.yaml` sits in the canonical skill directory. Claude Code ignores it; leave it in place so a single source tree serves both harnesses.
+- `.claude-plugin/plugin.json` packages the skill for native Claude Code plugin installation. `.codex-plugin/plugin.json` packages the same directory for OpenAI; neither contains a second copy of the workflow.
 
 ## Where things live
 
 | Path | Notes |
 | --- | --- |
-| `skill/outstanding-items/SKILL.md` | Always-loaded operating contract, Rule #1 first. |
-| `skill/outstanding-items/references/` | `authority.md`, `status-labels.md`, `next-action.md` (choosing the one item), `backlog-artifact.md`, `ledger-ui.md`, `related-tasks.md`, `worked-examples.md`. |
+| `plugins/outstanding-items/.claude-plugin/plugin.json` | Claude Code plugin identity. |
+| `plugins/outstanding-items/.codex-plugin/plugin.json` | OpenAI plugin identity. |
+| `plugins/outstanding-items/skills/outstanding-items/SKILL.md` | Always-loaded operating contract, Rule #1 first. |
+| `plugins/outstanding-items/skills/outstanding-items/references/` | `authority.md`, `status-labels.md`, `next-action.md` (choosing the one item), `backlog-artifact.md`, `ledger-ui.md`, `related-tasks.md`, `worked-examples.md`. |
+| `.claude-plugin/marketplace.json` | Claude Code repo marketplace. |
+| `.agents/plugins/marketplace.json` | OpenAI repo marketplace. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from JSON embedded in `docs/index.html`. |
 | `scripts/` | POSIX `sh`, dry-runnable, non-destructive. |
 | `tests/run_checks.py` | Standard library only. Add a check when you add an invariant, including the authority ones. |

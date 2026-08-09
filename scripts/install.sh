@@ -1,6 +1,7 @@
 #!/bin/sh
-# Install the outstanding-items skill from this checkout into a harness skills
-# directory. No network access. No recursive deletion. Dry-runnable.
+# Install the canonical skill bundled inside the Outstanding Items plugin into
+# a standalone harness skills directory. No network access. No recursive
+# deletion. Dry-runnable.
 set -eu
 
 SKILL_NAME="outstanding-items"
@@ -11,7 +12,7 @@ references/related-task-sync.md"
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$script_dir/.." && pwd)
-SRC="$REPO_ROOT/skill/$SKILL_NAME"
+SRC="$REPO_ROOT/plugins/$SKILL_NAME/skills/$SKILL_NAME"
 
 TARGET="auto"
 DEST=""
@@ -25,7 +26,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/install.sh [options]
 
-Copies skill/outstanding-items/ into a harness skills directory.
+Copies plugins/outstanding-items/skills/outstanding-items/ into a harness skills directory.
 
 Options:
   --target <auto|codex|claude|both>

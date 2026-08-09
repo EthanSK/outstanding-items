@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Outstanding Items — outsource your memory</title>
-<meta name="description" content="A simple skill for Codex and Claude Code that remembers every request, keeps the list out of your chat, and ends each answer with one suggested next move.">
+<meta name="description" content="An OpenAI and Claude Code plugin that remembers every request, keeps the list out of your chat, and ends each answer with one suggested next move.">
 <link rel="canonical" href="https://ethansk.github.io/outstanding-items/">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f6f8fc" media="(prefers-color-scheme: light)">
@@ -23,7 +23,7 @@
   "@context": "https://schema.org",
   "@type": "SoftwareSourceCode",
   "name": "Outstanding Items",
-  "description": "A skill for Codex and Claude Code that keeps a user-owned ledger of outstanding work.",
+  "description": "A skills-only plugin for Codex and Claude Code that keeps a user-owned ledger of outstanding work.",
   "codeRepository": "https://github.com/EthanSK/outstanding-items",
   "url": "https://ethansk.github.io/outstanding-items/",
   "license": "https://opensource.org/license/mit",
@@ -48,12 +48,12 @@
 <main id="main">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <p class="kicker">For Codex and Claude Code</p>
+      <p class="kicker">One plugin for Codex and Claude Code</p>
       <h1 id="hero-title">Outsource your memory</h1>
       <p class="hero-title-2">— a curated work experience.</p>
       <p class="hero-summary">Say everything as it comes to you. Your agent keeps the whole list out of the chat and ends each answer with one thoughtful next choice — the rest is one click away.</p>
       <div class="hero-actions">
-        <a class="button" href="#install">Install the skill</a>
+        <a class="button" href="#install">Install the plugin</a>
         <a class="text-link" href="https://github.com/EthanSK/outstanding-items#readme">Read the full documentation</a>
       </div>
     </div>
@@ -123,20 +123,23 @@
   <section class="install" id="install" aria-labelledby="install-title">
     <div class="install-copy">
       <p class="kicker">Install</p>
-      <h2 id="install-title">One script. No dependencies.</h2>
-      <p>Clone the repository, preview exactly what will be installed, then install it for Codex, Claude Code, or both.</p>
-      <p class="small">Requires only <code>sh</code> and <code>python3</code>. Installation starts no service and opens no port.</p>
+      <h2 id="install-title">Pick your agent. Install the same skill.</h2>
+      <p>The repository follows both plugin formats while keeping one canonical skill underneath.</p>
+      <p class="small">No service starts and no port opens. The standalone skill installer remains available in the README.</p>
     </div>
     <div class="code-block">
       <button class="copy-button" type="button" data-copy-target="install-code">Copy</button>
-      <pre><code id="install-code">git clone https://github.com/EthanSK/outstanding-items.git
-cd outstanding-items
-sh scripts/install.sh --dry-run
-sh scripts/install.sh</code></pre>
+      <pre><code id="install-code"># Codex
+codex plugin marketplace add EthanSK/outstanding-items
+codex plugin add outstanding-items@outstanding-items
+
+# Claude Code
+claude plugin marketplace add EthanSK/outstanding-items
+claude plugin install outstanding-items@outstanding-items --scope user</code></pre>
     </div>
     <div class="install-links">
-      <a href="https://github.com/EthanSK/outstanding-items#install">Choose a specific target</a>
-      <a href="https://github.com/EthanSK/outstanding-items/blob/main/skill/outstanding-items/SKILL.md">Read the skill</a>
+      <a href="https://github.com/EthanSK/outstanding-items#install">Standalone skill and setup details</a>
+      <a href="https://github.com/EthanSK/outstanding-items/blob/main/plugins/outstanding-items/skills/outstanding-items/SKILL.md">Read the skill</a>
     </div>
   </section>
 

@@ -2,7 +2,7 @@
 
 **Outsource your memory — a curated work experience.**
 
-A skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that keeps the list of everything you asked for out of your way, and hands you one thing at a time — and, deliberately, nothing more.
+An installable plugin and standalone skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that keeps the list of everything you asked for out of your way, and hands you one thing at a time — and, deliberately, nothing more.
 
 **It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and every item is captured with a permanent ID. The list itself stays out of the conversation: it lives in the ledger, and in a local editor you can open in one click.
 
@@ -18,7 +18,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **prompt-level skill** with one small optional local editor: one `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
+Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format, and it can still be installed directly as a standalone skill in either harness. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
 
 ## What it actually does
 
@@ -80,7 +80,7 @@ There is still only one ledger: the task-owned `outstanding-items.json`. The UI 
 
 When you explicitly transfer ownership to another task, the original records stay in that JSON with their status and evidence unchanged. They move into a collapsed, read-only **Owned elsewhere** section, leave the active counts, and show the destination task title, stable task/session ID, and handoff date. On Codex, the local editor refreshes cached destination titles by exact ID when a task is renamed; it never reads the task's turns, wakes it, or sends it a message.
 
-The generic HTML, CSS, and JavaScript ship with the skill, so no page regeneration is needed when the data changes. A migrated Markdown ledger is retained as a frozen source snapshot, then never updated again. See the [data model](skill/outstanding-items/references/backlog-artifact.md) and [editor operations](skill/outstanding-items/references/ledger-ui.md).
+The generic HTML, CSS, and JavaScript ship with the skill, so no page regeneration is needed when the data changes. A migrated Markdown ledger is retained as a frozen source snapshot, then never updated again. See the [data model](plugins/outstanding-items/skills/outstanding-items/references/backlog-artifact.md) and [editor operations](plugins/outstanding-items/skills/outstanding-items/references/ledger-ui.md).
 
 ## Who owns what
 
@@ -98,7 +98,7 @@ This is the part the whole project is built around, so it is worth being blunt a
 | The agent tidied, sorted, or summarised the list | No. |
 | You said "start OI-4 now" | **Yes** — that one item, in that turn. |
 
-The full decision table, with the reasoning and the hard cases, lives in [`references/authority.md`](skill/outstanding-items/references/authority.md).
+The full decision table, with the reasoning and the hard cases, lives in [`references/authority.md`](plugins/outstanding-items/skills/outstanding-items/references/authority.md).
 
 ## Status labels
 
@@ -122,7 +122,7 @@ The other thing that makes the ledger worth trusting: the skill may not claim a 
 - **`waiting-on-you` is not `blocked`.** "Blocked" reads as *nothing to be done* and gets ignored for a week. If the only missing thing is your click, your key, or your yes, the ledger says so and tells you exactly what to press.
 - **`reminder` is not a neglected request.** It was parked deliberately, so it stays visible, never retires itself, and never becomes a suggestion unless you ask or something genuinely becomes urgent.
 
-Full definitions, transitions, and anti-patterns: [`references/status-labels.md`](skill/outstanding-items/references/status-labels.md).
+Full definitions, transitions, and anti-patterns: [`references/status-labels.md`](plugins/outstanding-items/skills/outstanding-items/references/status-labels.md).
 
 ## Outsource your memory — a curated work experience
 
@@ -157,7 +157,7 @@ And the rules that keep it from becoming a productivity lecture:
 - **Advice, once.** Ignore it and it moves on to something else next turn, or says nothing at all. It does not repeat it, and it certainly does not start it.
 - **Silence is a legitimate answer.** When everything left is blocked, parked, or already offered, the footer says "nothing new to suggest" instead of inventing a pick.
 
-Weighing, wording, and the cases where it should refuse to pick: [`references/next-action.md`](skill/outstanding-items/references/next-action.md).
+Weighing, wording, and the cases where it should refuse to pick: [`references/next-action.md`](plugins/outstanding-items/skills/outstanding-items/references/next-action.md).
 
 ## Related tasks, without waking anything
 
@@ -165,11 +165,33 @@ If another conversation should know about one of your items, the skill registers
 
 It will only deliver that note through a mechanism that does not start a turn in the destination. If the only available tool would wake, resume, or dispatch that conversation, the delta is marked `prepared (not sent)` and handed to you instead — because a note that arrives as an instruction turns somebody else's backlog into work nobody authorized.
 
-Registry schema, delivery gate, loop prevention, and failure wording: [`references/related-tasks.md`](skill/outstanding-items/references/related-tasks.md).
+Registry schema, delivery gate, loop prevention, and failure wording: [`references/related-tasks.md`](plugins/outstanding-items/skills/outstanding-items/references/related-tasks.md).
 
 ## Install
 
-Everything installs from the checked-out repository. No network access, no package manager, no build step.
+The repository is a marketplace for both plugin systems. Install the same packaged skill in either harness:
+
+### Codex plugin
+
+```sh
+codex plugin marketplace add EthanSK/outstanding-items
+codex plugin add outstanding-items@outstanding-items
+```
+
+Start a new Codex task after installation so it picks up the bundled skill.
+
+### Claude Code plugin
+
+```sh
+claude plugin marketplace add EthanSK/outstanding-items
+claude plugin install outstanding-items@outstanding-items --scope user
+```
+
+Run `/reload-plugins` or start a new Claude Code session. Claude exposes the bundled skill under its plugin namespace.
+
+### Standalone skill
+
+The direct installer remains available for people who want the short `$outstanding-items` skill without installing a plugin. It uses the same canonical source and introduces no second copy in the repository. No package manager or build step is involved.
 
 ```sh
 git clone https://github.com/EthanSK/outstanding-items.git
@@ -202,10 +224,10 @@ If you would rather see every step:
 
 ```sh
 mkdir -p ~/.codex/skills/outstanding-items
-cp -R skill/outstanding-items/. ~/.codex/skills/outstanding-items/
+cp -R plugins/outstanding-items/skills/outstanding-items/. ~/.codex/skills/outstanding-items/
 
 mkdir -p ~/.claude/skills/outstanding-items
-cp -R skill/outstanding-items/. ~/.claude/skills/outstanding-items/
+cp -R plugins/outstanding-items/skills/outstanding-items/. ~/.claude/skills/outstanding-items/
 ```
 
 One canonical source, copied twice. The `SKILL.md` frontmatter (`name` + `description`) is valid for both harnesses; `agents/openai.yaml` uses Codex's supported `interface` schema and Claude Code ignores it. A manual copy does not create the install manifest, so remove a manual installation manually; use `scripts/install.sh` when you want conflict-aware updates and manifest-scoped uninstalling.
@@ -292,11 +314,15 @@ Stated plainly, because these are the assumptions people arrive with:
 
 | Path | Purpose |
 | --- | --- |
-| `skill/outstanding-items/SKILL.md` | The canonical operating contract, Rule #1 first. Single source of truth. |
-| `skill/outstanding-items/references/` | Seven one-level references: authority, status labels, choosing the one item, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
-| `skill/outstanding-items/assets/` | Generic local ledger HTML, CSS, and JavaScript. It contains no user data. |
-| `skill/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
-| `skill/outstanding-items/agents/openai.yaml` | Codex packaging metadata. |
+| `.agents/plugins/marketplace.json` | OpenAI marketplace catalog for the repository. |
+| `.claude-plugin/marketplace.json` | Claude Code marketplace catalog for the repository. |
+| `plugins/outstanding-items/.codex-plugin/plugin.json` | OpenAI plugin manifest. |
+| `plugins/outstanding-items/.claude-plugin/plugin.json` | Claude Code plugin manifest. |
+| `plugins/outstanding-items/skills/outstanding-items/SKILL.md` | The canonical operating contract, Rule #1 first. Single source of truth. |
+| `plugins/outstanding-items/skills/outstanding-items/references/` | Seven one-level references: authority, status labels, choosing the one item, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
+| `plugins/outstanding-items/skills/outstanding-items/assets/` | Generic local ledger HTML, CSS, and JavaScript. It contains no user data. |
+| `plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
+| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | Standalone Codex skill metadata; Claude Code ignores it. |
 | `scripts/install.sh` | Dry-runnable, non-destructive installer. |
 | `scripts/uninstall.sh` | Manifest-scoped removal. |
 | `scripts/check.sh` | Repository and installation validation. |
@@ -322,8 +348,8 @@ Fork it and change four things:
 
 1. **The `description` in `SKILL.md`** — trigger phrases decide when the skill loads. Put your own vocabulary in it ("chuck that on the list", "next thing").
 2. **The status labels** — if your work has a different pipeline, replace the table. Keep the requested / implemented / verified split, keep `waiting-on-you` separate from `blocked`, and keep every label descriptive; those are the parts that prevent optimistic reporting and silent stalling. If you would rather the ledger addressed you by name, rename the label — `waiting-on-ada` reads just as well, it only has to be consistent across `SKILL.md` and the references.
-3. **The thresholds** — when the ledger moves into its own JSON file and editor (7 open items / 20 total) lives in `SKILL.md` and [`references/backlog-artifact.md`](skill/outstanding-items/references/backlog-artifact.md). The footer stays one item whatever you set.
-4. **What a suggestion means to you** — the weighing in [`references/next-action.md`](skill/outstanding-items/references/next-action.md) is deliberately human. If your work needs deadlines to dominate, or you would rather see nothing unless you ask, say so there.
+3. **The thresholds** — when the ledger moves into its own JSON file and editor (7 open items / 20 total) lives in `SKILL.md` and [`references/backlog-artifact.md`](plugins/outstanding-items/skills/outstanding-items/references/backlog-artifact.md). The footer stays one item whatever you set.
+4. **What a suggestion means to you** — the weighing in [`references/next-action.md`](plugins/outstanding-items/skills/outstanding-items/references/next-action.md) is deliberately human. If your work needs deadlines to dominate, or you would rather see nothing unless you ask, say so there.
 
 What not to change: Rule #1. If you rewrite the ownership model so that a list entry, a status, or a ranking implies permission, this stops being the same tool, and the checks in `tests/run_checks.py` will say so.
 

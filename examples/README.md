@@ -14,4 +14,4 @@ Copy-paste material. Everything here is synthetic: the task titles are invented 
 
 In `outstanding-items.json`, three items carry an `explanation` and the completed one deliberately does not — that is the older-ledger case, where the UI shows a plain sentence based on the item's status instead.
 
-None of these files is read at runtime. The skill itself is `skill/outstanding-items/`.
+None of these files is read at runtime. The canonical skill is `plugins/outstanding-items/skills/outstanding-items/`.
