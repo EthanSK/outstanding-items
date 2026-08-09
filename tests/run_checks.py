@@ -1841,6 +1841,22 @@ def check_docs_consistency() -> list[str]:
     ):
         if phrase not in readme:
             problems.append(f"README.md does not document the public synchronization rule: {phrase!r}")
+    for name in ("AGENTS.md", "CLAUDE.md"):
+        text = read(ROOT / name)
+        for phrase in (
+            "Refresh after every local repository change, whoever made it",
+            "git status --short",
+            "whether made by Ethan, this agent, or another agent",
+            "python3 scripts/sync_plugin_dev.py",
+        ):
+            if phrase not in text:
+                problems.append(f"{name} does not preserve local plugin refresh policy: {phrase!r}")
+    for phrase in (
+        "After any coherent local change to this repository",
+        "whenever you, they, or another agent changed anything locally",
+    ):
+        if phrase not in readme:
+            problems.append(f"README.md does not document local plugin refresh policy: {phrase!r}")
     if REPO_URL not in index:
         problems.append("docs/index.html does not link to the repository")
     if SITE_BASE not in readme:

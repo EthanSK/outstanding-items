@@ -183,13 +183,13 @@ Start a new Codex task after installation so it picks up the bundled skill.
 
 #### Refresh a local development copy
 
-After changing the plugin, one command validates the repository, registers this checkout as a local marketplace when needed, installs a cache-busted copy, restores both authored manifests byte-for-byte, and verifies the installed version:
+After any coherent local change to this repository—including a change you made outside an agent task—one command validates the repository, registers this checkout as a local marketplace when needed, installs a cache-busted copy, restores both authored manifests byte-for-byte, and verifies the installed version:
 
 ```sh
 python3 scripts/sync_plugin_dev.py
 ```
 
-Use `--dry-run` to inspect the exact flow. The command also removes any manifest-owned legacy standalone Codex copy after the plugin is verified. Modified or unowned files are never deleted; if an old manual copy cannot be proved safe to remove, the command stops and explains why. Codex loads refreshed plugin skills in a new task, not retroactively into the task performing the reinstall.
+Repository agents are instructed to inspect the working tree when they start and run this command before finishing whenever you, they, or another agent changed anything locally. Use `--dry-run` to inspect the exact flow. The command also removes any manifest-owned legacy standalone Codex copy after the plugin is verified. Modified or unowned files are never deleted; if an old manual copy cannot be proved safe to remove, the command stops and explains why. Codex loads refreshed plugin skills in a new task, not retroactively into the task performing the reinstall.
 
 For a Git-backed marketplace release, refresh its snapshot before reinstalling:
 

@@ -28,7 +28,7 @@ Everything here is built around one rule:
 ./scripts/check.sh
 ```
 
-12. **Refresh the local Codex plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Do not hand-edit plugin caches or marketplace configuration.
+12. **Refresh after every local repository change, whoever made it.** At the start of a task, inspect `git status --short` so changes Ethan made locally are not mistaken for already-installed plugin state. Before finishing any task that leaves a coherent local change anywhere in this repository—whether made by Ethan, this agent, or another agent—run `python3 scripts/sync_plugin_dev.py`. It validates the whole repository, cache-busts and reinstalls the Codex plugin, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Never install conflicted or obviously half-written work; preserve it and report the blocker instead. Do not hand-edit plugin caches or marketplace configuration.
 
 ## Working on the outstanding items of this repository
 
