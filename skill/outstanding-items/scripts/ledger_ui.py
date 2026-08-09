@@ -14,8 +14,10 @@ import hashlib
 import json
 import os
 import pathlib
+import queue
 import re
 import secrets
+import shutil
 import signal
 import subprocess
 import sys
@@ -54,6 +56,11 @@ STATE_RE = re.compile(r"^-\s+\*\*State:\*\*\s*(.+?)\s*$", re.I)
 MAX_BODY_BYTES = 1_000_000
 # One short, plain-language paragraph shown as the item's hover/focus tooltip.
 MAX_EXPLANATION_CHARS = 600
+CODEX_THREAD_ID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.I,
+)
+TITLE_REFRESH_INTERVAL_SECONDS = 60.0
 
 
 def utc_now() -> str:
@@ -180,6 +187,11 @@ def validate_ledger(data: Any) -> None:
             for key in ("task_id", "title", "transferred_at"):
                 if not isinstance(transferred_to.get(key), str) or not transferred_to[key].strip():
                     raise ValueError(f"{item_id} transferred_to needs non-empty {key}")
+            for key in ("title_source", "title_updated_at"):
+                if key in transferred_to and (
+                    not isinstance(transferred_to[key], str) or not transferred_to[key].strip()
+                ):
+                    raise ValueError(f"{item_id} transferred_to {key} must be a non-empty string")
         position = item.get("position")
         if not isinstance(position, int) or position < 0:
             raise ValueError(f"{item_id} position must be a non-negative integer")
@@ -447,6 +459,174 @@ def client_ledger(data: dict[str, Any], ledger_path: pathlib.Path) -> dict[str, 
     return payload
 
 
+def read_codex_thread_titles(
+    task_ids: set[str],
+    *,
+    codex_binary: str | None = None,
+    timeout: float = 6.0,
+) -> dict[str, str]:
+    """Resolve exact saved Codex task IDs through the local app-server protocol.
+
+    This is deliberately read-only and fail-soft. It never messages, wakes, or
+    mutates a task, and it disables remote plugin sync for the short-lived local
+    protocol process. Non-Codex IDs are ignored so Claude-compatible ledgers
+    remain valid without requiring Codex.
+    """
+    wanted = {task_id for task_id in task_ids if CODEX_THREAD_ID_RE.fullmatch(task_id)}
+    if not wanted:
+        return {}
+    executable = codex_binary or os.environ.get("OUTSTANDING_ITEMS_CODEX_BIN") or shutil.which("codex")
+    if not executable:
+        return {}
+    process: subprocess.Popen[str] | None = None
+    deadline = time.monotonic() + timeout
+    request_id = 1
+    responses: queue.Queue[dict[str, Any]] = queue.Queue()
+
+    def send(payload: dict[str, Any]) -> None:
+        assert process and process.stdin
+        process.stdin.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        process.stdin.flush()
+
+    def response_for(expected_id: int) -> dict[str, Any] | None:
+        while time.monotonic() < deadline:
+            try:
+                payload = responses.get(timeout=max(0.0, deadline - time.monotonic()))
+            except queue.Empty:
+                return None
+            if payload.get("id") == expected_id:
+                return payload
+        return None
+
+    try:
+        process = subprocess.Popen(
+            [executable, "app-server", "--disable", "remote_plugin", "--stdio"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
+        )
+
+        def read_responses() -> None:
+            assert process and process.stdout
+            for line in process.stdout:
+                try:
+                    payload = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(payload, dict):
+                    responses.put(payload)
+
+        threading.Thread(target=read_responses, daemon=True).start()
+        send(
+            {
+                "jsonrpc": "2.0",
+                "id": request_id,
+                "method": "initialize",
+                "params": {
+                    "clientInfo": {
+                        "name": "outstanding-items",
+                        "title": "Outstanding Items",
+                        "version": "1.0.0",
+                    }
+                },
+            }
+        )
+        initialized = response_for(request_id)
+        if not initialized or initialized.get("error"):
+            return {}
+        send({"jsonrpc": "2.0", "method": "initialized", "params": {}})
+
+        found: dict[str, str] = {}
+        for archived in (False, True):
+            cursor: str | None = None
+            for _page in range(50):
+                request_id += 1
+                params: dict[str, Any] = {
+                    "archived": archived,
+                    "limit": 100,
+                    "sortKey": "updated_at",
+                    "sortDirection": "desc",
+                    "useStateDbOnly": True,
+                }
+                if cursor:
+                    params["cursor"] = cursor
+                send(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": request_id,
+                        "method": "thread/list",
+                        "params": params,
+                    }
+                )
+                response = response_for(request_id)
+                if not response or response.get("error"):
+                    break
+                result = response.get("result")
+                if not isinstance(result, dict):
+                    break
+                for thread in result.get("data", []):
+                    if not isinstance(thread, dict):
+                        continue
+                    task_id = thread.get("id") or thread.get("sessionId")
+                    title = thread.get("name")
+                    if task_id in wanted and isinstance(title, str) and title.strip():
+                        found[task_id] = title.strip()
+                if wanted <= found.keys():
+                    return found
+                cursor = result.get("nextCursor")
+                if not isinstance(cursor, str) or not cursor:
+                    break
+        return found
+    except (OSError, ValueError, BrokenPipeError, subprocess.SubprocessError):
+        return {}
+    finally:
+        if process and process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=1.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=1.0)
+        if process and process.stdin:
+            process.stdin.close()
+        if process and process.stdout:
+            process.stdout.close()
+
+
+def refresh_transferred_titles(
+    data: dict[str, Any],
+    *,
+    resolver: Any = read_codex_thread_titles,
+) -> bool:
+    """Refresh cached destination names by stable task ID; return whether data changed."""
+    transferred = [
+        item["transferred_to"]
+        for item in data["items"]
+        if item.get("tracking_state") == "transferred"
+    ]
+    task_ids = {destination["task_id"] for destination in transferred}
+    titles = resolver(task_ids)
+    if not titles:
+        return False
+    changed = False
+    refreshed_at = utc_now()
+    for destination in transferred:
+        title = titles.get(destination["task_id"])
+        if not title:
+            continue
+        if (
+            destination.get("title") != title
+            or destination.get("title_source") != "codex-app-server"
+        ):
+            destination["title"] = title
+            destination["title_source"] = "codex-app-server"
+            destination["title_updated_at"] = refreshed_at
+            changed = True
+    return changed
+
+
 class ConflictError(ValueError):
     pass
 
@@ -469,6 +649,50 @@ class LedgerHTTPServer(ThreadingHTTPServer):
         self.token = token
         self.instance_id = instance_id
         self.write_lock = threading.Lock()
+        self.title_refresh_lock = threading.Lock()
+        self.last_title_refresh = 0.0
+
+    def title_refresh_due(self) -> bool:
+        return time.monotonic() - self.last_title_refresh >= TITLE_REFRESH_INTERVAL_SECONDS
+
+    def mark_titles_refreshed(self) -> None:
+        self.last_title_refresh = time.monotonic()
+
+    def refresh_titles(self, *, force: bool = False) -> None:
+        if not force and not self.title_refresh_due():
+            return
+        if not self.title_refresh_lock.acquire(blocking=False):
+            return
+        try:
+            with self.write_lock:
+                snapshot = read_json(self.ledger_path)
+                task_ids = {
+                    item["transferred_to"]["task_id"]
+                    for item in snapshot["items"]
+                    if item.get("tracking_state") == "transferred"
+                }
+            titles = read_codex_thread_titles(task_ids)
+            if titles:
+                with self.write_lock:
+                    current = read_json(self.ledger_path)
+                    if refresh_transferred_titles(current, resolver=lambda _ids: titles):
+                        current["revision"] += 1
+                        current["updated_at"] = utc_now()
+                        atomic_write_json(self.ledger_path, current)
+            self.mark_titles_refreshed()
+        except (OSError, ValueError):
+            # Title refresh is optional display maintenance. Ledger reads and
+            # user mutations remain available even when Codex metadata is not.
+            self.mark_titles_refreshed()
+        finally:
+            self.title_refresh_lock.release()
+
+    def schedule_title_refresh(self) -> None:
+        threading.Thread(
+            target=self.refresh_titles,
+            kwargs={"force": True},
+            daemon=True,
+        ).start()
 
 
 class LedgerHandler(BaseHTTPRequestHandler):
@@ -547,7 +771,9 @@ class LedgerHandler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "invalid token"})
                 return
             try:
-                data = read_json(self.server.ledger_path)
+                self.server.refresh_titles()
+                with self.server.write_lock:
+                    data = read_json(self.server.ledger_path)
             except ValueError as exc:
                 self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
                 return
@@ -594,10 +820,15 @@ class LedgerHandler(BaseHTTPRequestHandler):
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
         self.send_json(HTTPStatus.OK, client_ledger(mutated, self.server.ledger_path))
+        self.server.schedule_title_refresh()
 
 
 def state_path_for(ledger: pathlib.Path) -> pathlib.Path:
     return ledger.with_name(f".{ledger.stem}.ledger-ui-state.json")
+
+
+def connection_path_for(ledger: pathlib.Path) -> pathlib.Path:
+    return ledger.with_name(f".{ledger.stem}.ledger-ui-connection.json")
 
 
 def log_path_for(ledger: pathlib.Path) -> pathlib.Path:
@@ -623,6 +854,43 @@ def load_state(path: pathlib.Path) -> dict[str, Any] | None:
     return state if isinstance(state, dict) else None
 
 
+def write_private_state(path: pathlib.Path, state: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        temporary = pathlib.Path(handle.name)
+        json.dump(state, handle, indent=2)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    temporary.chmod(0o600)
+    os.replace(temporary, path)
+
+
+def reusable_connection(path: pathlib.Path, ledger: pathlib.Path) -> dict[str, Any] | None:
+    state = load_state(path)
+    if not state or state.get("ledger") != str(ledger):
+        return None
+    port = state.get("port")
+    token = state.get("token")
+    if not isinstance(port, int) or not 1 <= port <= 65535:
+        return None
+    if not isinstance(token, str) or len(token) < 16:
+        return None
+    return {
+        "port": port,
+        "token": token,
+        "url": f"http://127.0.0.1:{port}/?token={urllib.parse.quote(token)}",
+        "ledger": str(ledger),
+    }
+
+
 def command_serve(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     read_json(ledger)
@@ -633,6 +901,11 @@ def command_serve(args: argparse.Namespace) -> int:
     port = server.server_address[1]
     url = f"http://127.0.0.1:{port}/?token={urllib.parse.quote(token)}"
     state_path = pathlib.Path(args.state_file).resolve() if args.state_file else state_path_for(ledger)
+    connection_path = (
+        pathlib.Path(args.connection_file).resolve()
+        if args.connection_file
+        else connection_path_for(ledger)
+    )
     state = {
         "pid": os.getpid(),
         "port": port,
@@ -643,9 +916,11 @@ def command_serve(args: argparse.Namespace) -> int:
         "started_at": utc_now(),
     }
     atomic_state = dict(state)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(json.dumps(atomic_state, indent=2) + "\n", encoding="utf-8")
-    state_path.chmod(0o600)
+    write_private_state(state_path, atomic_state)
+    write_private_state(
+        connection_path,
+        {"port": port, "url": url, "token": token, "ledger": str(ledger)},
+    )
     print(f"LEDGER_URL={url}", flush=True)
 
     def request_shutdown(_signum: int, _frame: Any) -> None:
@@ -674,7 +949,10 @@ def command_start(args: argparse.Namespace) -> int:
             print(f"LEDGER_URL={existing['url']}")
             print(f"LEDGER_PID={existing['pid']}")
             return 0
-    token = secrets.token_urlsafe(24)
+    connection_path = connection_path_for(ledger)
+    connection = reusable_connection(connection_path, ledger)
+    preferred_port = args.port or (connection["port"] if connection else 0)
+    token = args.token or (connection["token"] if connection else secrets.token_urlsafe(24))
     instance_id = secrets.token_hex(12)
     log_path = log_path_for(ledger)
     command = [
@@ -684,13 +962,15 @@ def command_start(args: argparse.Namespace) -> int:
         "--ledger",
         str(ledger),
         "--port",
-        str(args.port),
+        str(preferred_port),
         "--token",
         token,
         "--instance-id",
         instance_id,
         "--state-file",
         str(state_path),
+        "--connection-file",
+        str(connection_path),
     ]
     with log_path.open("ab") as log:
         process = subprocess.Popen(
@@ -710,6 +990,10 @@ def command_start(args: argparse.Namespace) -> int:
                 print(f"LEDGER_URL={state['url']}")
                 print(f"LEDGER_PID={process.pid}")
                 print(f"LEDGER_LOG={log_path}")
+                # The child deliberately outlives this short launcher command.
+                # Mark the local Popen wrapper as detached to avoid a misleading
+                # ResourceWarning when its Python object is collected.
+                process.returncode = 0
                 return 0
         if process.poll() is not None:
             break
@@ -748,6 +1032,9 @@ def command_stop(args: argparse.Namespace) -> int:
     pid = state.get("pid")
     if not isinstance(pid, int) or pid <= 1:
         raise ValueError("refusing to stop: invalid pid")
+    connection = reusable_connection(state_path, ledger)
+    if connection:
+        write_private_state(connection_path_for(ledger), connection)
     os.kill(pid, signal.SIGTERM)
     for _ in range(40):
         if not health(state.get("url", ""), state.get("token", ""), timeout=0.15):
@@ -877,6 +1164,8 @@ def command_transfer(args: argparse.Namespace) -> int:
         "task_id": args.task_id,
         "title": args.destination_title,
         "transferred_at": transferred_at,
+        "title_source": "provided-at-transfer",
+        "title_updated_at": transferred_at,
     }
     if args.handoff_path:
         destination["handoff_path"] = str(pathlib.Path(args.handoff_path).expanduser().resolve())
@@ -944,11 +1233,13 @@ def parser() -> argparse.ArgumentParser:
     serve.add_argument("--token")
     serve.add_argument("--instance-id")
     serve.add_argument("--state-file")
+    serve.add_argument("--connection-file")
     serve.set_defaults(func=command_serve)
 
     start = sub.add_parser("start", help="start or reuse a background ledger UI")
     start.add_argument("--ledger", required=True)
     start.add_argument("--port", type=int, default=0)
+    start.add_argument("--token", help=argparse.SUPPRESS)
     start.set_defaults(func=command_start)
 
     status = sub.add_parser("status", help="show whether a ledger UI is running")

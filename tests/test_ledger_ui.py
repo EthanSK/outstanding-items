@@ -361,8 +361,98 @@ class LedgerModelTests(unittest.TestCase):
             self.assertEqual(by_id["OI-3"]["provenance"], "unknown-legacy")
             self.assertEqual(by_id["OI-1"]["tracking_state"], "transferred")
             self.assertEqual(by_id["OI-3"]["transferred_to"]["task_id"], "task_EXAMPLE_target")
+            self.assertEqual(
+                by_id["OI-3"]["transferred_to"]["title_source"], "provided-at-transfer"
+            )
             self.assertNotEqual(by_id["OI-2"].get("tracking_state"), "transferred")
             ledger_ui.validate_ledger(data)
+
+    def test_transferred_title_refresh_uses_stable_task_id_and_preserves_item_state(self) -> None:
+        data = sample_ledger()
+        item = data["items"][0]
+        task_id = "019fd41a-b89f-7de1-8795-bd7e3de7dfdd"
+        item["tracking_state"] = "transferred"
+        item["transferred_to"] = {
+            "task_id": task_id,
+            "title": "Old task title",
+            "transferred_at": "2026-08-07T10:00:00Z",
+        }
+        before = copy.deepcopy(item)
+
+        changed = ledger_ui.refresh_transferred_titles(
+            data,
+            resolver=lambda ids: {task_id: "Renamed Codex task"} if ids == {task_id} else {},
+        )
+
+        self.assertTrue(changed)
+        self.assertEqual(item["transferred_to"]["title"], "Renamed Codex task")
+        self.assertEqual(item["transferred_to"]["title_source"], "codex-app-server")
+        self.assertIn("title_updated_at", item["transferred_to"])
+        for key in ("id", "status", "completed", "position", "provenance"):
+            self.assertEqual(item[key], before[key])
+        self.assertFalse(
+            ledger_ui.refresh_transferred_titles(
+                data, resolver=lambda _ids: {task_id: "Renamed Codex task"}
+            )
+        )
+        ledger_ui.validate_ledger(data)
+
+    def test_codex_title_resolver_uses_read_only_app_server_protocol(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            fake = pathlib.Path(temp) / "fake-codex"
+            task_id = "019fd41a-b89f-7de1-8795-bd7e3de7dfdd"
+            fake.write_text(
+                "#!/usr/bin/env python3\n"
+                "import json, sys\n"
+                "assert sys.argv[1:] == ['app-server', '--disable', 'remote_plugin', '--stdio']\n"
+                "for line in sys.stdin:\n"
+                "    message = json.loads(line)\n"
+                "    if message.get('method') == 'initialize':\n"
+                "        print(json.dumps({'id': message['id'], 'result': {'codexHome': '/tmp'}}), flush=True)\n"
+                "    elif message.get('method') == 'thread/list':\n"
+                f"        thread = {{'id': '{task_id}', 'name': 'Current task title'}}\n"
+                "        print(json.dumps({'id': message['id'], 'result': {'data': [thread], 'nextCursor': None}}), flush=True)\n",
+                encoding="utf-8",
+            )
+            fake.chmod(0o700)
+
+            titles = ledger_ui.read_codex_thread_titles(
+                {task_id, "task_EXAMPLE_not_codex"}, codex_binary=str(fake)
+            )
+
+            self.assertEqual(titles, {task_id: "Current task title"})
+
+
+class LedgerLifecycleTests(unittest.TestCase):
+    def test_start_stop_start_reuses_the_exact_local_url(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(ledger=str(ledger), port=0, token=None)
+            try:
+                self.assertEqual(ledger_ui.command_start(args), 0)
+                first = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                self.assertIsNotNone(first)
+                self.assertEqual(ledger_ui.command_stop(types.SimpleNamespace(ledger=str(ledger))), 0)
+                deadline = time.monotonic() + 3
+                while ledger_ui.state_path_for(ledger.resolve()).exists() and time.monotonic() < deadline:
+                    time.sleep(0.05)
+
+                connection = ledger_ui.reusable_connection(
+                    ledger_ui.connection_path_for(ledger.resolve()), ledger.resolve()
+                )
+                self.assertIsNotNone(connection)
+                self.assertEqual(connection["url"], first["url"])
+
+                self.assertEqual(ledger_ui.command_start(args), 0)
+                second = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                self.assertIsNotNone(second)
+                self.assertEqual(second["url"], first["url"])
+                self.assertNotEqual(second["instance_id"], first["instance_id"])
+            finally:
+                state = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                if state and ledger_ui.health(state.get("url", ""), state.get("token", "")):
+                    ledger_ui.command_stop(types.SimpleNamespace(ledger=str(ledger)))
 
 
 class LedgerServerTests(unittest.TestCase):
@@ -613,6 +703,21 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("snackbar-action", html)
         self.assertIn("undoCompletion", script)
         self.assertIn("transferred-list", html)
+        self.assertIn('<h2 id="open-title">Outstanding</h2>', html)
+        self.assertNotIn('<h2 id="open-title">Open</h2>', html)
+        self.assertRegex(
+            html,
+            r'<details class="ledger-section ledger-section--transferred" '
+            r'id="transferred-section">',
+        )
+        self.assertNotRegex(html, r'<details[^>]+open')
+        self.assertIn("transfer-task-title", html)
+        self.assertIn("transfer-task-id", html)
+        self.assertIn("transfer-time", html)
+        self.assertIn("item.transferred_to?.task_id", script)
+        self.assertIn("item.transferred_to?.transferred_at", script)
+        self.assertIn("readOnlyTitle.tabIndex = 0", script)
+        self.assertIn("NETWORK_ERROR_MESSAGE", script)
         for action in ("toggle", "reorder", "edit"):
             self.assertIn(f'action: "{action}"', script)
         self.assertIn("window.setInterval", script)

@@ -17,7 +17,7 @@
         <p class="kicker">Outstanding items</p>
         <h1 id="ledger-title">Full outstanding items</h1>
         <p class="summary-line">
-          <span><strong id="open-count">—</strong> open</span>
+          <span><strong id="open-count">—</strong> outstanding</span>
           <span><strong id="done-count">—</strong> completed</span>
           <span><strong id="transferred-count">—</strong> elsewhere</span>
         </p>
@@ -31,24 +31,26 @@
     <main id="ledger" tabindex="-1">
       <section class="ledger-section" aria-labelledby="open-title">
         <div class="section-heading">
-          <h2 id="open-title">Open</h2>
+          <h2 id="open-title">Outstanding</h2>
         </div>
         <ol class="item-list" id="open-list" aria-describedby="open-help"></ol>
         <p class="sr-only" id="open-help">Click task text to edit it. Hovering a task, or giving it keyboard focus, shows a short note describing what it is about; press Escape to dismiss that note. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
         <div class="empty-state" id="open-empty" hidden>
-          <p>Nothing is open.</p>
+          <p>Nothing is outstanding.</p>
         </div>
       </section>
 
-      <section class="ledger-section ledger-section--transferred" aria-labelledby="transferred-title">
-        <div class="section-heading">
+      <details class="ledger-section ledger-section--transferred" id="transferred-section">
+        <summary class="section-heading">
           <h2 id="transferred-title">Owned elsewhere</h2>
-        </div>
+          <span class="section-count" id="transferred-section-count"></span>
+        </summary>
+        <p class="section-note">Read-only here; continue each item in the named Codex task.</p>
         <ol class="item-list item-list--transferred" id="transferred-list"></ol>
         <div class="empty-state" id="transferred-empty" hidden>
           <p>No transferred items.</p>
         </div>
-      </section>
+      </details>
 
       <section class="ledger-section ledger-section--done" aria-labelledby="done-title">
         <div class="section-heading">
@@ -83,6 +85,11 @@
           <span class="item-tooltip-label"></span>
           <p class="item-tooltip-text"></p>
         </div>
+        <p class="transfer-meta" hidden>
+          <span class="transfer-task-title"></span>
+          <span class="transfer-task-id"></span>
+          <span class="transfer-time"></span>
+        </p>
       </div>
       <div class="item-actions">
         <div class="drag-handle" draggable="true" role="button" tabindex="0" aria-label="Drag to reorder">

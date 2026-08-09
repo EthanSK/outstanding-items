@@ -11,7 +11,7 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py start \
   --ledger /absolute/task/path/outstanding-items.json
 ```
 
-Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger; otherwise it starts a loopback-only process on an available port.
+Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger. After a deliberate stop or replacement, it reuses the same private loopback port and token from the user-only connection file, so an existing browser tab and previously supplied link reconnect instead of becoming a dead URL.
 
 Use the printed URL as the last line of the compact footer:
 
@@ -33,11 +33,13 @@ Keep the resting interface visually quiet: each actionable row shows only its re
 
 Hovering a row with a pointer, or moving keyboard focus onto its task text, shows one small tooltip above that row: the item's `OI-n` and a friendly state phrase on the first line, then its short explanation paragraph. It flips below the row only when there is not enough space above. `Escape` dismisses it without moving the pointer or the focus, the pointer can travel onto the tooltip without it closing, and it stays up as long as the row is hovered or focused. The tooltip is text only, rendered with `textContent`, and it is never used to show Markdown, evidence, logs, or a next step.
 
-Open-item reorder controls are latent rather than absent: hover or keyboard focus reveals the drag grip and move buttons. `Alt+Up` and `Alt+Down` on focused task text provide the same keyboard movement without requiring the buttons. Completed items stay at the bottom and may be reopened with their checkbox.
+Outstanding-item reorder controls are latent rather than absent: hover or keyboard focus reveals the drag grip and move buttons. `Alt+Up` and `Alt+Down` on focused task text provide the same keyboard movement without requiring the buttons. Completed items stay at the bottom and may be reopened with their checkbox.
 
 After a successful completion mutation, show a temporary snackbar with **Undo**. Undo sends a real reopen mutation using the current `base_revision`; it never rewinds client state independently of the canonical JSON. Keep the snackbar available for eight seconds, pause its timeout during hover or keyboard focus, do not steal focus, and allow `Command+Z` or `Control+Z` while it is live. A failed or stale mutation must report the error and render the server's current ledger instead of claiming success.
 
-Transferred entries remain plain read-only task text under **Owned elsewhere**. Do not render completion, edit, drag, or move controls for them, and preserve their ID, status, and destination in the accessible label and canonical JSON.
+Transferred entries remain read-only under **Owned elsewhere**, which is a closed disclosure by default. Opening it shows the task text plus the destination Codex task title, stable task/session ID, and transfer date. Do not render completion, edit, drag, or move controls for them. Preserve their item ID, status, provenance, destination ID, cached title, transfer time, and optional handoff path in canonical JSON.
+
+On Codex, the loopback server checks exact stored destination IDs through `codex app-server`'s read-only `thread/list` protocol at most once per minute and after a successful browser mutation. It disables remote plugin sync for that short-lived lookup, reads titles only, and updates `transferred_to.title` plus its source/time metadata when a name changed. It never searches for replacement identities, reads turns, wakes a task, sends a message, or changes destination work. When Codex is unavailable (including Claude Code), cached titles remain valid and the editor continues normally.
 
 ## Canonical mutations
 
@@ -65,7 +67,7 @@ For rich notes, write a task-local temporary note and pass `--notes-file`; do no
 
 `--provenance` is required when creating a new item. Use `user-requested` only when the user's explicit words caused the capture, `agent-added` for a genuinely useful proactive agent addition, and `unknown-legacy` only when migrating an older item whose source cannot be proved. Later updates may omit the flag; provenance is preserved and cannot be rewritten. The UI shows a tiny inline `You` or `Agent` pill only for the two known origins; hovering it supplies the full explanation. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
 
-A newly created open item is inserted at position `0`, so it appears at the top of Open as soon as the page refreshes. Existing open items retain their relative order underneath it. Creating a completed historical item does not disturb Open.
+A newly created outstanding item is inserted at position `0`, so it appears at the top of **Outstanding** as soon as the page refreshes. Existing outstanding items retain their relative order underneath it. Creating a completed historical item does not disturb that order.
 
 ## Writing the explanation
 
@@ -118,8 +120,9 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 - Every browser mutation carries the revision it read. A stale mutation gets HTTP 409 and the new ledger, so it cannot erase an agent-side update.
 - Writes are validated and atomic.
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
+- The per-ledger private connection file preserves the exact loopback URL across normal stop/start cycles. A disconnected page explains that it will retry instead of surfacing the browser's raw `Failed to fetch` text.
 - The HTML, CSS, and JavaScript are a generic shell installed with the skill. They contain no task items and never need regeneration when ledger data changes.
-- Transferred items render read-only under **Owned elsewhere** and are excluded from active open/done counts without being deleted.
+- Transferred items render read-only inside a collapsed **Owned elsewhere** disclosure, show their destination metadata, and are excluded from active outstanding/completed counts without being deleted.
 - `explanation` is an optional per-item string of at most 600 characters. It travels with the rest of the ledger, needs no schema bump, and an item or ledger without it stays valid; the browser supplies the status fallback at render time and stores nothing of its own.
 - `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, and transfer mutations. The browser cannot change it.
 

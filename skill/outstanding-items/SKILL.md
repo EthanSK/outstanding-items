@@ -36,7 +36,7 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 10. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
 11. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
 12. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
-13. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
+13. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact stable destination task/session ID plus its cached visible title, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history. When Codex is locally available, the editor may refresh that cached title through the read-only app-server protocol by exact ID; this never authorizes discovering, waking, messaging, or changing the destination task.
 
 ## The compact recommendation
 
@@ -144,7 +144,7 @@ A related task is another conversation whose own ledger should learn about some 
 
 1. **Record useful links locally.** When a relationship is genuinely useful, you may add its stable title and task/session ID to this ledger's `sections` registry without asking first. That link is record-only metadata: by itself it never authorizes waking, starting, messaging, reprioritising, or altering the other task.
 2. **Message only when separately authorized.** A fresh explicit user instruction is required before sending even a memory-only delta. The delta authorizes no implementation there, and it must say so in its own words. Never dispatch, wake, resume, or route work for execution.
-3. **Resolve once.** Identify the related task once, then store its visible title plus stable task/session ID in the canonical ledger's `sections` registry. Never re-resolve by searching again; a title alone is not an identity.
+3. **Resolve once; refresh display by exact ID.** Identify the related task once, then store its visible title plus stable task/session ID in the canonical ledger's `sections` registry. Never re-resolve identity by searching from a title. A local read-only title refresh may query the already-stored exact ID so a later rename stays legible; it must not enumerate for a replacement, wake the task, or change any work.
 4. **Filter.** Only propagate separately authorized updates relevant to that task's scope. Silence is correct for everything else.
 5. **Send deltas only.** Additive, compact, self-describing: what changed, which IDs, one line each. Never send the whole ledger.
 6. **Preserve the destination.** Never restate, reorder, reprioritise, or overwrite the other task's pre-existing scope, and never tell it to start anything.
@@ -159,7 +159,7 @@ An explicit ownership-transfer instruction is stronger than an ordinary memory d
 
 ## What this skill does not do
 
-Installing it does not start a background daemon, does not create a cross-task message bus, does not create a persistent database, and does not guarantee automatic invocation. The optional Full outstanding items UI is an explicit per-ledger loopback process; its only durable data is the task-owned JSON file. Cross-task propagation works only through tools the current harness already provides.
+Installing it does not start a background daemon, does not create a cross-task message bus, does not create a persistent database, and does not guarantee automatic invocation. The optional Full outstanding items UI is an explicit per-ledger loopback process; its only durable item data is the task-owned JSON file, while its private connection file preserves the same local URL across deliberate restarts. On Codex, that process may read current titles for exact transferred task IDs through the local app-server protocol; it never reads task content or sends a task message. Cross-task propagation works only through tools the current harness already provides.
 
 It does not grant you any authority over the user's work. It does not know what the user actually has the appetite for. A suggestion is a judgement made from what they said in this task, offered once and dropped if ignored — not a prediction, not a schedule, and not a claim about what matters most in their life.
 

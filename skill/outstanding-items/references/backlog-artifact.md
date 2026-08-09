@@ -91,7 +91,7 @@ Do not silently create a ledger before those triggers. When the user has already
 | `status` | One of the nine labels from `SKILL.md`. A label describes; it grants no authority. |
 | `completed` | Derived mechanically: true only for `verified` or `dropped`. Completed items render after all open items. |
 | `tracking_state` | Optional `active` (the default) or `transferred`. It is orthogonal to status and never implies completion. |
-| `transferred_to` | Required only when transferred: exact destination task ID/title, transfer timestamp, and optional handoff path. |
+| `transferred_to` | Required only when transferred: exact stable destination task/session ID, cached visible title, transfer timestamp, optional handoff path, and optional title source/update time. The ID is identity; the title is refreshable display metadata. |
 | `position` | Contiguous zero-based ordering inside the open or completed group. A new open item is inserted at `0`; dragging changes open positions only. |
 | `group` | A display label preserving the originating queue/category. It does not determine execution or section membership. |
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
@@ -130,7 +130,9 @@ The footer names one item per turn, so repeating a rejected one is the fastest w
 
 ## Ownership transfer
 
-When the user explicitly consolidates work into another task, keep every item in the canonical JSON and preserve its status, evidence, completion state, and ID. Set `tracking_state=transferred` plus `transferred_to`; never relabel it `verified` or `dropped` merely to make it stop appearing, and never suggest a transferred item in the footer. The HTML renders transferred entries read-only under **Owned elsewhere**, while active counts, completion controls, and suggestions ignore them.
+When the user explicitly consolidates work into another task, keep every item in the canonical JSON and preserve its status, evidence, completion state, and ID. Set `tracking_state=transferred` plus `transferred_to`; never relabel it `verified` or `dropped` merely to make it stop appearing, and never suggest a transferred item in the footer. The HTML renders transferred entries read-only inside a collapsed **Owned elsewhere** disclosure and names the destination task, while active counts, completion controls, and suggestions ignore them.
+
+The destination task/session ID is permanent identity. Its title is cached display metadata. When the local Codex binary is available, the editor may refresh only those exact stored IDs through the read-only app-server `thread/list` method and persist a changed title with `title_source=codex-app-server` and `title_updated_at`. Failure is non-fatal, and other harnesses keep the cached title. A refresh never discovers a new destination, reads task turns, sends a message, wakes a task, or changes ownership.
 
 The handoff must identify collisions where the destination already uses the same ID for a different item. Preserve both histories and let the destination's newer state win; never overwrite one item just to make IDs globally unique across independent tasks.
 
@@ -143,7 +145,7 @@ Unchecking restores the prior non-retiring status when available, otherwise `req
 ## Lifecycle
 
 1. **Create or migrate.** Create native JSON, or run `migrate-markdown` once against the existing ledger. Validate the result before retiring the Markdown file from active use.
-2. **Start the UI.** Run the loopback-only server and capture its tokenized URL. The footer's single **Full outstanding items** link points to this HTML URL, never to the raw JSON or legacy Markdown.
+2. **Start the UI.** Run the loopback-only server and capture its tokenized URL. The footer's single **Full outstanding items** link points to this HTML URL, never to the raw JSON or legacy Markdown. Normal stop/start cycles reuse the same user-only connection record so already-open tabs reconnect.
 3. **Update.** Agent-side changes mutate the JSON. UI changes use revision-checked atomic writes. The open browser refreshes itself whenever the JSON revision changes.
 4. **Transfer when explicitly instructed.** Send the authorized handoff once, run `transfer` for the exact IDs, and verify they are read-only history with unchanged statuses.
 5. **Reconcile.** On task resume, validate and read the JSON, choose at most one active item for the footer of that turn's final response, honour any `latest_unanswered_suggestion` by not repeating it, then wait. Restoring a ledger starts nothing. A stale `in-progress` label must be reconciled to `implemented` when material work changed, `planned` when only an agreed route exists, or `requested` when neither is true; none of those labels authorizes resumption.
@@ -152,7 +154,7 @@ Unchecking restores the prior non-retiring status when available, otherwise `req
 ## Safety
 
 - Bind the editor to `127.0.0.1` only. API calls require the random token in the Full outstanding items URL, reject foreign Host headers, set no CORS permission, and write no browser storage.
-- The UI makes no outbound requests and loads no third-party assets.
+- The browser makes no outbound requests and loads no third-party assets. Optional Codex title refresh uses a short-lived local app-server process with remote plugin sync disabled.
 - Write ledger JSON with a same-directory temporary file, `fsync`, and `os.replace`; never partially rewrite it in place.
 - Keep runtime token/state/log files next to the task ledger with user-only state-file permissions. Never commit or share them.
 - Never put credentials or secret file contents into titles, notes, explanations, sections, URLs, examples, or logs.

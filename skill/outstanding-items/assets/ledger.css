@@ -123,6 +123,45 @@ h1 {
 
 .section-heading { margin-bottom: 0.55rem; }
 
+details > .section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+details > .section-heading::-webkit-details-marker { display: none; }
+
+details > .section-heading::before {
+  content: "›";
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+
+details[open] > .section-heading::before { transform: rotate(90deg); }
+
+details > .section-heading:hover h2,
+details > .section-heading:focus-visible h2 { color: var(--ink); }
+
+.section-count {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-note {
+  margin: 0 0 0.45rem 1.45rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
 .section-heading h2 {
   margin: 0;
   color: var(--muted);
@@ -366,6 +405,28 @@ button.item-title:hover { color: var(--accent); }
 .item-title--readonly {
   color: var(--muted);
   cursor: default;
+}
+
+.transfer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.7rem;
+  margin: -0.12rem 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.transfer-meta[hidden] { display: none; }
+
+.transfer-task-title { color: var(--ink); }
+
+.transfer-task-id {
+  max-width: 100%;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .edit-input {

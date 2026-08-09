@@ -1685,6 +1685,15 @@ def check_docs_consistency() -> list[str]:
     for summary in ("stable ID", "honest status", "Read the full documentation"):
         if summary not in index:
             problems.append(f"docs/index.html no longer links the simple story to detail: {summary!r}")
+    for phrase in (
+        "same local URL through normal restarts",
+        "collapsed, read-only **Owned elsewhere**",
+        "refreshes cached destination titles by exact ID",
+    ):
+        if phrase not in readme:
+            problems.append(f"README.md no longer documents ledger continuity: {phrase!r}")
+    if "Transferred work stays folded away with its destination task named." not in index:
+        problems.append("docs/index.html no longer mentions compact transferred-task ownership")
     for name in ("AGENTS.md", "CLAUDE.md"):
         text = read(ROOT / name)
         if "~/.codex" not in text and "~/.claude" not in text:

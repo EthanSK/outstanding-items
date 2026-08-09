@@ -20,6 +20,7 @@
     openCount: document.querySelector("#open-count"),
     doneCount: document.querySelector("#done-count"),
     transferredCount: document.querySelector("#transferred-count"),
+    transferredSectionCount: document.querySelector("#transferred-section-count"),
     updated: document.querySelector("#updated-label"),
     openList: document.querySelector("#open-list"),
     doneList: document.querySelector("#done-list"),
@@ -37,6 +38,8 @@
     liveStatus: document.querySelector("#live-status"),
   };
   elements.transferredSection = elements.transferredList.closest(".ledger-section");
+  const NETWORK_ERROR_MESSAGE =
+    "Keep this tab open; the local ledger will reconnect automatically. Reopen the latest Full outstanding items link if it stays disconnected.";
 
   // Plain-language tooltip copy. An item's own `explanation` is preferred; these
   // sentences are the fallback for a ledger written before that field existed.
@@ -142,15 +145,22 @@
   }
 
   async function request(path, options = {}) {
-    const response = await fetch(apiUrl(path), {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        "X-Ledger-Token": token,
-        ...(options.headers || {}),
-      },
-      cache: "no-store",
-    });
+    let response;
+    try {
+      response = await fetch(apiUrl(path), {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Ledger-Token": token,
+          ...(options.headers || {}),
+        },
+        cache: "no-store",
+      });
+    } catch (cause) {
+      const error = new Error(NETWORK_ERROR_MESSAGE, { cause });
+      error.network = true;
+      throw error;
+    }
     const payload = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
     if (!response.ok) {
       const error = new Error(payload.error || `HTTP ${response.status}`);
@@ -182,6 +192,12 @@
     if (!value) return "Update time unavailable";
     const date = new Date(value);
     return Number.isNaN(date.valueOf()) ? `Updated ${value}` : `Updated ${date.toLocaleString()}`;
+  }
+
+  function formatTransferred(value) {
+    if (!value) return "Transfer time unavailable";
+    const date = new Date(value);
+    return Number.isNaN(date.valueOf()) ? value : date.toLocaleDateString();
   }
 
   function autoSizeEditor(editor) {
@@ -376,6 +392,7 @@
     if (transferred) {
       const readOnlyTitle = document.createElement("span");
       readOnlyTitle.className = "item-title item-title--readonly";
+      readOnlyTitle.tabIndex = 0;
       const readOnlyText = document.createElement("span");
       readOnlyText.className = "item-title-text";
       readOnlyText.textContent = item.title;
@@ -383,9 +400,17 @@
       readOnlyTitle.append(readOnlyText, badge);
       readOnlyTitle.setAttribute(
         "aria-label",
-        `${item.title}. ${item.id}. ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Owned by ${item.transferred_to?.title || "another task"}; read-only here.`,
+        `${item.title}. ${item.id}. ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Owned by ${item.transferred_to?.title || "another task"}, task ID ${item.transferred_to?.task_id || "unavailable"}; read-only here.`,
       );
       title.replaceWith(readOnlyTitle);
+      const metadata = node.querySelector(".transfer-meta");
+      metadata.hidden = false;
+      metadata.querySelector(".transfer-task-title").textContent =
+        `Task: ${item.transferred_to?.title || "Another task"}`;
+      metadata.querySelector(".transfer-task-id").textContent =
+        `ID: ${item.transferred_to?.task_id || "unavailable"}`;
+      metadata.querySelector(".transfer-time").textContent =
+        `Transferred ${formatTransferred(item.transferred_to?.transferred_at)}`;
     } else {
       title.setAttribute(
         "aria-label",
@@ -453,6 +478,7 @@
     elements.openCount.textContent = String(open.length);
     elements.doneCount.textContent = String(done.length);
     elements.transferredCount.textContent = String(transferred.length);
+    elements.transferredSectionCount.textContent = String(transferred.length);
     elements.updated.textContent = `${formatUpdated(state.ledger.updated_at)} · revision ${state.ledger.revision}`;
     elements.ledgerPath.textContent = state.ledger._runtime?.ledger_path || "Canonical JSON ledger";
     elements.ledgerPath.title = elements.ledgerPath.textContent;
