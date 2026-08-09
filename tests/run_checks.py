@@ -122,6 +122,7 @@ REQUIRED_FILES = [
     "examples/transcript.md",
     "scripts/check.sh",
     "scripts/install.sh",
+    "scripts/sync_plugin_dev.py",
     "scripts/serve.sh",
     "scripts/uninstall.sh",
     "plugins/outstanding-items/.codex-plugin/plugin.json",
@@ -1636,6 +1637,50 @@ def check_scripts_safe() -> list[str]:
             problems.append(f"scripts/{name} does not reject symbolic-link traversal")
     if "changed after installation; keeping it" not in read(ROOT / "scripts" / "uninstall.sh"):
         problems.append("scripts/uninstall.sh does not preserve modified installed files")
+    return problems
+
+
+@check("plugin-dev-sync", "local plugin refresh is cache-busted, source-preserving, and dry-runnable")
+def check_plugin_dev_sync() -> list[str]:
+    problems = []
+    script = ROOT / "scripts" / "sync_plugin_dev.py"
+    before = {
+        path: path.read_bytes()
+        for path in (
+            PLUGIN_DIR / ".codex-plugin" / "plugin.json",
+            PLUGIN_DIR / ".claude-plugin" / "plugin.json",
+        )
+    }
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--dry-run",
+            "--cachebuster",
+            "test-token",
+            "--remove-standalone",
+        ],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if result.returncode != 0:
+        problems.append(f"plugin development sync dry run failed: {result.stdout.strip()}")
+    for phrase in (
+        "+codex.test-token",
+        "plugin marketplace add",
+        "plugin add outstanding-items@outstanding-items",
+        "plugin list --marketplace outstanding-items",
+        "uninstall.sh --target codex",
+        "restored byte-for-byte",
+    ):
+        if phrase not in result.stdout:
+            problems.append(f"plugin development sync dry run omitted {phrase!r}")
+    for path, content in before.items():
+        if path.read_bytes() != content:
+            problems.append(f"plugin development sync dry run changed {rel(path)}")
     return problems
 
 

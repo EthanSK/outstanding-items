@@ -28,6 +28,8 @@ The product it describes has one non-negotiable rule, and every file here has to
 ./scripts/check.sh
 ```
 
+12. **Refresh the local plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, and verifies the installed copy. Do not hand-edit plugin caches or marketplace configuration. Use `--remove-standalone` only after a fresh task proves the plugin works.
+
 ## Working on the outstanding items of this repository
 
 If a task here produces a list of remaining work, that list is the user's. Write it down, show it, and stop. Do not pick the next one up because it is obvious, small, ranked first, or already labelled `in-progress`. Ask, then wait to be told which one — by name.
@@ -46,7 +48,7 @@ If a task here produces a list of remaining work, that list is the user's. Write
 | `.agents/plugins/marketplace.json` | OpenAI repo marketplace pointing at the plugin package. |
 | `.claude-plugin/marketplace.json` | Claude Code repo marketplace pointing at that same package. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from the JSON in `docs/index.html`. |
-| `scripts/` | POSIX `sh`. Dry-runnable, non-destructive. |
+| `scripts/` | POSIX `sh` plus one Python-standard-library plugin sync command. Dry-runnable and non-destructive by default. |
 | `tests/run_checks.py` | Python standard library only. Add a check when you add an invariant — especially an authority invariant. |
 
 If you change the demo, change the JSON in `docs/index.html` — the static fallback and the interactive version are both generated from it, and a check compares them.

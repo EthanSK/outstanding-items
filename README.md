@@ -181,6 +181,31 @@ codex plugin add outstanding-items@outstanding-items
 
 Start a new Codex task after installation so it picks up the bundled skill.
 
+#### Refresh a local development copy
+
+After changing the plugin, one command validates the repository, registers this checkout as a local marketplace when needed, installs a cache-busted copy, restores both authored manifests byte-for-byte, and verifies the installed version:
+
+```sh
+python3 scripts/sync_plugin_dev.py
+```
+
+Use `--dry-run` to inspect the exact flow. The working standalone skill is deliberately retained during the first plugin test; after the plugin works in a fresh task, migrate cleanly with:
+
+```sh
+python3 scripts/sync_plugin_dev.py --remove-standalone
+```
+
+Modified or unowned standalone files are never deleted. Codex loads refreshed plugin skills in a new task, not retroactively into the task performing the reinstall.
+
+For a Git-backed marketplace release, refresh its snapshot before reinstalling:
+
+```sh
+codex plugin marketplace upgrade outstanding-items
+codex plugin add outstanding-items@outstanding-items
+```
+
+The plugin manifest has no self-update URL. Marketplace refresh and plugin installation are separate operations, which is why the local development command performs both required checks explicitly.
+
 ### Claude Code plugin
 
 ```sh
@@ -329,6 +354,7 @@ Stated plainly, because these are the assumptions people arrive with:
 | `plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
 | `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | Standalone Codex skill metadata; Claude Code ignores it. |
 | `scripts/install.sh` | Dry-runnable, non-destructive installer. |
+| `scripts/sync_plugin_dev.py` | One-command checked, cache-busted local plugin reinstall that restores source versions. |
 | `scripts/uninstall.sh` | Manifest-scoped removal. |
 | `scripts/check.sh` | Repository and installation validation. |
 | `scripts/serve.sh` | Local preview of the website. |

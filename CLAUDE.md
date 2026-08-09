@@ -28,6 +28,8 @@ Everything here is built around one rule:
 ./scripts/check.sh
 ```
 
+12. **Refresh the local Codex plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, and verifies the installed copy. Do not hand-edit plugin caches or marketplace configuration. Use `--remove-standalone` only after a fresh Codex task proves the plugin works.
+
 ## Working on the outstanding items of this repository
 
 Any list of remaining work produced here belongs to the person you are talking to. Record it, show it, and stop. Do not start the next one because it is obvious, small, first in the list, or already labelled `in-progress`. Ask which one, and wait for it to be named.
