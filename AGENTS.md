@@ -4,7 +4,7 @@ Instructions for agents working **in this repository**, plus the integration sni
 
 ## What this repository is
 
-A skills-only OpenAI plugin, a Claude Code plugin, a standalone cross-harness skill, a static public website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; `scripts/install.sh` can also copy that folder verbatim into a harness skills directory.
+A skills-only OpenAI plugin, a Claude Code plugin, a static public website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; direct standalone installation is deliberately unsupported so each harness has one discovery path.
 
 The product it describes has one non-negotiable rule, and every file here has to agree with it:
 
@@ -28,7 +28,7 @@ The product it describes has one non-negotiable rule, and every file here has to
 ./scripts/check.sh
 ```
 
-12. **Refresh the local plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, and verifies the installed copy. Do not hand-edit plugin caches or marketplace configuration. Use `--remove-standalone` only after a fresh task proves the plugin works.
+12. **Refresh the local plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Do not hand-edit plugin caches or marketplace configuration.
 
 ## Working on the outstanding items of this repository
 
@@ -44,7 +44,7 @@ If a task here produces a list of remaining work, that list is the user's. Write
 | `plugins/outstanding-items/skills/outstanding-items/references/` | Conditional detail: authority, status labels, choosing the one item the footer names, backlog artifact, related tasks, worked examples. |
 | `plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py` | Canonical JSON validation/migration, atomic persistence API, and loopback-only editor lifecycle. |
 | `plugins/outstanding-items/skills/outstanding-items/assets/` | Generic Full outstanding items HTML, CSS, and JavaScript. Never put a real ledger here. |
-| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | Standalone Codex skill metadata. Claude Code ignores it. |
+| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | OpenAI skill interface metadata. Claude Code ignores it. |
 | `.agents/plugins/marketplace.json` | OpenAI repo marketplace pointing at the plugin package. |
 | `.claude-plugin/marketplace.json` | Claude Code repo marketplace pointing at that same package. |
 | `docs/` | GitHub Pages site. `docs/assets/app.js` renders the ledger demo from the JSON in `docs/index.html`. |

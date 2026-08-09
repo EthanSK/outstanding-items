@@ -4,7 +4,7 @@ Instructions for Claude Code working **in this repository**, plus the integratio
 
 ## What this repository is
 
-A skills-only OpenAI plugin, a Claude Code plugin, a standalone cross-harness skill, a static website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; `scripts/install.sh --target claude` can also copy that folder verbatim into `~/.claude/skills/outstanding-items/`.
+A skills-only OpenAI plugin, a Claude Code plugin, a static website, and an optional Python-standard-library local ledger editor. There is no build step or third-party runtime dependency. Both plugin formats package the same canonical skill under `plugins/outstanding-items/skills/outstanding-items/`; direct standalone installation is deliberately unsupported so each harness has one discovery path.
 
 Everything here is built around one rule:
 
@@ -28,7 +28,7 @@ Everything here is built around one rule:
 ./scripts/check.sh
 ```
 
-12. **Refresh the local Codex plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, and verifies the installed copy. Do not hand-edit plugin caches or marketplace configuration. Use `--remove-standalone` only after a fresh Codex task proves the plugin works.
+12. **Refresh the local Codex plugin with the repository command.** After changing anything under `plugins/outstanding-items/`, run `python3 scripts/sync_plugin_dev.py`; it validates, cache-busts, reinstalls, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Do not hand-edit plugin caches or marketplace configuration.
 
 ## Working on the outstanding items of this repository
 

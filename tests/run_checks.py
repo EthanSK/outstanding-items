@@ -13,11 +13,13 @@ it keeps working after the prose is rewritten.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import os
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -121,7 +123,6 @@ REQUIRED_FILES = [
     "examples/outstanding-items.md",
     "examples/transcript.md",
     "scripts/check.sh",
-    "scripts/install.sh",
     "scripts/sync_plugin_dev.py",
     "scripts/serve.sh",
     "scripts/uninstall.sh",
@@ -841,6 +842,12 @@ def check_plugin_packaging() -> list[str]:
     legacy = ROOT / "skill" / SKILL_NAME
     if legacy.exists():
         problems.append("legacy skill/outstanding-items exists; keep one canonical bundled skill")
+    if (ROOT / "scripts" / "install.sh").exists():
+        problems.append("scripts/install.sh exists; new installations must use the plugin path only")
+    readme = read(ROOT / "README.md")
+    for forbidden in ("### Standalone skill", "### Manual install", "scripts/install.sh"):
+        if forbidden in readme:
+            problems.append(f"README.md still advertises a direct standalone route: {forbidden!r}")
     return problems
 
 
@@ -1611,10 +1618,10 @@ def check_tagline() -> list[str]:
     return problems
 
 
-@check("scripts-safe", "install and uninstall stay non-destructive and dry-runnable")
+@check("scripts-safe", "legacy cleanup and support scripts stay non-destructive and dry-runnable")
 def check_scripts_safe() -> list[str]:
     problems = []
-    for name in ("install.sh", "uninstall.sh", "check.sh", "serve.sh"):
+    for name in ("uninstall.sh", "check.sh", "serve.sh"):
         text = read(ROOT / "scripts" / name)
         if not text.startswith("#!/bin/sh"):
             problems.append(f"scripts/{name} has no POSIX shell shebang")
@@ -1627,7 +1634,7 @@ def check_scripts_safe() -> list[str]:
             problems.append(f"scripts/{name} has no --help")
         if "curl" in text or "wget" in text:
             problems.append(f"scripts/{name} appears to reach the network")
-    for name in ("install.sh", "uninstall.sh"):
+    for name in ("uninstall.sh",):
         text = read(ROOT / "scripts" / name)
         if "--dry-run" not in text:
             problems.append(f"scripts/{name} has no --dry-run")
@@ -1658,7 +1665,6 @@ def check_plugin_dev_sync() -> list[str]:
             "--dry-run",
             "--cachebuster",
             "test-token",
-            "--remove-standalone",
         ],
         cwd=ROOT,
         text=True,
@@ -1684,10 +1690,9 @@ def check_plugin_dev_sync() -> list[str]:
     return problems
 
 
-@check("installer-behavior", "install, conflict, force, and uninstall rules work in a temp root")
-def check_installer_behavior() -> list[str]:
+@check("legacy-uninstaller", "legacy standalone cleanup preserves modified and unowned files")
+def check_legacy_uninstaller() -> list[str]:
     problems = []
-    install = ROOT / "scripts" / "install.sh"
     uninstall = ROOT / "scripts" / "uninstall.sh"
 
     def run(script: pathlib.Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -1703,59 +1708,28 @@ def check_installer_behavior() -> list[str]:
     with tempfile.TemporaryDirectory(prefix="outstanding-items-test-") as temp:
         base = pathlib.Path(temp)
 
-        dry_root = base / "dry-root"
-        result = run(install, "--dest", str(dry_root), "--dry-run")
-        if result.returncode != 0:
-            problems.append(f"installer dry run failed: {result.stdout.strip()}")
-        if dry_root.exists():
-            problems.append("installer dry run created its destination")
-
-        root = base / "install-root"
-        result = run(install, "--dest", str(root))
+        root = base / "legacy-root"
         target = root / "skills" / SKILL_NAME
-        if result.returncode != 0:
-            problems.append(f"fresh install failed: {result.stdout.strip()}")
-            return problems
-        if not (target / ".install-manifest").is_file():
-            problems.append("fresh install did not create its ownership manifest")
-        if any(path.suffix == ".pyc" or "__pycache__" in path.parts for path in target.rglob("*")):
-            problems.append("installer copied generated Python bytecode")
-        for source in sorted(SKILL_DIR.rglob("*")):
-            if source.is_dir() or "__pycache__" in source.parts or source.suffix == ".pyc":
-                continue
-            relative = source.relative_to(SKILL_DIR)
-            copy = target / relative
-            if not copy.is_file() or copy.read_bytes() != source.read_bytes():
-                problems.append(f"installed copy differs: {relative}")
-
-        result = run(install, "--dest", str(root))
-        if result.returncode != 0 or "unchanged" not in result.stdout:
-            problems.append("second install was not idempotent")
-
+        target.mkdir(parents=True)
         installed_skill = target / "SKILL.md"
-        modified = installed_skill.read_text(encoding="utf-8") + "\n<!-- local edit -->\n"
-        installed_skill.write_text(modified, encoding="utf-8")
-        result = run(install, "--dest", str(root))
-        if result.returncode != 1 or installed_skill.read_text(encoding="utf-8") != modified:
-            problems.append("installer did not preserve a local edit without --force")
-        result = run(install, "--dest", str(root), "--force")
-        if result.returncode != 0 or installed_skill.read_bytes() != SKILL_MD.read_bytes():
-            problems.append("installer --force did not restore the canonical source")
-
-        deprecated = target / "references" / "curation.md"
-        deprecated.write_text("known deprecated owned file\n", encoding="utf-8")
-        result = run(install, "--dest", str(root), "--dry-run")
-        if result.returncode != 0 or not deprecated.is_file() or "known deprecated owned file" not in result.stdout:
-            problems.append("installer dry run did not safely report the deprecated-file migration")
-        result = run(install, "--dest", str(root))
-        if result.returncode != 0 or deprecated.exists():
-            problems.append("installer did not remove a known deprecated owned file")
-
+        installed_skill.write_bytes(SKILL_MD.read_bytes())
+        reference = target / "references" / "authority.md"
+        reference.parent.mkdir(parents=True)
+        reference.write_bytes((SKILL_DIR / "references" / "authority.md").read_bytes())
+        manifest = target / ".install-manifest"
+        manifest.write_text(
+            "\n".join(
+                f"{hashlib.sha256(path.read_bytes()).hexdigest()} {path.relative_to(target)}"
+                for path in (installed_skill, reference)
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         extra = target / "references" / "my-note.md"
         extra.write_text("keep me\n", encoding="utf-8")
         result = run(uninstall, "--dest", str(root), "--dry-run")
         if result.returncode != 0 or not installed_skill.exists():
-            problems.append("uninstaller dry run changed or rejected a valid install")
+            problems.append("legacy uninstaller dry run changed or rejected a valid manifest")
         result = run(uninstall, "--dest", str(root))
         if result.returncode != 0 or not extra.is_file():
             problems.append("uninstaller did not preserve an unrecognised user file")
@@ -1763,11 +1737,13 @@ def check_installer_behavior() -> list[str]:
             problems.append("uninstaller left hash-matching owned files behind")
 
         edited_root = base / "edited-root"
-        result = run(install, "--dest", str(edited_root))
         edited_target = edited_root / "skills" / SKILL_NAME
+        edited_target.mkdir(parents=True)
         edited_skill = edited_target / "SKILL.md"
-        edited_skill.write_text(
-            edited_skill.read_text(encoding="utf-8") + "\n<!-- keep this edit -->\n",
+        original = SKILL_MD.read_bytes()
+        edited_skill.write_bytes(original + b"\n<!-- keep this edit -->\n")
+        (edited_target / ".install-manifest").write_text(
+            f"{hashlib.sha256(original).hexdigest()} SKILL.md\n",
             encoding="utf-8",
         )
         result = run(uninstall, "--dest", str(edited_root))
@@ -1789,9 +1765,9 @@ def check_installer_behavior() -> list[str]:
         outside.mkdir()
         linked_root = base / "linked-root"
         linked_root.symlink_to(outside, target_is_directory=True)
-        result = run(install, "--dest", str(linked_root))
-        if result.returncode != 1 or (outside / "skills").exists():
-            problems.append("installer followed a symbolic-link destination")
+        result = run(uninstall, "--dest", str(linked_root))
+        if result.returncode != 1:
+            problems.append("legacy uninstaller accepted a symbolic-link destination")
 
     return problems
 
@@ -1872,45 +1848,66 @@ def check_docs_consistency() -> list[str]:
     return problems
 
 
-@check("installed-copies", "installed skills match this checkout (only with --installed)")
+@check("installed-plugin", "the installed Codex plugin matches this checkout (only with --installed)")
 def check_installed_copies() -> list[str]:
     if not INSPECT_INSTALLED:
         return []
     problems = []
     home = pathlib.Path.home()
-    found = False
     for harness in ("codex", "claude"):
-        target = home / f".{harness}" / "skills" / SKILL_NAME
-        if not target.exists():
-            print(f"   note  {harness}: not installed at {target}")
+        legacy = home / f".{harness}" / "skills" / SKILL_NAME
+        if legacy.exists():
+            problems.append(f"{harness}: legacy standalone copy still exists at {legacy}")
+
+    codex = shutil.which("codex")
+    if codex is None:
+        print("   note  Codex CLI is unavailable; plugin installation was not inspected")
+        return problems
+    result = subprocess.run(
+        [codex, "plugin", "list", "--marketplace", SKILL_NAME, "--json"],
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        check=False,
+    )
+    if result.returncode != 0:
+        problems.append(f"Codex plugin list failed: {result.stdout.strip()}")
+        return problems
+    try:
+        installed = json.loads(result.stdout).get("installed", [])
+        entry = next(item for item in installed if item.get("pluginId") == f"{SKILL_NAME}@{SKILL_NAME}")
+        version = entry["version"]
+    except (json.JSONDecodeError, KeyError, StopIteration, TypeError):
+        problems.append("Codex does not report outstanding-items as an installed plugin")
+        return problems
+
+    target = home / ".codex" / "plugins" / "cache" / SKILL_NAME / SKILL_NAME / version / "skills" / SKILL_NAME
+    if not target.is_dir():
+        problems.append(f"Codex plugin cache is missing at {target}")
+        return problems
+
+    expected = {
+        source.relative_to(SKILL_DIR)
+        for source in SKILL_DIR.rglob("*")
+        if source.is_file() and "__pycache__" not in source.parts and source.suffix != ".pyc"
+    }
+    for source in sorted(SKILL_DIR.rglob("*")):
+        if source.is_dir() or "__pycache__" in source.parts or source.suffix == ".pyc":
             continue
-        found = True
-        expected = {
-            source.relative_to(SKILL_DIR)
-            for source in SKILL_DIR.rglob("*")
-            if source.is_file() and "__pycache__" not in source.parts and source.suffix != ".pyc"
-        }
-        for source in sorted(SKILL_DIR.rglob("*")):
-            if source.is_dir() or "__pycache__" in source.parts or source.suffix == ".pyc":
-                continue
-            relative = source.relative_to(SKILL_DIR)
-            copy = target / relative
-            if not copy.exists():
-                problems.append(f"{harness}: missing {relative}")
-            elif copy.read_bytes() != source.read_bytes():
-                problems.append(f"{harness}: {relative} differs from this checkout")
-        actual = {
-            path.relative_to(target)
-            for path in target.rglob("*")
-            if path.is_file()
-            and path.name != ".install-manifest"
-            and "__pycache__" not in path.parts
-            and path.suffix != ".pyc"
-        }
-        for extra in sorted(actual - expected):
-            problems.append(f"{harness}: extra installed file outside the canonical manifest: {extra}")
-    if not found:
-        print("   note  the skill is not installed anywhere; run scripts/install.sh")
+        relative = source.relative_to(SKILL_DIR)
+        copy = target / relative
+        if not copy.exists():
+            problems.append(f"Codex plugin: missing {relative}")
+        elif copy.read_bytes() != source.read_bytes():
+            problems.append(f"Codex plugin: {relative} differs from this checkout")
+    actual = {
+        path.relative_to(target)
+        for path in target.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    }
+    for extra in sorted(actual - expected):
+        problems.append(f"Codex plugin: extra installed file outside the canonical source: {extra}")
     return problems
 
 

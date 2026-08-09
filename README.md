@@ -2,7 +2,7 @@
 
 **Outsource your memory — a curated work experience.**
 
-An installable plugin and standalone skill for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that keeps the list of everything you asked for out of your way, and hands you one thing at a time — and, deliberately, nothing more.
+An installable plugin for [Codex](https://developers.openai.com/codex/) and [Claude Code](https://www.anthropic.com/claude-code) that keeps the list of everything you asked for out of your way, and hands you one thing at a time — and, deliberately, nothing more.
 
 **It holds the list.** You talk freely — including asides that have nothing to do with what the agent is currently doing — and every item is captured with a permanent ID. The list itself stays out of the conversation: it lives in the ledger, and in a local editor you can open in one click.
 
@@ -18,7 +18,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, eight focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format, and it can still be installed directly as a standalone skill in either harness. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
+Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, eight focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format. Direct standalone installation is deliberately unsupported, so each harness has one discovery path and cannot surface duplicate copies. Installing the plugin starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
 
 ## What it actually does
 
@@ -189,13 +189,7 @@ After changing the plugin, one command validates the repository, registers this 
 python3 scripts/sync_plugin_dev.py
 ```
 
-Use `--dry-run` to inspect the exact flow. The working standalone skill is deliberately retained during the first plugin test; after the plugin works in a fresh task, migrate cleanly with:
-
-```sh
-python3 scripts/sync_plugin_dev.py --remove-standalone
-```
-
-Modified or unowned standalone files are never deleted. Codex loads refreshed plugin skills in a new task, not retroactively into the task performing the reinstall.
+Use `--dry-run` to inspect the exact flow. The command also removes any manifest-owned legacy standalone Codex copy after the plugin is verified. Modified or unowned files are never deleted; if an old manual copy cannot be proved safe to remove, the command stops and explains why. Codex loads refreshed plugin skills in a new task, not retroactively into the task performing the reinstall.
 
 For a Git-backed marketplace release, refresh its snapshot before reinstalling:
 
@@ -215,57 +209,16 @@ claude plugin install outstanding-items@outstanding-items --scope user
 
 Run `/reload-plugins` or start a new Claude Code session. Claude exposes the bundled skill under its plugin namespace.
 
-### Standalone skill
+### Remove an older standalone installation
 
-The direct installer remains available for people who want the short `$outstanding-items` skill without installing a plugin. It uses the same canonical source and introduces no second copy in the repository. No package manager or build step is involved.
-
-```sh
-git clone https://github.com/EthanSK/outstanding-items.git
-cd outstanding-items
-sh scripts/install.sh --dry-run   # print the exact file plan, change nothing
-sh scripts/install.sh             # install for every harness found on this machine
-```
-
-By default the installer targets each harness whose home directory already exists and skips the others with a note. To be explicit:
+Releases before the plugin-only package included a direct installer. If that legacy copy still exists, remove it after installing the plugin:
 
 ```sh
-sh scripts/install.sh --target codex    # ~/.codex/skills/outstanding-items/
-sh scripts/install.sh --target claude   # ~/.claude/skills/outstanding-items/
-sh scripts/install.sh --target both     # create both, even if one is missing
-sh scripts/install.sh --dest /tmp/preview   # install under an arbitrary root
+sh scripts/uninstall.sh --dry-run --target codex
+sh scripts/uninstall.sh --target codex
 ```
 
-The installer:
-
-- copies file by file from a manifest built out of the repository, validating every path — it never runs a recursive delete;
-- creates only `<root>/skills/outstanding-items/` and its subdirectories;
-- refuses to touch an existing `outstanding-items` skill that something else owns, and refuses to overwrite locally modified files without `--force`;
-- is idempotent — running it twice with unchanged sources reports `unchanged` and writes nothing;
-- prints a per-file plan of `create`, `update`, `unchanged`, or `skip` before it acts;
-- copies the skill's text, HTML, CSS, JavaScript, and Python runtime only. Installing it starts nothing and does not authorize any agent to work on anything in your ledger.
-
-### Manual install
-
-If you would rather see every step:
-
-```sh
-mkdir -p ~/.codex/skills/outstanding-items
-cp -R plugins/outstanding-items/skills/outstanding-items/. ~/.codex/skills/outstanding-items/
-
-mkdir -p ~/.claude/skills/outstanding-items
-cp -R plugins/outstanding-items/skills/outstanding-items/. ~/.claude/skills/outstanding-items/
-```
-
-One canonical source, copied twice. The `SKILL.md` frontmatter (`name` + `description`) is valid for both harnesses; `agents/openai.yaml` uses Codex's supported `interface` schema and Claude Code ignores it. A manual copy does not create the install manifest, so remove a manual installation manually; use `scripts/install.sh` when you want conflict-aware updates and manifest-scoped uninstalling.
-
-### Uninstall
-
-```sh
-sh scripts/uninstall.sh --dry-run
-sh scripts/uninstall.sh
-```
-
-It removes only manifest-listed files whose hashes still match what this repository installed, then removes directories **only if they are empty**. Files you added or edited by hand are left alone and reported. If the manifest is missing, it refuses to guess.
+It removes only manifest-listed legacy files whose hashes still match what an older release installed, then removes directories **only if they are empty**. Files you added or edited by hand are left alone and reported. If the manifest is missing, it refuses to guess. New installations use the plugin commands above; there is no standalone install route.
 
 ## Make it fire without being asked
 
@@ -336,7 +289,7 @@ Stated plainly, because these are the assumptions people arrive with:
 - It **does not create a persistent database**. The only durable ledger is one plain JSON file at a path you approve; the UI is a live view of that file, not another store.
 - It **does not guarantee automatic invocation**. Harnesses decide when to load a skill from its description. Global rules make it likelier, not certain.
 - It **does not discover other conversations by itself**. Without task tools in the harness, it says `registered (manual)` and gives you the text to carry.
-- The installer and website make **no project-owned outbound application requests** and add no analytics or third-party runtime dependency. Your agent and harness may still use their existing model, task, or filesystem tools; this project does not hide or replace those calls.
+- The plugin tooling and website make **no project-owned outbound application requests** and add no analytics or third-party runtime dependency. Your agent and harness may still use their existing model, task, or filesystem tools; this project does not hide or replace those calls.
 - It **does not read your existing tasks** during installation, and it never edits a skill it did not install.
 - It **does not know what you have the appetite for**. The suggestion is a judgement made from what you said in this task — offered once, dropped if ignored. It is not a prediction, not a schedule, and not a claim about what matters most in your life.
 
@@ -352,10 +305,9 @@ Stated plainly, because these are the assumptions people arrive with:
 | `plugins/outstanding-items/skills/outstanding-items/references/` | Seven one-level references: authority, status labels, choosing the one item, backlog artifact, Full outstanding items operations, related tasks, worked examples. |
 | `plugins/outstanding-items/skills/outstanding-items/assets/` | Generic local ledger HTML, CSS, and JavaScript. It contains no user data. |
 | `plugins/outstanding-items/skills/outstanding-items/scripts/ledger_ui.py` | Standard-library JSON migration, validation, mutation, and loopback editor runtime. |
-| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | Standalone Codex skill metadata; Claude Code ignores it. |
-| `scripts/install.sh` | Dry-runnable, non-destructive installer. |
+| `plugins/outstanding-items/skills/outstanding-items/agents/openai.yaml` | OpenAI skill interface metadata; Claude Code ignores it. |
 | `scripts/sync_plugin_dev.py` | One-command checked, cache-busted local plugin reinstall that restores source versions. |
-| `scripts/uninstall.sh` | Manifest-scoped removal. |
+| `scripts/uninstall.sh` | Manifest-scoped cleanup for legacy standalone installations. |
 | `scripts/check.sh` | Repository and installation validation. |
 | `scripts/serve.sh` | Local preview of the website. |
 | `tests/run_tests.sh`, `tests/run_checks.py`, `tests/test_ledger_ui.py` | Deterministic contract and end-to-end ledger checks. Python standard library only. |
@@ -369,8 +321,7 @@ Stated plainly, because these are the assumptions people arrive with:
 - The canonical JSON ledger is working memory. It is created only after you approve a path, it is offered a `.git/info/exclude` entry together with its `.ledger-ui-*` runtime files when the directory is a Git repository, and it is never committed. This repository's `.gitignore` blocks task ledgers and their local runtime files for the same reason.
 - Every task ID and session ID anywhere in this repository is synthetic and contains the literal string `EXAMPLE`. A check enforces it, so a real identifier cannot be pasted in unnoticed.
 - Cross-task deltas carry one change and no context dumps: never the whole ledger, never file contents, never credentials, never identifiers.
-- The installer writes only inside `<root>/skills/outstanding-items/`, validates every manifest path and resolved path boundary, refuses symbolic-link traversal, and never deletes recursively.
-- The uninstaller removes only hash-matching manifest entries. Modified files and unrecognised files survive; a missing manifest stops removal rather than guessing.
+- The legacy cleanup script removes only hash-matching manifest entries. Modified files and unrecognised files survive; a missing manifest stops removal rather than guessing. It validates path boundaries, refuses symbolic-link traversal, and never deletes recursively.
 - The website ships no analytics, no cookies, no CDN fonts, and no third-party requests. The optional ledger browser talks only to its token-protected `127.0.0.1` server and uses no browser storage. On Codex, that server may run a short-lived local `codex app-server` title lookup with remote plugin sync disabled; it requests only current names for exact transferred task IDs.
 
 ## Adapting it

@@ -49,14 +49,6 @@ def parse_args() -> argparse.Namespace:
         help="Use a deterministic cachebuster token instead of the current UTC timestamp.",
     )
     parser.add_argument(
-        "--remove-standalone",
-        action="store_true",
-        help=(
-            "After plugin verification, run the manifest-scoped uninstaller for the "
-            "standalone Codex skill. Modified or unowned files are preserved."
-        ),
-    )
-    parser.add_argument(
         "--codex-bin",
         default="codex",
         help=argparse.SUPPRESS,
@@ -188,8 +180,7 @@ def main() -> int:
         print(f"+ {args.codex_bin} plugin marketplace add {ROOT} --json  # only if missing")
         print(f"+ {args.codex_bin} plugin add {plugin_id} --json")
         print(f"+ {args.codex_bin} plugin list --marketplace {market_name} --json")
-        if args.remove_standalone:
-            print("+ ./scripts/uninstall.sh --target codex")
+        print("+ ./scripts/uninstall.sh --target codex  # only if a legacy standalone copy exists")
         return 0
 
     codex_bin = shutil.which(args.codex_bin)
@@ -241,7 +232,7 @@ def main() -> int:
 
     print(f"Verified installed plugin: {plugin_id} {actual_version}")
 
-    if args.remove_standalone and STANDALONE_SKILL.exists():
+    if STANDALONE_SKILL.exists():
         run([str(ROOT / "scripts" / "uninstall.sh"), "--target", "codex"])
         if STANDALONE_SKILL.exists():
             raise RuntimeError(
@@ -249,11 +240,8 @@ def main() -> int:
                 "modified files"
             )
         print("Verified standalone Codex skill removal.")
-    elif STANDALONE_SKILL.exists():
-        print(
-            "Standalone Codex skill still exists. Re-run with --remove-standalone only after "
-            "the plugin works in a fresh task."
-        )
+    else:
+        print("Verified no standalone Codex skill is present.")
 
     print("Start a new Codex task to load the refreshed plugin.")
     return 0

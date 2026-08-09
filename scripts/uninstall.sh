@@ -1,15 +1,12 @@
 #!/bin/sh
-# Remove an outstanding-items skill installed by scripts/install.sh.
+# Remove a legacy standalone outstanding-items skill installed by releases that
+# predate plugin-only distribution.
 # Only files listed in the install manifest are removed. Directories are removed
 # only when they are already empty. There is no recursive delete anywhere here.
 set -eu
 
 SKILL_NAME="outstanding-items"
 MANIFEST_FILE=".install-manifest"
-
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=$(CDPATH= cd -- "$script_dir/.." && pwd)
-SRC="$REPO_ROOT/skill/$SKILL_NAME"
 
 TARGET="auto"
 DEST=""
@@ -22,7 +19,7 @@ usage() {
   cat <<'EOF'
 Usage: scripts/uninstall.sh [options]
 
-Removes the files this repository installed, and nothing else.
+Removes a legacy standalone copy installed by an older repository release, and nothing else.
 
 Options:
   --target <auto|codex|claude|both>  Which harness to clean (default: auto).
