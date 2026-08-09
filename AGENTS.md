@@ -20,7 +20,8 @@ The product it describes has one non-negotiable rule, and every file here has to
 6. **No personal state.** No live backlogs, no real task IDs, no absolute paths from anyone's machine, no credentials, no private URLs. Examples are invented, and stay invented.
 7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, cross-task bus, or database. Do not claim guaranteed invocation. The public site has no analytics, third-party runtime dependencies, or outbound application requests. `tests/run_checks.py` enforces these boundaries.
 8. **The site has no runtime dependencies.** No CDN, no analytics, no fonts fetched over the network, no framework. All internal links are relative so the site works under `/outstanding-items/`.
-9. **Run the checks before you claim anything works.**
+9. **Keep the public surfaces synchronized.** Whenever user-visible behaviour, setup, status, or limitations change, review `README.md` and `docs/` in the same change and update both wherever the public story changed. If either surface needs no edit, record what was checked rather than assuming. When publication is authorized, do not stop at a successful push: wait for the GitHub Pages build, verify the live HTTPS page comes from the expected commit, and compare deterministic live/local bytes where practical.
+10. **Run the checks before you claim anything works.**
 
 ```sh
 ./scripts/check.sh

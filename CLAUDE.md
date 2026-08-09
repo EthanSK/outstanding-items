@@ -20,7 +20,8 @@ Everything here is built around one rule:
 6. **No personal state**: no live backlogs, real IDs, absolute machine paths, credentials, or private URLs.
 7. **Truthful capability claims only.** Installation starts no process. The optional Full outstanding items editor is a per-ledger loopback process backed by one JSON file, not a daemon, message bus, or database. There is no guaranteed invocation. The public website has no analytics, third-party runtime dependencies, or outbound application requests.
 8. **No runtime dependencies on the site**, and all internal links relative so it works under `/outstanding-items/`.
-9. **Run the checks before claiming success:**
+9. **Keep the public surfaces synchronized.** Whenever user-visible behaviour, setup, status, or limitations change, review `README.md` and `docs/` in the same change and update both wherever the public story changed. If either surface needs no edit, record what was checked rather than assuming. When publication is authorized, do not stop at a successful push: wait for the GitHub Pages build, verify the live HTTPS page comes from the expected commit, and compare deterministic live/local bytes where practical.
+10. **Run the checks before claiming success:**
 
 ```sh
 ./scripts/check.sh

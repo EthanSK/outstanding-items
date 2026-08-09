@@ -348,6 +348,12 @@ ledger animation is progressive enhancement, and the page is complete and readab
 with JavaScript switched off — a check compares the interactive data against the
 static fallback so the two cannot drift apart.
 
+Treat the public documentation as part of every user-visible change. Review both
+`README.md` and `docs/` in the same change, update whichever public explanation has
+changed, and record the audit when one surface needs no edit. After publishing,
+wait for the GitHub Pages build and verify the live HTTPS page against the committed
+`docs/` files; a successful push by itself is not publication proof.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

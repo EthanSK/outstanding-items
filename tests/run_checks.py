@@ -1691,6 +1691,16 @@ def check_docs_consistency() -> list[str]:
             problems.append(f"{name} does not say where the skill is installed")
         if "outstanding-items" not in text:
             problems.append(f"{name} does not name the skill")
+        for phrase in ("Keep the public surfaces synchronized", "`README.md` and `docs/`", "GitHub Pages build"):
+            if phrase not in text:
+                problems.append(f"{name} does not preserve the public documentation rule: {phrase!r}")
+    for phrase in (
+        "Treat the public documentation as part of every user-visible change",
+        "Review both\n`README.md` and `docs/` in the same change",
+        "a successful push by itself is not publication proof",
+    ):
+        if phrase not in readme:
+            problems.append(f"README.md does not document the public synchronization rule: {phrase!r}")
     if REPO_URL not in index:
         problems.append("docs/index.html does not link to the repository")
     if SITE_BASE not in readme:
