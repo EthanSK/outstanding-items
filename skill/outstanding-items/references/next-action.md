@@ -40,7 +40,7 @@ Availability is judged from the user's side, not yours. Something you cannot tou
 Two lines maximum, plus the live UI link when one exists:
 
 ```text
-**OI-4 Focus ring on interactive elements**
+**OI-4 Focus ring on interactive elements** `You`
 Twenty minutes, and the smallest version is the shared token plus one button.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -58,7 +58,7 @@ Twenty minutes, and the smallest version is the shared token plus one button.
 Say it is close, and leave the runner-up unnamed. Naming a second item turns the footer back into the list it exists to replace, and the whole ledger is one click away in the UI:
 
 ```text
-**OI-4 Focus ring on interactive elements**
+**OI-4 Focus ring on interactive elements** `You`
 A close call, but this is the smaller restart and you were already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -118,7 +118,7 @@ Each of these is the whole footer, at the end of the final response of its turn.
 **Asked directly, several things open**
 
 ```text
-**OI-4 Focus ring on interactive elements**
+**OI-4 Focus ring on interactive elements** `You`
 About twenty minutes, and you are already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -126,21 +126,21 @@ About twenty minutes, and you are already in that file.
 **Everything left needs them in person**
 
 ```text
-**OI-8 Approve the staging deploy** — waiting-on-you
+**OI-8 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the smallest thing on the list that only you can do.
 ```
 
 **Returning after a gap**
 
 ```text
-**OI-4 Focus ring on interactive elements** — implemented
+**OI-4 Focus ring on interactive elements** `You` — implemented
 You left it half-done and the suite still passes, so it is the cheapest restart.
 ```
 
 **Overloaded**
 
 ```text
-**OI-5 Skip link**
+**OI-5 Skip link** `You`
 Just the first section of it, if anything. Nothing here has a date on it.
 ```
 

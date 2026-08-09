@@ -16,7 +16,7 @@ list, a count, or a Done section.
 is implemented but not verified.
 
 ```text
-**OI-1 Fix the flaky login test** — implemented
+**OI-1 Fix the flaky login test** `You` — implemented
 A CI run is the only thing that would prove it; say the word and I will start one.
 ```
 
@@ -30,7 +30,7 @@ me to ask the design channel about its empty state.
 **Agent:** Recorded both. Neither has started.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook**
+**OI-2 Add rate-limit docs to the handbook** `You`
 Twenty minutes if you want a small one; nothing else waits on it.
 ```
 
@@ -46,7 +46,7 @@ OI-3 is a reminder you parked on purpose, so it is never promoted to fill a line
 OI-3 is the design-channel reminder.
 
 ```text
-**OI-1 Fix the flaky login test** — implemented
+**OI-1 Fix the flaky login test** `You` — implemented
 CI would settle it in a couple of minutes, if you want that now.
 ```
 
@@ -66,7 +66,7 @@ the answer.
 **Agent** *(final response)*: CI passed the login suite 20 times.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook**
+**OI-2 Add rate-limit docs to the handbook** `You`
 Still the only thing on the list you could knock out in one sitting.
 ```
 
@@ -93,7 +93,7 @@ Nothing else in your list changes.
 ```
 
 ```text
-**OI-8 Carry the prepared delta to the design audit** — waiting-on-you
+**OI-8 Carry the prepared delta to the design audit** `Agent` — waiting-on-you
 Paste it into that task only if you want its memory updated; nothing sends itself.
 ```
 
@@ -107,7 +107,7 @@ No task-triggering send occurred. The destination received no instruction.
 about twenty minutes, and the nav labels read the same token afterwards.
 
 ```text
-**OI-4 Focus ring on interactive elements**
+**OI-4 Focus ring on interactive elements** `You`
 About twenty minutes, and you already have that file open.
 ```
 
@@ -121,7 +121,7 @@ The recommendation changes no item, status, order, or execution state.
 `start OI-5` if you want me to work on it.
 
 ```text
-**OI-5 Skip link**
+**OI-5 Skip link** `You`
 Your call, recorded. Say `start OI-5` whenever you want it picked up.
 ```
 
@@ -136,7 +136,7 @@ offered again unless you ask.
 pending, and no sibling item is authorized.
 
 ```text
-**OI-6 Aria labels on the nav**
+**OI-6 Aria labels on the nav** `You`
 It reads the token the skip link just used, so it is the cheapest thing next.
 ```
 

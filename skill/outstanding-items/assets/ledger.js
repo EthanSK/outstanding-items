@@ -78,12 +78,12 @@
 
   const PROVENANCE = {
     "user-requested": {
-      label: "You asked",
-      description: "You explicitly asked for this item to be added.",
+      label: "You",
+      description: "You asked for this item.",
     },
     "agent-added": {
-      label: "Agent added",
-      description: "An agent added this item proactively.",
+      label: "Agent",
+      description: "An agent added this item because it was genuinely useful to track.",
     },
   };
 
@@ -236,18 +236,22 @@
     const badge = node.querySelector(".provenance-badge");
     const provenance = PROVENANCE[item.provenance];
     if (!provenance) {
+      delete node.dataset.provenanceDescription;
       badge.hidden = true;
       badge.textContent = "";
       badge.removeAttribute("data-provenance");
+      badge.removeAttribute("data-tooltip");
       badge.removeAttribute("aria-label");
-      badge.removeAttribute("title");
       return;
     }
     badge.hidden = false;
+    node.dataset.provenanceDescription = provenance.description;
     badge.textContent = provenance.label;
     badge.dataset.provenance = item.provenance;
+    badge.dataset.tooltip = provenance.description;
     badge.setAttribute("aria-label", `Provenance: ${provenance.description}`);
-    badge.title = provenance.description;
+    badge.addEventListener("pointerenter", () => node.classList.add("provenance-hovered"));
+    badge.addEventListener("pointerleave", () => node.classList.remove("provenance-hovered"));
   }
 
   function beginEdit(node, item, initialValue = item.title) {
@@ -361,18 +365,25 @@
     }
 
     const title = node.querySelector(".item-title");
-    title.textContent = item.title;
+    node.querySelector(".item-title-text").textContent = item.title;
     if (transferred) {
       const readOnlyTitle = document.createElement("span");
       readOnlyTitle.className = "item-title item-title--readonly";
-      readOnlyTitle.textContent = item.title;
+      const readOnlyText = document.createElement("span");
+      readOnlyText.className = "item-title-text";
+      readOnlyText.textContent = item.title;
+      const badge = node.querySelector(".provenance-badge");
+      readOnlyTitle.append(readOnlyText, badge);
       readOnlyTitle.setAttribute(
         "aria-label",
-        `${item.title}. ${item.id}. ${item.status}. Owned by ${item.transferred_to?.title || "another task"}; read-only here.`,
+        `${item.title}. ${item.id}. ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Owned by ${item.transferred_to?.title || "another task"}; read-only here.`,
       );
       title.replaceWith(readOnlyTitle);
     } else {
-      title.setAttribute("aria-label", `${item.title}. ${item.id}. Status ${item.status}. Click to edit.`);
+      title.setAttribute(
+        "aria-label",
+        `${item.title}. ${item.id}. Status ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Click to edit.`,
+      );
       title.addEventListener("click", () => beginEdit(node, item));
       title.addEventListener("keydown", (event) => {
         if (!event.altKey || !["ArrowUp", "ArrowDown"].includes(event.key) || completed) return;

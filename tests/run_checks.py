@@ -223,7 +223,7 @@ MIDDOT = "·"
 
 FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
 FOOTER_ITEM_RE = re.compile(
-    rf"^\*\*(OI-\d+) (.+)\*\*(?: {DASH} ([a-z][a-z-]*))?$"
+    rf"^\*\*(OI-\d+) (.+)\*\* `(?:You|Agent)`(?: {DASH} ([a-z][a-z-]*))?$"
 )
 FOOTER_QUIET_RE = re.compile(r"^Nothing\b.*$")
 FOOTER_EMPTY_RE = re.compile(r"^\*\*No outstanding items\*\*$")
@@ -598,9 +598,12 @@ def check_item_provenance() -> list[str]:
     if 'class="provenance-badge"' not in html_text:
         problems.append("ledger.html has no provenance badge in the shared row template")
     for fragment in (
-        "You asked",
-        "Agent added",
+        'label: "You"',
+        'label: "Agent"',
+        "You asked for this item.",
+        "An agent added this item because it was genuinely useful to track.",
         'badge.setAttribute("aria-label"',
+        "badge.dataset.tooltip",
         "attachProvenance(node, item)",
         "badge.hidden = true",
         "badge.hidden = false",
@@ -609,9 +612,16 @@ def check_item_provenance() -> list[str]:
             problems.append(f"ledger.js is missing provenance UI wiring: {fragment!r}")
     if "Source unknown" in script:
         problems.append("ledger.js visibly labels legacy provenance instead of leaving it unobtrusive")
-    for fragment in (".provenance-badge", "white-space: nowrap"):
+    for fragment in (
+        ".provenance-badge",
+        ".provenance-badge::after",
+        ".provenance-badge:hover::after",
+        "white-space: nowrap",
+    ):
         if fragment not in style:
             problems.append(f"ledger.css is missing compact provenance styling: {fragment!r}")
+    if "grid-template-columns: minmax(0, 1fr) auto" in style:
+        problems.append("ledger.css still reserves a separate provenance column beside task text")
     for fragment in (
         "PROVENANCES",
         "unknown-legacy",
@@ -630,6 +640,8 @@ def check_item_provenance() -> list[str]:
         (artifact, "Version 3 migration", "backlog-artifact.md"),
         (ui_reference, "--provenance", "ledger-ui.md"),
         (skill, "Record provenance at creation", "SKILL.md"),
+        (skill, "Add proactively only when genuinely useful", "SKILL.md"),
+        (skill, "Do not manufacture agent-added work", "SKILL.md"),
     ):
         if phrase not in text:
             problems.append(f"{name} does not document provenance rule {phrase!r}")
@@ -637,6 +649,8 @@ def check_item_provenance() -> list[str]:
     homepage = read(DOCS / "index.html")
     if 'class="reply-provenance"' not in homepage:
         problems.append("homepage demo does not show the compact provenance badge")
+    if '>You</small>' not in homepage or '>You asked</small>' in homepage:
+        problems.append("homepage demo must use the compact 'You' provenance label")
     if 'class="reply-title"' in homepage or ">Outstanding<" in homepage:
         problems.append("homepage demo restored the retired Outstanding header")
     return problems
@@ -1181,6 +1195,8 @@ def check_compact_footer() -> list[str]:
         "**Exactly one item.**",
         "**No Done section, ever.**",
         "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
+        "Add proactively only when genuinely useful",
+        "inline-code source marker",
         "Nothing new to suggest",
         "**No outstanding items**",
         "never let it become the footer's suggestion",

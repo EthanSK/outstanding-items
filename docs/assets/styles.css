@@ -295,11 +295,6 @@ footer nav {
   font-weight: 750;
 }
 
-.reply-item em {
-  color: var(--muted);
-  font-style: normal;
-}
-
 .reply-provenance {
   display: inline-block;
   margin-left: 0.35rem;

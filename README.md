@@ -27,6 +27,7 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 | Multi-request tracking | Every request in the task gets a permanent `OI-n` ID, in the order you said it. |
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
+| No invented chores | An agent adds its own item only for a concrete useful loose end that would otherwise be lost — never to fill the ledger with possible work. |
 | One footer per turn | Two or three lines at the end of the final response: one suggested item, an optional line about it, and a link to the rest. Commentary and progress messages stay clean. |
 | Nothing else in the chat | No counts, no sections, no reminders, no Done list, no "+7 more". The full ledger is one click away instead of one scroll away. |
 | Crossed-out Done group | Finished and cancelled items move to the bottom of the editor, struck through, so you can audit what happened without reading it every turn. |
@@ -44,7 +45,7 @@ Working, and simple on purpose. This is a **prompt-level skill** with one small 
 A real footer looks like this — once per turn, at the end of the final response:
 
 ```text
-**OI-5 Add rate-limit docs to the handbook** — planned
+**OI-5 Add rate-limit docs to the handbook** `You` — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -54,7 +55,7 @@ That is the whole thing. One item — the one it thinks you should do next — a
 The link is the exact URL the local editor printed. If no editor is running, that line simply is not there — the skill does not invent a URL to fill the space:
 
 ```text
-**OI-8 Approve the staging deploy** — waiting-on-you
+**OI-8 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
@@ -71,7 +72,7 @@ IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns
 
 ## Full outstanding items is an editor, not a raw file
 
-Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is its checkbox and task text. A compact **You asked** or **Agent added** badge appears only when the origin is known; older items keep their honest legacy provenance in the data without adding a noisy badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Newly recorded open items appear at the top. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. At rest, a row is its checkbox and task text. A tiny **You** or **Agent** pill flows immediately after the text when the origin is known, so it does not reserve a separate column or force early wrapping. Hover the pill to read the full meaning: you asked for the item, or an agent added it because it was genuinely useful to track. Older items keep their honest legacy provenance in the data without adding a noisy or invented badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Newly recorded open items appear at the top. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short paragraph in ordinary words about what the item is. It comes from the item's own optional `explanation` field, written by the agent for a moment when the title alone is not enough. Items saved before that field existed still get a plain sentence based on their status, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 
@@ -128,7 +129,7 @@ Full definitions, transitions, and anti-patterns: [`references/status-labels.md`
 The second half of the skill, and the reason the footer is one line. The ledger knows what is outstanding; curation decides which single item is worth putting in front of you — offered to you, decided by you.
 
 ```text
-**OI-4 Focus ring on interactive elements**
+**OI-4 Focus ring on interactive elements** `You`
 About twenty minutes, and you already have that file open.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -228,8 +229,10 @@ Codex — append to `~/.codex/AGENTS.md`:
 ## Outstanding items
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
+add agent-created items only for concrete useful loose ends that would otherwise be lost,
 keep the ledger silently while you work, and end the final response of each turn
 with one compact recommendation: the single item you think I should do next,
+immediately followed by its compact `You` or `Agent` source marker,
 at most one line about it, and nothing else — no list, no counts, no reminders,
 no Done section. Never put it in commentary or progress messages. When a local
 ledger UI is running, put **Full outstanding items** on the footer's last line
@@ -250,6 +253,7 @@ Claude Code — append to `~/.claude/CLAUDE.md`:
 Use the `outstanding-items` skill in any session with more than one request.
 The list is mine. Maintain it silently while you work and end the final response
 of each turn with one compact recommendation naming a single suggested item
+with its compact `You` or `Agent` source marker immediately after it
 — never in commentary or progress messages, and never as a list, a count, or a
 Done section. Link a running local UI as **Full outstanding items** on the
 footer's last line, never label an item `verified` without evidence you observed

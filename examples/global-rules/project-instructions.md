@@ -24,6 +24,8 @@ Work in this repository arrives in bursts of half-related requests. Use the
 - Record `user-requested`, `agent-added`, or `unknown-legacy` provenance when an
   item is created; never infer that I asked for an older item when the source is
   not provable.
+- Add an `agent-added` item only when it is a concrete useful loose end that
+  would otherwise be lost. Do not clutter the ledger with speculative work.
 - Past seven open items for me, ask before writing `outstanding-items.json` and
   start its local HTML editor. Link it as **Full outstanding items** on the
   footer's last line, using the exact URL it printed, and add the private

@@ -23,9 +23,13 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 - Record each item's source when it is created: `user-requested` only when my
   words caused the capture, `agent-added` for a proactive agent addition, and
   `unknown-legacy` only when an older item's source cannot be proved.
+- Add an `agent-added` item only for a concrete loose end, dependency, risk, or
+  follow-up that is genuinely useful to me and would otherwise be lost. Do not
+  fill my ledger with speculative improvements or possible work.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation that starts directly with the single item you think I should
-  do next, at most one line about it, and nothing else. No list, no counts, no
+  do next, immediately followed by a compact `You` or `Agent` source marker,
+  at most one line about it, and nothing else. No list, no counts, no
   section headings, no reminders, no Done section. Never put it in commentary,
   progress notes, partial updates, or status messages.
 - When a local HTML editor is running for this ledger, link it as

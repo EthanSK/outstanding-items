@@ -28,20 +28,21 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 2. **Capturing is not accepting a job.** "Add this to outstanding items" and "remember this" ask you to record, and nothing more. Record it, say so, and stop.
 3. **Assign a stable ID.** Items are `OI-1`, `OI-2`, … in the order first seen. IDs are never reused and never renumbered, so deltas stay compact and references stay valid.
 4. **Record provenance at creation.** Set `provenance` to `user-requested` only when the user's words explicitly caused the item to be captured, or `agent-added` when an agent proactively created it. Use `unknown-legacy` only for older records whose source cannot be proved; never infer authorization from the title, status, or notes.
-5. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn** while any item is open. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, append nothing.
-6. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
-7. **Close the loop.** When an item is finished, move it to the ledger's Done group instead of deleting it, so the user can audit what happened in the Full outstanding items view.
-8. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
-9. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
-10. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
-11. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
+5. **Add proactively only when genuinely useful.** Do not manufacture agent-added work merely because another improvement is imaginable. Create an `agent-added` item only for a concrete user-relevant loose end, dependency, risk, or follow-up that would otherwise be lost. If its value is doubtful, leave it out; the ledger is memory, not idea exhaust.
+6. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn**. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If nothing is open, use the bold empty-ledger line below.
+7. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task. Status words describe; they never manufacture or extend authority.
+8. **Close the loop.** When an item is finished, move it to the ledger's Done group instead of deleting it, so the user can audit what happened in the Full outstanding items view.
+9. **Keep one source of truth.** After the user agrees to a path, the task-owned JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
+10. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
+11. **Preserve every entry.** Never drop, hide, or quietly retire an item because the user corrected you, chose something else, or declined a suggestion.
+12. **Transfer without pretending completion.** When the user explicitly moves ownership to another task, retain the original status and evidence, set the orthogonal tracking state to `transferred`, record the exact destination, and stop counting or advancing it here. The Full outstanding items view keeps it as read-only history.
 
 ## The compact recommendation
 
 One small block at the very end of the **final** response of the turn, after your normal answer, separated by a blank line. At most three lines: the one item you suggest next, an optional line saying how to start it and why, and the live UI link when one exists. Everything else stays in the ledger, out of the chat.
 
 ```text
-**OI-5 Add rate-limit docs to the handbook** — planned
+**OI-5 Add rate-limit docs to the handbook** `You` — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](<live local UI URL>)
 ```
@@ -49,7 +50,7 @@ Draft the limits table first, about twenty minutes; nothing else is waiting on i
 With no live UI, the link line is simply absent and nothing replaces it:
 
 ```text
-**OI-8 Approve the staging deploy** — waiting-on-you
+**OI-8 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
@@ -73,7 +74,7 @@ Rules:
 - **No heading or label.** Start immediately with the item itself. Never prefix the block with `Outstanding`, `Suggested for you`, `Next`, or another heading.
 - **Exactly one item.** One `OI-n` appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
 - **No Done section, ever.** A `verified`, `dropped`, or `transferred` item never appears in the footer — not as a line, not struck through, not as a count, not as a heading. Completions live in the ledger's Done group and in the Full outstanding items view, which is where the user audits them.
-- Line one is `**OI-n <short title>**` for the default `requested` state, or `**OI-n <short title>** — <status>` for any other state. Use the user's own words trimmed to roughly 60 characters. Use the quiet no-suggestion line when open items exist but none should be offered; use `**No outstanding items**` only when zero items remain open. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
+- Line one starts with `**OI-n <short title>**`, immediately followed by the inline-code source marker `You` or `Agent`; append ` — <status>` only for a non-default state. Use `You` for `user-requested`, `Agent` for `agent-added`, and omit the marker for `unknown-legacy` rather than inventing an origin. Use the user's own words trimmed to roughly 60 characters. Use the quiet no-suggestion line when open items exist but none should be offered; use `**No outstanding items**` only when zero items remain open. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
 - Line two is optional and never more than one line: a small first step, one plain reason, or the exact action a `waiting-on-you` item needs. Leave it out when it adds nothing.
 - **The Full outstanding items link appears once, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line as the last line of the footer, using the exact URL `ledger_ui.py start` printed. With no live UI, write no link line at all: never invent a URL, and never link raw JSON or Markdown.
 - **Never repeat a suggestion the user ignored, declined, or has not answered.** Choose a different eligible item, or use the no-suggestion line. When the user asks what to do next, the slate is clear and the best item may be named again. Once is advice; twice is nagging.

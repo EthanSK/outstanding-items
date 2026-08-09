@@ -626,16 +626,28 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertEqual(html.count('class="provenance-badge"'), 1)
         for value in ("user-requested", "agent-added"):
             self.assertIn(f'"{value}"', script)
-        for label in ("You asked", "Agent added"):
+        for label in ('label: "You"', 'label: "Agent"'):
             self.assertIn(label, script)
+        self.assertIn("You asked for this item.", script)
+        self.assertIn("An agent added this item because it was genuinely useful to track.", script)
         self.assertNotIn("Source unknown", script)
         self.assertIn('class="provenance-badge" hidden', html)
+        self.assertRegex(
+            html,
+            r'class="item-title">\s*<span class="item-title-text"></span>\s*'
+            r'<span class="provenance-badge" hidden></span>',
+        )
         self.assertIn("badge.hidden = true", script)
         self.assertIn("badge.hidden = false", script)
+        self.assertIn("badge.dataset.tooltip", script)
+        self.assertIn('node.classList.add("provenance-hovered")', script)
+        self.assertIn('node.querySelector(".item-title-text").textContent', script)
         self.assertIn(".provenance-badge[hidden]", style)
+        self.assertIn(".provenance-badge::after", style)
+        self.assertIn(".provenance-badge:hover::after", style)
+        self.assertNotIn("grid-template-columns: minmax(0, 1fr) auto", style)
         self.assertIn('badge.setAttribute("aria-label"', script)
         self.assertIn("attachProvenance(node, item)", script)
-        self.assertIn("grid-template-columns: minmax(0, 1fr) auto", style)
         self.assertIn("white-space: nowrap", style)
 
     def test_every_row_carries_an_accessible_explanation_tooltip(self) -> None:

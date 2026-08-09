@@ -209,26 +209,56 @@ h1 {
 
 .item-copy {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.55rem;
-  align-items: center;
   min-width: 0;
 }
 
 .provenance-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: 1.35rem;
-  padding: 0.12rem 0.42rem;
+  min-height: 1.15rem;
+  margin-left: 0.28rem;
+  padding: 0.08rem 0.32rem;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 620;
   line-height: 1;
   white-space: nowrap;
+}
+
+.provenance-badge::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.42rem);
+  z-index: 20;
+  width: max-content;
+  max-width: min(15rem, 70vw);
+  padding: 0.42rem 0.55rem;
+  border: 1px solid var(--tooltip-line);
+  border-radius: 0.42rem;
+  background: var(--tooltip);
+  color: var(--tooltip-ink);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate(-50%, 0.18rem);
+  transition: opacity 100ms ease, transform 100ms ease, visibility 100ms ease;
+}
+
+.provenance-badge:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
 }
 
 .provenance-badge[hidden] {
@@ -301,6 +331,11 @@ h1 {
   visibility: visible;
 }
 
+.ledger-item.provenance-hovered .item-tooltip {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .ledger-item.tooltip-dismissed .item-tooltip {
   opacity: 0;
   visibility: hidden;
@@ -319,6 +354,11 @@ h1 {
   line-height: 1.45;
   text-align: left;
   overflow-wrap: anywhere;
+}
+
+.item-title-text,
+.provenance-badge {
+  vertical-align: 0.08em;
 }
 
 button.item-title:hover { color: var(--accent); }
@@ -399,7 +439,7 @@ button.item-title:hover { color: var(--accent); }
 
 .item-list--done .ledger-item { color: var(--muted); }
 
-.item-list--done .item-title {
+.item-list--done .item-title-text {
   text-decoration: line-through;
   text-decoration-thickness: 1px;
   text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
