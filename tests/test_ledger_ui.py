@@ -330,6 +330,113 @@ class LedgerModelTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "provenance is immutable"):
                 ledger_ui.command_upsert(args)
 
+    def test_provenance_correction_is_audited_and_preserves_item_state(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            data = sample_ledger()
+            data["items"][0]["tracking_state"] = "transferred"
+            data["items"][0]["transferred_to"] = {
+                "task_id": "task_EXAMPLE_target",
+                "title": "Destination task",
+                "transferred_at": "2026-08-07T10:00:00Z",
+            }
+            ledger_ui.atomic_write_json(ledger, data)
+            before = copy.deepcopy(data["items"][0])
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                ids=["OI-1"],
+                provenance="agent-added",
+                reason="The user requested the work, but never requested ledger capture.",
+                session_id="sess_EXAMPLE_7f2a",
+            )
+
+            self.assertEqual(ledger_ui.command_correct_provenance(args), 0)
+            saved = ledger_ui.read_json(ledger)
+            item = next(entry for entry in saved["items"] if entry["id"] == "OI-1")
+            self.assertEqual(saved["revision"], data["revision"] + 1)
+            self.assertEqual(item["provenance"], "agent-added")
+            self.assertEqual(
+                item["provenance_history"],
+                [
+                    {
+                        "from": "user-requested",
+                        "to": "agent-added",
+                        "corrected_at": item["provenance_history"][0]["corrected_at"],
+                        "reason": "The user requested the work, but never requested ledger capture.",
+                        "session_id": "sess_EXAMPLE_7f2a",
+                    }
+                ],
+            )
+            for key in (
+                "id",
+                "title",
+                "status",
+                "completed",
+                "position",
+                "tracking_state",
+                "transferred_to",
+                "details_markdown",
+            ):
+                self.assertEqual(item[key], before[key])
+
+    def test_provenance_correction_fails_closed_without_a_real_change(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            original = ledger.read_bytes()
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                ids=["OI-1"],
+                provenance="agent-added",
+                reason="",
+                session_id=None,
+            )
+            with self.assertRaisesRegex(ValueError, "--reason"):
+                ledger_ui.command_correct_provenance(args)
+            self.assertEqual(ledger.read_bytes(), original)
+
+            args.reason = "No-op correction"
+            args.provenance = "user-requested"
+            with self.assertRaisesRegex(ValueError, "already user-requested"):
+                ledger_ui.command_correct_provenance(args)
+            self.assertEqual(ledger.read_bytes(), original)
+
+            args.ids = ["OI-1", "OI-404"]
+            args.provenance = "agent-added"
+            with self.assertRaisesRegex(ValueError, "unknown item"):
+                ledger_ui.command_correct_provenance(args)
+            self.assertEqual(ledger.read_bytes(), original)
+
+    def test_validation_rejects_broken_provenance_history(self) -> None:
+        data = sample_ledger()
+        item = data["items"][0]
+        item["provenance"] = "agent-added"
+        item["provenance_history"] = [
+            {
+                "from": "user-requested",
+                "to": "agent-added",
+                "corrected_at": "2026-08-09T13:00:00Z",
+                "reason": "Synthetic correction.",
+            }
+        ]
+        ledger_ui.validate_ledger(data)
+
+        item["provenance"] = "unknown-legacy"
+        with self.assertRaisesRegex(ValueError, "does not end at current provenance"):
+            ledger_ui.validate_ledger(data)
+
+        item["provenance"] = "agent-added"
+        item["provenance_history"].append(
+            {
+                "from": "unknown-legacy",
+                "to": "user-requested",
+                "corrected_at": "2026-08-09T13:05:00Z",
+                "reason": "Broken synthetic chain.",
+            }
+        )
+        with self.assertRaisesRegex(ValueError, "continuous audit chain"):
+            ledger_ui.validate_ledger(data)
+
     def test_migration_leaves_the_explanation_empty_for_the_ui_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = pathlib.Path(temp) / "legacy.md"
@@ -734,8 +841,8 @@ class LedgerAssetTests(unittest.TestCase):
             self.assertIn(f'"{value}"', script)
         for label in ('label: "You"', 'label: "Agent"'):
             self.assertIn(label, script)
-        self.assertIn("You asked for this item.", script)
-        self.assertIn("An agent added this item because it was genuinely useful to track.", script)
+        self.assertIn("You explicitly added this item to Outstanding Items.", script)
+        self.assertIn("An agent added this item to track a useful loose end.", script)
         self.assertNotIn("Source unknown", script)
         self.assertIn('class="provenance-badge" hidden', html)
         self.assertRegex(

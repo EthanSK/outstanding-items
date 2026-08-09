@@ -82,11 +82,11 @@
   const PROVENANCE = {
     "user-requested": {
       label: "You",
-      description: "You asked for this item.",
+      description: "You explicitly added this item to Outstanding Items.",
     },
     "agent-added": {
       label: "Agent",
-      description: "An agent added this item because it was genuinely useful to track.",
+      description: "An agent added this item to track a useful loose end.",
     },
   };
 

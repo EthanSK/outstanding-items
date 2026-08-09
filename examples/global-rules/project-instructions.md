@@ -21,9 +21,10 @@ Work in this repository arrives in bursts of half-related requests. Use the
   carry none of it.
 - Capture asides that have nothing to do with the current change. Recording
   something is the whole job when I only asked you to record it.
-- Record `user-requested`, `agent-added`, or `unknown-legacy` provenance when an
-  item is created; never infer that I asked for an older item when the source is
-  not provable.
+- Record `user-requested` only when I explicitly ask to add that specific thing
+  to Outstanding Items. A normal work request captured automatically is
+  `agent-added`; use `unknown-legacy` only when an old capture source cannot be
+  proved.
 - Add an `agent-added` item only when it is a concrete useful loose end that
   would otherwise be lost. Do not clutter the ledger with speculative work.
 - Past seven open items for me, ask before writing `outstanding-items.json` and

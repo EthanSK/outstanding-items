@@ -65,7 +65,20 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. The command atomically increments the revision, and an open UI sees it within two seconds.
 
-`--provenance` is required when creating a new item. Use `user-requested` only when the user's explicit words caused the capture, `agent-added` for a genuinely useful proactive agent addition, and `unknown-legacy` only when migrating an older item whose source cannot be proved. Later updates may omit the flag; provenance is preserved and cannot be rewritten. The UI shows a tiny inline `You` or `Agent` pill only for the two known origins; hovering it supplies the full explanation. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
+`--provenance` is required when creating a new item. Use `user-requested` only when the user explicitly asks to add that specific thing to Outstanding Items. If the user merely requests or discusses the underlying work and the agent captures it automatically, use `agent-added`. Use `unknown-legacy` only when migrating an older item whose capture source cannot be proved. Later `upsert` calls preserve provenance. The UI shows a tiny inline `You` or `Agent` pill only for the two known origins; hovering explains that `You` means an explicit request for the ledger entry itself. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
+
+When evidence proves an earlier classification wrong, use the audited correction route instead of hand-editing JSON:
+
+```sh
+python3 scripts/ledger_ui.py correct-provenance \
+  --ledger outstanding-items.json \
+  --ids OI-7 OI-8 \
+  --provenance agent-added \
+  --reason "The source messages requested work but never requested ledger capture." \
+  --session-id sess_EXAMPLE_7f2a
+```
+
+This command validates the whole batch before writing, increments the revision once, and appends each item's `provenance_history`. It changes no status, completion state, position, transfer state, title, or evidence. The browser cannot invoke it.
 
 A newly created outstanding item is inserted at position `0`, so it appears at the top of **Outstanding** as soon as the page refreshes. Existing outstanding items retain their relative order underneath it. Creating a completed historical item does not disturb that order.
 
@@ -124,7 +137,7 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 - The HTML, CSS, and JavaScript are a generic shell installed with the skill. They contain no task items and never need regeneration when ledger data changes.
 - Transferred items render read-only inside a collapsed **Owned elsewhere** disclosure, show their destination metadata, and are excluded from active outstanding/completed counts without being deleted.
 - `explanation` is an optional per-item string of at most 600 characters. It travels with the rest of the ledger, needs no schema bump, and an item or ledger without it stays valid; the browser supplies the status fallback at render time and stores nothing of its own.
-- `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, and transfer mutations. The browser cannot change it.
+- `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, transfer, and ordinary `upsert` mutations. The browser cannot change it. Only the agent-side, reason-required `correct-provenance` command may repair a proven mistake, and it appends an audit record.
 
 ## Stop or inspect
 

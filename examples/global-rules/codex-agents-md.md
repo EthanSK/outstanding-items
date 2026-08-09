@@ -20,9 +20,11 @@ Use the `outstanding-items` skill in any task where I make more than one request
   being off-topic. If I say "add this to outstanding items" or "remember this",
   record it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
-- Record each item's source when it is created: `user-requested` only when my
-  words caused the capture, `agent-added` for a proactive agent addition, and
-  `unknown-legacy` only when an older item's source cannot be proved.
+- Record each item's source when it is created: `user-requested` only when I
+  explicitly tell you to add that specific thing to Outstanding Items. If I
+  merely request or discuss the work and you capture it automatically, use
+  `agent-added`. Use `unknown-legacy` only when an older capture source cannot
+  be proved.
 - Add an `agent-added` item only for a concrete loose end, dependency, risk, or
   follow-up that is genuinely useful to me and would otherwise be lost. Do not
   fill my ledger with speculative improvements or possible work.

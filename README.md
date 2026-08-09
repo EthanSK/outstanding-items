@@ -18,7 +18,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, seven focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format, and it can still be installed directly as a standalone skill in either harness. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
+Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, eight focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format, and it can still be installed directly as a standalone skill in either harness. Installing it starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
 
 ## What it actually does
 
@@ -28,6 +28,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
 | No invented chores | An agent adds its own item only for a concrete useful loose end that would otherwise be lost — never to fill the ledger with possible work. |
+| Strict source badges | **You** means you explicitly asked for that ledger entry. A normal work request captured automatically is **Agent**. |
 | One footer per turn | Two or three lines at the end of the final response: one suggested item, an optional line about it, and a link to the rest. Commentary and progress messages stay clean. |
 | Nothing else in the chat | No counts, no sections, no reminders, no Done list, no "+7 more". The full ledger is one click away instead of one scroll away. |
 | Crossed-out Done group | Finished and cancelled items move to the bottom of the editor, struck through, so you can audit what happened without reading it every turn. |
@@ -72,7 +73,7 @@ IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns
 
 ## Full outstanding items is an editor, not a raw file
 
-Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. Active work sits under **Outstanding**. At rest, a row is its checkbox and task text. A tiny **You** or **Agent** pill flows immediately after the text when the origin is known, so it does not reserve a separate column or force early wrapping. Hover the pill to read the full meaning: you asked for the item, or an agent added it because it was genuinely useful to track. Older items keep their honest legacy provenance in the data without adding a noisy or invented badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Newly recorded items appear at the top. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. Active work sits under **Outstanding**. At rest, a row is its checkbox and task text. A tiny **You** or **Agent** pill flows immediately after the text when the origin is known, so it does not reserve a separate column or force early wrapping. **You** is deliberately strict: it appears only when you explicitly asked to add that specific thing to Outstanding Items. If you merely requested or discussed the underlying work and the agent captured it automatically, the pill is **Agent**. Hover the pill to read that full meaning. Older items keep their honest legacy provenance in the data without adding a noisy or invented badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Newly recorded items appear at the top. Drag with the reorder grip or reveal the keyboard move controls with focus. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 Hovering a row — or giving its task text keyboard focus — shows one small tooltip above it: the item's ID, a friendly state phrase, and a short action-first paragraph in ordinary words. Explanations use imperative Git commit-subject style — `Write a LinkedIn post…`, not `This is the idea to…` — so they scan quickly when the title alone is not enough. Items saved before that field existed start their fallback with the item title, so nothing looks blank. `Escape` dismisses a tooltip, the pointer can move onto it without it vanishing, and every row's text is rendered as text, never as markup.
 
@@ -252,6 +253,8 @@ Codex — append to `~/.codex/AGENTS.md`:
 Use the `outstanding-items` skill in any task with more than one request.
 The outstanding items belong to me. Capture asides even when they are unrelated,
 add agent-created items only for concrete useful loose ends that would otherwise be lost,
+use `You` only when I explicitly asked to add that entry to Outstanding Items
+(a normal work request captured automatically is `Agent`),
 keep the ledger silently while you work, and end the final response of each turn
 with one compact recommendation: the single item you think I should do next,
 immediately followed by its compact `You` or `Agent` source marker,
@@ -277,7 +280,9 @@ The list is mine. Maintain it silently while you work and end the final response
 of each turn with one compact recommendation naming a single suggested item
 with its compact `You` or `Agent` source marker immediately after it
 — never in commentary or progress messages, and never as a list, a count, or a
-Done section. Link a running local UI as **Full outstanding items** on the
+Done section. Use `You` only when I explicitly asked to add that entry to
+Outstanding Items; a normal work request captured automatically is `Agent`.
+Link a running local UI as **Full outstanding items** on the
 footer's last line, never label an item `verified` without evidence you observed
 in this session, and never label something `blocked` when it is really waiting on
 me. Being on the list, being suggested, or being labelled `in-progress` is never

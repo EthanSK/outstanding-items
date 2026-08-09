@@ -605,8 +605,8 @@ def check_item_provenance() -> list[str]:
     for fragment in (
         'label: "You"',
         'label: "Agent"',
-        "You asked for this item.",
-        "An agent added this item because it was genuinely useful to track.",
+        "You explicitly added this item to Outstanding Items.",
+        "An agent added this item to track a useful loose end.",
         'badge.setAttribute("aria-label"',
         "badge.dataset.tooltip",
         "attachProvenance(node, item)",
@@ -632,6 +632,8 @@ def check_item_provenance() -> list[str]:
         "unknown-legacy",
         '"--provenance"',
         "provenance is immutable",
+        '"correct-provenance"',
+        "provenance_history",
         "migrate_schema",
     ):
         if fragment not in runtime:
@@ -639,14 +641,18 @@ def check_item_provenance() -> list[str]:
 
     artifact = read(SKILL_DIR / "references" / "backlog-artifact.md")
     ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
+    provenance_reference = read(SKILL_DIR / "references" / "provenance.md")
     skill = read(SKILL_MD)
     for text, phrase, name in (
         (artifact, "| `provenance` |", "backlog-artifact.md"),
         (artifact, "Version 3 migration", "backlog-artifact.md"),
         (ui_reference, "--provenance", "ledger-ui.md"),
-        (skill, "Record provenance at creation", "SKILL.md"),
+        (skill, "Record ledger provenance, not task authorship", "SKILL.md"),
         (skill, "Add proactively only when genuinely useful", "SKILL.md"),
         (skill, "Do not manufacture agent-added work", "SKILL.md"),
+        (skill, "A normal work request", "SKILL.md"),
+        (provenance_reference, "We need to write the release note", "provenance.md"),
+        (provenance_reference, "correct-provenance", "provenance.md"),
     ):
         if phrase not in text:
             problems.append(f"{name} does not document provenance rule {phrase!r}")
@@ -656,6 +662,8 @@ def check_item_provenance() -> list[str]:
         problems.append("homepage demo does not show the compact provenance badge")
     if '>You</small>' not in homepage or '>You asked</small>' in homepage:
         problems.append("homepage demo must use the compact 'You' provenance label")
+    if "Add these to Outstanding Items" not in homepage:
+        problems.append("homepage You badge must follow an explicit ledger-add request")
     if 'class="reply-title"' in homepage or ">Outstanding<" in homepage:
         problems.append("homepage demo restored the retired Outstanding header")
     return problems

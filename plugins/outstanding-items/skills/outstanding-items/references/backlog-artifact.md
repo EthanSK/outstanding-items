@@ -97,17 +97,18 @@ Do not silently create a ledger before those triggers. When the user has already
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |
 | `explanation` | Optional. One short, plain-language paragraph (600 characters or fewer) describing what the item is about, shown as the hover/focus tooltip in the UI. Plain text only — no Markdown, evidence, paths, or next steps. Absent or empty is valid, and the UI then falls back to a sentence based on `status`. |
-| `provenance` | Required. `user-requested` only when the user's explicit words caused capture, `agent-added` when an agent proactively created the item, or `unknown-legacy` when an older item's origin cannot be proved. It is immutable after creation. |
+| `provenance` | Required. `user-requested` only when the user explicitly asked to add that specific thing to Outstanding Items; a normal task request captured automatically is `agent-added`. Use `unknown-legacy` only when an older item's capture source cannot be proved. Ordinary mutations preserve this field. |
+| `provenance_history` | Optional append-only correction audit. Each record stores `from`, `to`, `corrected_at`, `reason`, and an optional correcting `session_id`. Only `correct-provenance` writes it. |
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
 | `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
 
-The server validates IDs, statuses, completion consistency, unique positions, provenance, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
+The server validates IDs, statuses, completion consistency, unique positions, provenance and its optional correction history, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
 
 ### Version 3 migration
 
-Loading a valid version 3 ledger upgrades it atomically to version 4, increments its revision, and writes `provenance: "unknown-legacy"` on every existing item. The migration deliberately does not guess from titles, status labels, notes, or conversational wording. Item order, status, completion, tracking/transfer state, evidence, and all other item content stay unchanged. Future items must supply provenance explicitly when they are first created.
+Loading a valid version 3 ledger upgrades it atomically to version 4, increments its revision, and writes `provenance: "unknown-legacy"` on every existing item. The migration deliberately does not guess from titles, status labels, notes, or conversational wording. Item order, status, completion, tracking/transfer state, evidence, and all other item content stay unchanged. Future items must supply provenance explicitly when they are first created. A demonstrably wrong later classification is corrected only through `correct-provenance`, which records the evidence without changing ordinary item state.
 
 ### Not offering the same thing twice
 

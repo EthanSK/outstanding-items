@@ -15,7 +15,7 @@ That is a fresh, explicit instruction naming a specific thing, so the work is au
 **Agent** *(does the work, then)*:
 
 ```text
-**OI-1 Fix the flaky login test** `You` — implemented
+**OI-1 Fix the flaky login test** `Agent` — implemented
 The retry loop changed; a CI run is the thing that would settle it, if you want one.
 ```
 
@@ -26,7 +26,7 @@ The retry loop changed; a CI run is the thing that would settle it, if you want 
 **Agent (body):** Noted — I have not started it.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook** `You`
+**OI-2 Add rate-limit docs to the handbook** `Agent`
 Twenty minutes if you want a small one. Nothing depends on it either way.
 ```
 
@@ -47,7 +47,7 @@ Nothing new to suggest; your list is unchanged.
 **Agent (body):** Three things are open. OI-1 is implemented but unproven — CI would settle it. OI-2 is untouched. OI-3 is the design-channel reminder you parked.
 
 ```text
-**OI-1 Fix the flaky login test** `You` — implemented
+**OI-1 Fix the flaky login test** `Agent` — implemented
 CI is the cheapest thing left on it; say the word and I will run it.
 ```
 
@@ -62,7 +62,7 @@ CI is the cheapest thing left on it; say the word and I will run it.
 **Agent** runs CI, and the login test passes 20 times.
 
 ```text
-**OI-2 Add rate-limit docs to the handbook** `You` — planned
+**OI-2 Add rate-limit docs to the handbook** `Agent` — planned
 The approach is agreed, so the limits table is a short first pass.
 ```
 
@@ -91,7 +91,7 @@ Eight open items for the user, past the point where the ledger should live only 
 **Turn 12 — User:** Yeah do it.
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4 Focus ring on interactive elements** `Agent`
 Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -109,7 +109,7 @@ Twenty minutes, and the shared token is the whole first step.
 The pipeline requires a human. The agent cannot press the button, and no in-scope workaround exists that would be safe to take alone.
 
 ```text
-**OI-12 Approve the staging deploy** `You` — waiting-on-you
+**OI-12 Approve the staging deploy** `Agent` — waiting-on-you
 Click approve in the deploy UI; it is the one thing here that only you can do.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -165,7 +165,7 @@ Availability from the user's side: OI-9 is `blocked`, so nothing they do moves i
 **Agent (body):** OI-4, if you want a short one. You were already in that file, it is about twenty minutes, and OI-6 reads the same token, so doing it once settles two. Nothing here has a date on it.
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4 Focus ring on interactive elements** `Agent`
 About twenty minutes, and you were already in that file this morning.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -183,7 +183,7 @@ What the suggestion did **not** do:
 **Agent (body):** OI-5 is recorded as your priority. The ledger is unchanged. Tell me `start OI-5` if you want me to work on it.
 
 ```text
-**OI-5 Skip link** `You`
+**OI-5 Skip link** `Agent`
 Your call, recorded. Say `start OI-5` whenever you want it picked up.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -197,7 +197,7 @@ Now there is a fresh, explicit instruction naming one item. The agent adds the s
 While the work was under way the agent posted two short progress notes — "reading the layout template", then "skip link added, checking the tab order". Neither carried a recommendation, count, `OI-n`, or Full outstanding items link. The ledger was updated silently, and the compact block appeared once, here, at the end of the final response:
 
 ```text
-**OI-6 Aria labels on the nav** `You`
+**OI-6 Aria labels on the nav** `Agent`
 It reads the token you just added, so it is the cheapest thing to carry on with.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```

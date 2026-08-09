@@ -71,6 +71,9 @@ Use the `outstanding-items` skill in any task where I make more than one request
 - Add an agent-created item only for a concrete loose end, dependency, risk, or
   follow-up that is genuinely useful and would otherwise be lost. Never clutter
   my ledger with speculative improvements or possible work.
+- Use `You` / `user-requested` only when I explicitly tell you to add that
+  specific thing to Outstanding Items. If I merely request or discuss the work
+  and you capture it automatically, use `Agent` / `agent-added`.
 - Give each item a permanent `OI-n` ID. Never renumber.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation: the single item you think I should
@@ -120,7 +123,9 @@ with its compact `You` or `Agent` source marker immediately after the item —
 never in commentary or progress messages, and never as a list, a count, or a
 Done section. The list is mine: record it, keep it out of the chat, suggest at
 most one next move, and wait for my current message to name the item to start.
-Authority ends with that response turn. If the list passes seven open items for
+`You` means I explicitly asked for that Outstanding Items entry; a normal work
+request captured automatically is `Agent`. Authority ends with that response
+turn. If the list passes seven open items for
 me, ask before writing `outstanding-items.json` and start its local HTML editor.
 Link it as **Full outstanding items** on the footer's last line, and add its
 private ledger/runtime files to `.git/info/exclude`.

@@ -56,6 +56,7 @@ STATE_RE = re.compile(r"^-\s+\*\*State:\*\*\s*(.+?)\s*$", re.I)
 MAX_BODY_BYTES = 1_000_000
 # One short, plain-language paragraph shown as the item's hover/focus tooltip.
 MAX_EXPLANATION_CHARS = 600
+MAX_PROVENANCE_REASON_CHARS = 1_000
 CODEX_THREAD_ID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.I,
@@ -177,6 +178,44 @@ def validate_ledger(data: Any) -> None:
         provenance = item.get("provenance")
         if provenance not in PROVENANCES:
             raise ValueError(f"{item_id} has unsupported provenance {provenance!r}")
+        history = item.get("provenance_history", [])
+        if not isinstance(history, list):
+            raise ValueError(f"{item_id} provenance_history must be an array")
+        history_value: str | None = None
+        for correction_index, correction in enumerate(history):
+            if not isinstance(correction, dict):
+                raise ValueError(
+                    f"{item_id} provenance_history[{correction_index}] must be an object"
+                )
+            if correction.get("from") not in PROVENANCES or correction.get("to") not in PROVENANCES:
+                raise ValueError(
+                    f"{item_id} provenance_history[{correction_index}] has unsupported provenance"
+                )
+            if correction["from"] == correction["to"]:
+                raise ValueError(
+                    f"{item_id} provenance_history[{correction_index}] does not change provenance"
+                )
+            if history_value is not None and correction["from"] != history_value:
+                raise ValueError(f"{item_id} provenance_history is not a continuous audit chain")
+            history_value = correction["to"]
+            for key in ("corrected_at", "reason"):
+                if not isinstance(correction.get(key), str) or not correction[key].strip():
+                    raise ValueError(
+                        f"{item_id} provenance_history[{correction_index}] needs non-empty {key}"
+                    )
+            if len(correction["reason"]) > MAX_PROVENANCE_REASON_CHARS:
+                raise ValueError(
+                    f"{item_id} provenance_history[{correction_index}] reason is too long"
+                )
+            if "session_id" in correction and (
+                not isinstance(correction["session_id"], str)
+                or not correction["session_id"].strip()
+            ):
+                raise ValueError(
+                    f"{item_id} provenance_history[{correction_index}] session_id must be non-empty"
+                )
+        if history_value is not None and history_value != provenance:
+            raise ValueError(f"{item_id} provenance_history does not end at current provenance")
         tracking_state = item.get("tracking_state", "active")
         if tracking_state not in TRACKING_STATES:
             raise ValueError(f"{item_id} has unsupported tracking_state {tracking_state!r}")
@@ -1120,7 +1159,7 @@ def command_upsert(args: argparse.Namespace) -> int:
     elif provenance is not None and provenance != item["provenance"]:
         raise ValueError(
             f"{args.id} provenance is immutable ({item['provenance']}); "
-            "do not rewrite item origin"
+            "use correct-provenance with an evidence-based reason"
         )
     if args.title:
         item["title"] = args.title.strip()
@@ -1148,6 +1187,55 @@ def command_upsert(args: argparse.Namespace) -> int:
     data["updated_at"] = utc_now()
     atomic_write_json(ledger, data)
     print(f"saved {args.id} at revision {data['revision']}")
+    return 0
+
+
+def command_correct_provenance(args: argparse.Namespace) -> int:
+    """Correct demonstrably wrong origin metadata without changing item state."""
+    ledger = pathlib.Path(args.ledger).expanduser().resolve()
+    data = read_json(ledger)
+    by_id = {item["id"]: item for item in data["items"]}
+    requested = list(dict.fromkeys(args.ids))
+    if not requested:
+        raise ValueError("--ids must name at least one item")
+    missing = [item_id for item_id in requested if item_id not in by_id]
+    if missing:
+        raise ValueError(f"unknown item id(s): {', '.join(missing)}")
+    reason = " ".join(args.reason.split())
+    if not reason:
+        raise ValueError("--reason must explain the evidence for this correction")
+    if len(reason) > MAX_PROVENANCE_REASON_CHARS:
+        raise ValueError(
+            f"--reason must be at most {MAX_PROVENANCE_REASON_CHARS} characters"
+        )
+    unchanged = [item_id for item_id in requested if by_id[item_id]["provenance"] == args.provenance]
+    if unchanged:
+        raise ValueError(
+            f"already {args.provenance}: {', '.join(unchanged)}; no correction was written"
+        )
+
+    corrected_at = utc_now()
+    for item_id in requested:
+        item = by_id[item_id]
+        old = item["provenance"]
+        correction = {
+            "from": old,
+            "to": args.provenance,
+            "corrected_at": corrected_at,
+            "reason": reason,
+        }
+        if args.session_id:
+            correction["session_id"] = args.session_id
+        item.setdefault("provenance_history", []).append(correction)
+        item["provenance"] = args.provenance
+
+    data["revision"] += 1
+    data["updated_at"] = corrected_at
+    atomic_write_json(ledger, data)
+    print(
+        f"corrected provenance for {len(requested)} item(s) to {args.provenance} "
+        f"at revision {data['revision']}"
+    )
     return 0
 
 
@@ -1218,6 +1306,17 @@ def parser() -> argparse.ArgumentParser:
     upsert.add_argument("--notes-file")
     upsert.add_argument("--session-id")
     upsert.set_defaults(func=command_upsert)
+
+    correct_provenance = sub.add_parser(
+        "correct-provenance",
+        help="correct demonstrably wrong item provenance and append an audit record",
+    )
+    correct_provenance.add_argument("--ledger", required=True)
+    correct_provenance.add_argument("--ids", nargs="+", required=True)
+    correct_provenance.add_argument("--provenance", choices=sorted(PROVENANCES), required=True)
+    correct_provenance.add_argument("--reason", required=True)
+    correct_provenance.add_argument("--session-id")
+    correct_provenance.set_defaults(func=command_correct_provenance)
 
     transfer = sub.add_parser("transfer", help="retain items as read-only history owned by another task")
     transfer.add_argument("--ledger", required=True)
