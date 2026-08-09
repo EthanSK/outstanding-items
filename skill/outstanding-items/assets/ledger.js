@@ -53,28 +53,28 @@
   };
 
   const TOOLTIP_TEXT = {
-    requested:
-      "This one is here because you asked for it. Nothing has started, and it will wait quietly until you decide it is the right moment.",
-    planned:
-      "There is an agreed way to do this one, and nothing has changed yet. It is ready for you whenever it suits.",
-    "in-progress":
-      "You asked for this one to be picked up, so work went into it then. It sits here until you say what happens with it next.",
-    implemented:
-      "The change for this one has been made, and it has not been checked yet. A quick check is the natural next step whenever you want it.",
-    verified:
-      "This one is finished and was checked, so you can happily leave it behind. It stays on the list as a record of what happened.",
-    "waiting-on-you":
-      "This one is ready and just needs a moment from you — a click, a yes, a key, or a choice. Nothing else is holding it up.",
-    blocked:
-      "Something outside this list is in the way for now, so this one is parked rather than forgotten. It can move again once that clears.",
-    reminder:
-      "You parked this one on purpose. It stays visible for whenever you want it, and nothing will start it for you.",
-    dropped:
-      "You decided against this one. It stays here so the reasoning is easy to find later.",
+    requested: (action) =>
+      `${action} Nothing has started; leave it here until you decide the moment is right.`,
+    planned: (action) =>
+      `${action} Follow the agreed approach when you decide to start; nothing has changed yet.`,
+    "in-progress": (action) =>
+      `${action} Resume only when you explicitly ask; the earlier work remains recorded here.`,
+    implemented: (action) =>
+      `${action} Check the finished change when you are ready; it has not been verified yet.`,
+    verified: (action) =>
+      `${action} Leave the checked result here as a record of what was finished.`,
+    "waiting-on-you": (action) =>
+      `${action} Complete the recorded click, approval, key, or choice when you are ready.`,
+    blocked: (action) =>
+      `${action} Wait for the recorded outside blocker to clear before picking it up again.`,
+    reminder: (action) =>
+      `${action} Keep it parked until you decide to pick it up.`,
+    dropped: (action) =>
+      `${action} Keep the decision here as history; you chose not to continue it.`,
   };
 
-  const TOOLTIP_FALLBACK =
-    "This one is on your list, and it stays here until you decide what happens with it.";
+  const TOOLTIP_FALLBACK = (action) =>
+    `${action} Decide what happens next when you are ready; it will wait here.`;
 
   const PROVENANCE = {
     "user-requested": {
@@ -194,14 +194,21 @@
     return `${item.id} · ${TOOLTIP_LABELS[item.status] || "On your list"}`;
   }
 
+  function tooltipAction(item) {
+    const title = String(item.title || "Review this item").trim();
+    return /[.!?]$/.test(title) ? title : `${title}.`;
+  }
+
   function tooltipText(item, transferred) {
     const written = typeof item.explanation === "string" ? item.explanation.trim() : "";
     if (written) return written;
+    const action = tooltipAction(item);
     if (transferred) {
       const destination = (item.transferred_to?.title || "").trim() || "Another task";
-      return `${destination} looks after this one now. It stays here as a record, with its wording and status kept exactly as they were.`;
+      return `${action} Open it in ${destination} when you want to continue; this copy stays read-only.`;
     }
-    return TOOLTIP_TEXT[item.status] || TOOLTIP_FALLBACK;
+    const fallback = TOOLTIP_TEXT[item.status] || TOOLTIP_FALLBACK;
+    return fallback(action);
   }
 
   function attachTooltip(node, item, transferred) {

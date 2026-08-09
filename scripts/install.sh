@@ -284,7 +284,12 @@ install_to() {
 
   # Files present in the destination that this repository no longer ships.
   if [ -d "$skill_dir" ]; then
-    existing=$(cd "$skill_dir" && find . -type f | sed 's|^\./||' | LC_ALL=C sort)
+    # Ignore Python's replaceable runtime cache. Running the installed ledger
+    # may create it, but it is neither authored content nor an ownership conflict.
+    existing=$(cd "$skill_dir" && find . -type f \
+      ! -name '*.pyc' \
+      ! -path '*/__pycache__/*' \
+      | sed 's|^\./||' | LC_ALL=C sort)
     for rel in $existing; do
       [ "$rel" = "$MANIFEST_FILE" ] && continue
       case "

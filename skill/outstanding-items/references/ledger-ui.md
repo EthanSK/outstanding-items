@@ -72,16 +72,18 @@ A newly created open item is inserted at position `0`, so it appears at the top 
 `--explanation` fills the tooltip. Write it as if the user is meeting the item for the first time in a while and wants to feel oriented, not tested.
 
 - One or two warm, ordinary sentences. Up to 600 characters, and shorter is better.
-- Say what the item is and why it is on the list, in the user's own vocabulary.
+- Use imperative Git commit-subject style: lead with the concrete action and a direct verb such as `Write`, `Add`, `Check`, or `Finish`.
+- Say what the item does and why it is on the list, in the user's own vocabulary.
 - Plain text only: no Markdown, no code, no file paths, no ticket numbers, no command output, no evidence, no credentials.
 - Describe the item, never the plan. It states nothing about what will happen next, claims no progress, and is not permission to act.
+- Omit throat-clearing such as “This is”, “This would”, “This one”, or “The idea is”. Do not force a genuinely non-action fact into a command.
 - No apologies, no reference to forgetting or remembering, and nothing that reads as talking down to the user.
 
-Good: `The docs page for rate limits has no numbers in it yet, so this is the one where the real limits get written down.`
+Good: `Write the real rate limits into the handbook so the docs page gives people the numbers they need.`
 
-Avoid: `Per OI-12 above, blocked on the CI matrix; see details_markdown for the full evidence trail.`
+Avoid: `This would add rate-limit numbers to the handbook.`
 
-Leaving it out is safe. Ledgers written before this field existed stay valid, and the UI falls back to a plain sentence based on the item's status — for example, a `waiting-on-you` item reads as ready and simply needing a moment from the user. Fill the field in when you can: the fallback describes the state, while a written explanation describes the item.
+Leaving it out is safe. Ledgers written before this field existed stay valid, and the UI starts its fallback with the item title before adding a plain sentence based on the status. Fill the field in when you can: the fallback describes the state, while a written explanation describes the item.
 
 Transfer exact items after an explicitly authorized handoff:
 

@@ -1300,6 +1300,8 @@ def check_item_explanations() -> list[str]:
         problems.append("ledger.js renders markup instead of safe text")
     for fragment in (
         "item.explanation",
+        "tooltipAction(item)",
+        "return fallback(action)",
         'querySelector(".item-tooltip-text").textContent',
         'querySelector(".item-tooltip-label").textContent',
         'setAttribute("aria-describedby"',
@@ -1307,6 +1309,15 @@ def check_item_explanations() -> list[str]:
     ):
         if fragment not in script:
             problems.append(f"ledger.js is missing the tooltip wiring: {fragment!r}")
+    for forbidden in (
+        "This one is here",
+        "This one is finished",
+        "This one is ready",
+        "This one is on your list",
+        "This would",
+    ):
+        if forbidden in script:
+            problems.append(f"ledger.js fallback copy is not action-first: {forbidden!r}")
     for status in STATUSES:
         key = f'"{status}"' if "-" in status else status
         if not re.search(rf"^\s*{re.escape(key)}:", script, re.M):
@@ -1327,9 +1338,18 @@ def check_item_explanations() -> list[str]:
     if "Compatibility of `explanation`" not in artifact:
         problems.append("backlog-artifact.md does not document explanation backward compatibility")
     ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
-    for phrase in ("--explanation", "Writing the explanation", "textContent"):
+    for phrase in (
+        "--explanation",
+        "Writing the explanation",
+        "textContent",
+        "imperative Git commit-subject style",
+    ):
         if phrase not in ui_reference:
             problems.append(f"ledger-ui.md does not cover: {phrase!r}")
+    skill = read(SKILL_DIR / "SKILL.md")
+    for phrase in ("Phrase actions for scanning", "imperative Git commit-subject style"):
+        if phrase not in skill:
+            problems.append(f"SKILL.md does not preserve the action-first rule: {phrase!r}")
 
     payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
     items = payload.get("items", [])
@@ -1345,6 +1365,8 @@ def check_item_explanations() -> list[str]:
         for markup in ("`", "](", "<", "**"):
             if markup in explanation:
                 problems.append(f"{item['id']} explanation contains markup: {markup!r}")
+        if re.match(r"^(?:This is|This would|This one|The idea is)\b", explanation, re.I):
+            problems.append(f"{item['id']} explanation starts with throat-clearing copy")
     return problems
 
 
@@ -1706,7 +1728,10 @@ def check_installed_copies() -> list[str]:
         actual = {
             path.relative_to(target)
             for path in target.rglob("*")
-            if path.is_file() and path.name != ".install-manifest"
+            if path.is_file()
+            and path.name != ".install-manifest"
+            and "__pycache__" not in path.parts
+            and path.suffix != ".pyc"
         }
         for extra in sorted(actual - expected):
             problems.append(f"{harness}: extra installed file outside the canonical manifest: {extra}")

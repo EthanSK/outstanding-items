@@ -49,7 +49,7 @@ def sample_ledger() -> dict:
                 "group": "Outstanding for you",
                 "state_text": "requested",
                 "details_markdown": "Synthetic note one.",
-                "explanation": "A synthetic item kept here so the tooltip has something plain to say.",
+                "explanation": "Keep a synthetic item here so the tooltip has something plain to say.",
                 "provenance": "user-requested",
                 "completed_at": None,
                 "completed_session_id": None,
@@ -667,7 +667,17 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn('querySelector(".item-tooltip-label").textContent', script)
         self.assertIn('querySelector(".item-tooltip-text").textContent', script)
         self.assertIn("item.explanation", script)
+        self.assertIn("tooltipAction(item)", script)
+        self.assertIn("return fallback(action)", script)
         self.assertIn('setAttribute("aria-describedby", tooltip.id)', script)
+        for forbidden in (
+            "This one is here",
+            "This one is finished",
+            "This one is ready",
+            "This one is on your list",
+            "This would",
+        ):
+            self.assertNotIn(forbidden, script)
 
         # A ledger written before the field existed still says something useful.
         for status in (
