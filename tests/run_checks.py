@@ -1060,8 +1060,10 @@ def check_homepage_focus() -> list[str]:
     for removed in (
         'class="rule"',
         'class="steps"',
+        'class="limits"',
         "The list belongs to you.",
         "Talk. See the list. Choose.",
+        "Small and honest",
     ):
         if removed in text:
             problems.append(f"homepage restored a removed explanatory section: {removed!r}")
@@ -1570,11 +1572,6 @@ def check_honesty() -> list[str]:
             "does not create a cross-task message bus",
             "does not create a persistent database",
             "does not guarantee automatic invocation",
-        ],
-        "docs/index.html": [
-            "No cloud account or background daemon",
-            "No automatic authority over your work",
-            "No promise that every agent harness will invoke a skill perfectly",
         ],
     }
     required["README.md"].append("does not know what you have the appetite for")
