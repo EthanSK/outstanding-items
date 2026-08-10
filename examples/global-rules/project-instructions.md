@@ -29,11 +29,11 @@ Work in this repository arrives in bursts of half-related requests. Use the
   decide, provide, verify, or return to as `agent-added`. Before saying there
   are no outstanding items, check current results, blockers, decisions, and
   unverified outcomes for anything omitted. Never invent filler or speculative work.
-- Past seven open items for me, ask before writing `outstanding-items.json` and
-  start its local HTML editor. Link it as **Full outstanding items** on the
-  footer's last line, using the exact URL it printed, and add the private
-  ledger/runtime files to `.git/info/exclude` rather than to `.gitignore`. That
-  editor is where the rest of the list lives.
+- Before the first captured item, create or resolve this chat's canonical ledger
+  under `.outstanding-items/<task-id>/outstanding-items.json`. Project storage is
+  on by default; add `/.outstanding-items/` to the root `.gitignore` and use the
+  explicit opt-out only when I ask. Link a running editor as **Full outstanding
+  items** on the footer's last line, using the exact URL it printed.
 - Never label an item `verified` without a passing check from this repository's
   test suite, and never treat `in-progress` from an earlier turn as a reason to
   carry on in this one.

@@ -18,5 +18,6 @@ outstanding-items.json
 .*.ledger-ui-state.json
 .*.ledger-ui.log
 .outstanding/
+/.outstanding-items/
 !examples/outstanding-items.md
 !examples/outstanding-items.json

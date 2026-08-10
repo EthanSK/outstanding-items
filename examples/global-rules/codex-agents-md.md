@@ -20,6 +20,9 @@ Use the `outstanding-items` skill in any task where I make more than one request
   being off-topic. If I say "add this to outstanding items" or "remember this",
   record it, tell me it is recorded, and stop there.
 - Give each item a permanent `OI-n` ID. Never renumber.
+- In a Git-project task, create or resolve this chat's ledger under
+  `.outstanding-items/<task-id>/`, add `/.outstanding-items/` to the root
+  `.gitignore`, and keep project storage on unless I explicitly opt out.
 - Record each item's source when it is created: `user-requested` only when I
   explicitly tell you to add that specific thing to Outstanding Items. If I
   merely request or discuss the work and you capture it automatically, use
@@ -72,7 +75,7 @@ Use the `outstanding-items` skill in any task where I make more than one request
 - You may record a genuinely useful relationship to another task locally. That
   link alone never authorizes messaging, waking, starting, reprioritising, or
   altering the other task; ask me separately before sending any memory update.
-- Ask before writing a backlog file anywhere.
+- For a non-project task, ask before writing a durable backlog file.
 ```
 
 ## Shorter version
@@ -91,7 +94,9 @@ research, prepare, do pre-work for, dispatch, route, hand off, or complete an it
 unless I have just told you to, naming it. Never mark something `verified` without
 evidence you saw. On every ledger interaction, move exact proven completions to
 Done instead of asking me to accept finished Agent work. Never say `blocked` when
-it is really waiting on me, and never repeat a suggestion I ignored.
+it is really waiting on me, and never repeat a suggestion I ignored. In a Git
+project, keep this chat's ledger under the Git-ignored `.outstanding-items/`
+directory by default unless I opt out.
 ```
 
 ## Turning it off for one task

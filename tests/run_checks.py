@@ -384,6 +384,42 @@ def check_skill_contract() -> list[str]:
     return problems
 
 
+@check("project-ledger-default", "Git-project chats default to separate ignored canonical ledgers")
+def check_project_ledger_default() -> list[str]:
+    problems = []
+    skill = read(SKILL_MD)
+    runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
+    backlog = read(SKILL_DIR / "references" / "backlog-artifact.md")
+    readme = read(ROOT / "README.md")
+    site = read(DOCS / "index.html")
+    gitignore = read(ROOT / ".gitignore")
+
+    for phrase in (
+        "Persist project chats by default",
+        ".outstanding-items/<task-id>/outstanding-items.json",
+        "--no-project-storage",
+        "Never combine different chats into one ledger",
+    ):
+        if phrase not in skill:
+            problems.append(f"SKILL.md does not preserve project-ledger rule {phrase!r}")
+    for phrase in (
+        'PROJECT_LEDGER_DIRECTORY = ".outstanding-items"',
+        'PROJECT_GITIGNORE_ENTRY = f"/{PROJECT_LEDGER_DIRECTORY}/"',
+        '"project-ledger"',
+        'action=argparse.BooleanOptionalAction',
+        'default=True',
+        'PROJECT_STORAGE_ENABLED=false',
+    ):
+        if phrase not in runtime:
+            problems.append(f"ledger_ui.py lacks project-ledger invariant {phrase!r}")
+    for name, text in (("backlog-artifact.md", backlog), ("README.md", readme), ("site", site)):
+        if ".outstanding-items/" not in text:
+            problems.append(f"{name} does not describe project-local storage")
+    if "/.outstanding-items/" not in gitignore.splitlines():
+        problems.append("repository .gitignore does not ignore project chat ledgers")
+    return problems
+
+
 @check("authority-matrix", "Rule One denies every implicit signal and allows only a fresh named instruction")
 def check_authority_matrix() -> list[str]:
     problems = []

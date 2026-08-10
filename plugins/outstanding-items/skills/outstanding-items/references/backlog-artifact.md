@@ -16,16 +16,35 @@ The agreed task-owned `outstanding-items.json` file is authoritative. The conver
 
 The UI process and operational commands are in [ledger-ui.md](ledger-ui.md).
 
-## When to create it
+## Default project location
 
-The footer never lists items, so this file and its UI are where the user reads the whole thing. Create the JSON ledger after asking once when any of these becomes true:
+When a chat is scoped to a Git project, create or resolve its canonical ledger before the first captured item:
+
+```sh
+python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py project-ledger \
+  --project-root /absolute/project/root \
+  --task-id task_EXAMPLE_4b7c \
+  --project-storage
+```
+
+Project storage defaults to on, so `--project-storage` is normally optional; it exists to make the setting explicit. Use `--no-project-storage` only for an explicit opt-out. The command then writes nothing and prints `PROJECT_STORAGE_ENABLED=false`.
+
+The canonical project path is `.outstanding-items/<stable-task-id>/outstanding-items.json` under the Git root. Each chat gets a separate directory. The command adds `/.outstanding-items/` to the root `.gitignore` exactly once, refuses a symlinked `.gitignore`, creates the private storage directories with mode `0700`, and creates the ledger with mode `0600`. Re-running it resolves the same ledger without resetting its revision, status, order, or evidence.
+
+Use the stable task/session ID exposed by the harness. Codex can read `CODEX_THREAD_ID`; Claude Code or another harness passes its stable session ID explicitly. If no stable ID is available, stop and ask rather than merging chats or inventing unstable identity. If several repositories are involved, use the primary project for the task and record the others as context; never create competing ledgers.
+
+An already-existing canonical ledger remains authoritative. Do not silently copy or relocate it when a project later enters scope, because that would create two sources of truth. Move it only through an explicit, verified migration.
+
+## Non-project chats
+
+The footer never lists items, so a durable file and its UI are where the user reads the whole thing. For a chat with no Git project, create the JSON ledger after asking once when any of these becomes true:
 
 - More than 7 open items for the user.
 - More than 20 items in total.
 - The user asks for the full list, a plan, a handover, or the Full outstanding items UI.
 - A related task is registered.
 
-Prefer, in order: a path the user names; a task/session scratch directory; `outstanding-items.json` in the working directory. In a Git repository, offer to add the exact ledger and its `.ledger-ui-*` runtime files to `.git/info/exclude`.
+Prefer, in order: a path the user names; a task/session scratch directory; `outstanding-items.json` in the working directory.
 
 Do not silently create a ledger before those triggers. When the user has already explicitly asked for the Full outstanding items UI or durable ledger file, that request supplies the path-creation authority; choose the task-owned output directory when one exists and report it.
 

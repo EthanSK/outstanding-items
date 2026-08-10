@@ -100,6 +100,108 @@ def sample_ledger() -> dict:
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_project_ledger_defaults_on_and_is_idempotently_gitignored(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            project = pathlib.Path(temp) / "project"
+            project.mkdir()
+            subprocess.run(["git", "init", "-q", str(project)], check=True)
+            (project / ".gitignore").write_text("/build/", encoding="utf-8")
+            args = types.SimpleNamespace(
+                project_root=str(project),
+                task_id="task_EXAMPLE_project",
+                title="Project task ledger",
+                project_storage=True,
+            )
+
+            self.assertEqual(ledger_ui.command_project_ledger(args), 0)
+            ledger = (
+                project
+                / ledger_ui.PROJECT_LEDGER_DIRECTORY
+                / "task_EXAMPLE_project"
+                / "outstanding-items.json"
+            )
+            self.assertTrue(ledger.exists())
+            data = ledger_ui.read_json(ledger)
+            self.assertEqual(data["task_id"], "task_EXAMPLE_project")
+            self.assertEqual(data["source"]["kind"], "project-task-json")
+            self.assertIs(data["source"]["project_storage_enabled"], True)
+            self.assertEqual(ledger.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(ledger.parent.stat().st_mode & 0o777, 0o700)
+            first_revision = data["revision"]
+
+            self.assertEqual(ledger_ui.command_project_ledger(args), 0)
+            self.assertEqual(ledger_ui.read_json(ledger)["revision"], first_revision)
+            self.assertEqual(
+                (project / ".gitignore").read_text(encoding="utf-8").splitlines(),
+                ["/build/", ledger_ui.PROJECT_GITIGNORE_ENTRY],
+            )
+
+    def test_project_ledger_keeps_chats_separate(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            project = pathlib.Path(temp) / "project"
+            project.mkdir()
+            subprocess.run(["git", "init", "-q", str(project)], check=True)
+            for task_id in ("task_EXAMPLE_alpha", "task_EXAMPLE_beta"):
+                args = types.SimpleNamespace(
+                    project_root=str(project),
+                    task_id=task_id,
+                    title=task_id,
+                    project_storage=True,
+                )
+                self.assertEqual(ledger_ui.command_project_ledger(args), 0)
+            ledgers = sorted((project / ".outstanding-items").glob("*/outstanding-items.json"))
+            self.assertEqual(len(ledgers), 2)
+            self.assertEqual({ledger_ui.read_json(path)["task_id"] for path in ledgers}, {
+                "task_EXAMPLE_alpha",
+                "task_EXAMPLE_beta",
+            })
+
+    def test_project_ledger_can_be_explicitly_disabled_without_writes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            project = pathlib.Path(temp) / "project"
+            project.mkdir()
+            subprocess.run(["git", "init", "-q", str(project)], check=True)
+            args = types.SimpleNamespace(
+                project_root=str(project),
+                task_id="task_EXAMPLE_disabled",
+                title="Disabled ledger",
+                project_storage=False,
+            )
+
+            self.assertEqual(ledger_ui.command_project_ledger(args), 0)
+            self.assertFalse((project / ".outstanding-items").exists())
+            self.assertFalse((project / ".gitignore").exists())
+
+    def test_project_ledger_parser_defaults_on_and_supports_no_flag(self) -> None:
+        enabled = ledger_ui.parser().parse_args(["project-ledger"])
+        disabled = ledger_ui.parser().parse_args(["project-ledger", "--no-project-storage"])
+        self.assertIs(enabled.project_storage, True)
+        self.assertIs(disabled.project_storage, False)
+
+    def test_project_ledger_refuses_non_git_projects_and_symlinked_gitignore(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            outside = pathlib.Path(temp) / "outside"
+            outside.mkdir()
+            args = types.SimpleNamespace(
+                project_root=str(outside),
+                task_id="task_EXAMPLE_invalid",
+                title="Invalid ledger",
+                project_storage=True,
+            )
+            with self.assertRaisesRegex(ValueError, "needs a Git project"):
+                ledger_ui.command_project_ledger(args)
+
+            project = pathlib.Path(temp) / "project"
+            project.mkdir()
+            subprocess.run(["git", "init", "-q", str(project)], check=True)
+            target = pathlib.Path(temp) / "external-ignore"
+            target.write_text("private\n", encoding="utf-8")
+            (project / ".gitignore").symlink_to(target)
+            args.project_root = str(project)
+            with self.assertRaisesRegex(ValueError, "symlinked .gitignore"):
+                ledger_ui.command_project_ledger(args)
+            self.assertEqual(target.read_text(encoding="utf-8"), "private\n")
+
     def test_acting_on_the_suggested_item_clears_the_unanswered_pointer(self) -> None:
         data = sample_ledger()
         data["latest_unanswered_suggestion"] = {

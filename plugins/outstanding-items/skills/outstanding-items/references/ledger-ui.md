@@ -2,6 +2,18 @@
 
 Operational guide for the local interactive ledger. Load after a canonical JSON ledger exists, when a **Full outstanding items** link must be shown, or when the editor needs diagnosis.
 
+## Resolve a project chat ledger
+
+For a Git-project chat, resolve its canonical per-chat ledger before the first capture:
+
+```sh
+python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py project-ledger \
+  --project-root /absolute/project/root \
+  --task-id task_EXAMPLE_4b7c
+```
+
+Project storage is enabled by default. The command prints `LEDGER_PATH`, stores that chat under `.outstanding-items/<task-id>/`, and adds `/.outstanding-items/` to the project's `.gitignore`. Pass `--no-project-storage` for an explicit opt-out; it writes nothing. Use the printed `LEDGER_PATH` for every later `upsert`, validation, and UI command in that chat.
+
 ## Start or reuse it
 
 The installed runtime lives inside the skill:
@@ -80,7 +92,7 @@ python3 scripts/ledger_ui.py correct-provenance \
 
 This command validates the whole batch before writing, increments the revision once, and appends each item's `provenance_history`. It changes no status, completion state, position, transfer state, title, or evidence. The browser cannot invoke it.
 
-A newly created outstanding item is inserted at position `0`, so it appears at the top of **Outstanding** as soon as the page refreshes. Existing outstanding items retain their relative order underneath it. Creating a completed historical item does not disturb that order.
+A newly created outstanding item receives a fresh relevance timestamp. Automatic reconciliation places it according to actionable status and recency; a `waiting-on-you` item can therefore surface above a newer ordinary request. Explicit drag/keyboard positions remain fixed, and creating a completed historical item does not disturb the active order.
 
 ## Writing the explanation
 

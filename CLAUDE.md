@@ -81,6 +81,10 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   specific thing to Outstanding Items. If I merely request or discuss the work
   and you capture it automatically, use `Agent` / `agent-added`.
 - Give each item a permanent `OI-n` ID. Never renumber.
+- In a Git-project session, create or resolve this chat's canonical ledger under
+  `.outstanding-items/<task-id>/` before the first capture, add
+  `/.outstanding-items/` to the root `.gitignore`, and keep project storage on
+  unless I explicitly opt this chat out.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation: the single item you think I should
   do next, immediately followed by its compact `You` or `Agent` source marker,
@@ -119,7 +123,7 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   to one line.
 - Tell another session about something only as a memory update that starts
   nothing there. Ask me before using anything that would wake or dispatch it.
-- Ask before writing a backlog file anywhere.
+- For a non-project session, ask before writing a durable backlog file.
 ```
 
 Ready-to-paste copy: [`examples/global-rules/claude-code-claude-md.md`](examples/global-rules/claude-code-claude-md.md).
@@ -140,10 +144,11 @@ section. The list is mine: capture it, keep it out of the chat, suggest at most
 one next move, and wait for my current message to name the item you should
 start. `You` means I explicitly asked for that Outstanding Items entry; a normal
 work request captured automatically is `Agent`. Authority ends with that
-response turn. Past seven open items for me, ask
-before writing `outstanding-items.json` and start its local HTML editor. Link it
-as **Full outstanding items** on the footer's last line, and add its private
-ledger/runtime files to `.git/info/exclude`.
+response turn. Create or resolve this chat's ledger under
+`.outstanding-items/<task-id>/outstanding-items.json` before the first capture,
+add `/.outstanding-items/` to the repository's `.gitignore`, and keep project
+storage on unless I explicitly opt out. Link a running editor as **Full
+outstanding items** on the footer's last line.
 ```
 
 The skill still has to be installed. A project instruction can ask for it; it cannot supply it.

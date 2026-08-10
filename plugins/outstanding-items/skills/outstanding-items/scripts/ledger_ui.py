@@ -71,6 +71,9 @@ CODEX_THREAD_ID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.I,
 )
+TASK_STORAGE_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+PROJECT_LEDGER_DIRECTORY = ".outstanding-items"
+PROJECT_GITIGNORE_ENTRY = f"/{PROJECT_LEDGER_DIRECTORY}/"
 TITLE_REFRESH_INTERVAL_SECONDS = 60.0
 
 
@@ -156,6 +159,85 @@ def atomic_write_json(path: pathlib.Path, data: dict[str, Any]) -> None:
     else:
         temporary.chmod(0o600)
     os.replace(temporary, path)
+
+
+def atomic_write_text(path: pathlib.Path, text: str) -> None:
+    """Atomically replace a small text file while preserving its existing mode."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    previous_mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        encoding="utf-8",
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        temporary = pathlib.Path(handle.name)
+        handle.write(text)
+        handle.flush()
+        os.fsync(handle.fileno())
+    temporary.chmod(previous_mode)
+    os.replace(temporary, path)
+
+
+def git_project_root(start: pathlib.Path) -> pathlib.Path:
+    result = subprocess.run(
+        ["git", "-C", str(start), "rev-parse", "--show-toplevel"],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=5,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout.strip():
+        raise ValueError(f"project storage needs a Git project: {start}")
+    root = pathlib.Path(result.stdout.strip()).resolve()
+    if not root.is_dir():
+        raise ValueError(f"Git reported a missing project root: {root}")
+    return root
+
+
+def ensure_project_gitignore(project_root: pathlib.Path) -> pathlib.Path:
+    gitignore = project_root / ".gitignore"
+    if gitignore.is_symlink():
+        raise ValueError(f"refusing to edit a symlinked .gitignore: {gitignore}")
+    current = gitignore.read_text(encoding="utf-8") if gitignore.exists() else ""
+    lines = current.splitlines()
+    if PROJECT_GITIGNORE_ENTRY in lines:
+        return gitignore
+    updated = current
+    if updated and not updated.endswith("\n"):
+        updated += "\n"
+    updated += PROJECT_GITIGNORE_ENTRY + "\n"
+    atomic_write_text(gitignore, updated)
+    return gitignore
+
+
+def empty_ledger(title: str, task_id: str, project_root: pathlib.Path) -> dict[str, Any]:
+    now = utc_now()
+    ledger = {
+        "schema_version": SCHEMA_VERSION,
+        "owner": "user",
+        "authorizes_work": False,
+        "title": title,
+        "task_id": task_id,
+        "revision": 0,
+        "created_at": now,
+        "updated_at": now,
+        "latest_unanswered_suggestion": None,
+        "items": [],
+        "sections": [],
+        "source": {
+            "kind": "project-task-json",
+            "status": "canonical",
+            "project_storage_enabled": True,
+            "project_root": str(project_root),
+        },
+    }
+    validate_ledger(ledger)
+    return ledger
 
 
 def validate_ledger(data: Any) -> None:
@@ -1257,6 +1339,46 @@ def command_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_project_ledger(args: argparse.Namespace) -> int:
+    if not args.project_storage:
+        print("PROJECT_STORAGE_ENABLED=false")
+        return 0
+    requested_root = pathlib.Path(args.project_root).expanduser().resolve()
+    project_root = git_project_root(requested_root)
+    task_id = args.task_id or os.environ.get("CODEX_THREAD_ID") or os.environ.get(
+        "CLAUDE_SESSION_ID"
+    )
+    if not task_id:
+        raise ValueError(
+            "project storage needs --task-id, CODEX_THREAD_ID, or CLAUDE_SESSION_ID"
+        )
+    if not TASK_STORAGE_KEY_RE.fullmatch(task_id):
+        raise ValueError(
+            "task ID must use 1-128 letters, digits, dots, underscores, or hyphens"
+        )
+    gitignore = ensure_project_gitignore(project_root)
+    storage_root = project_root / PROJECT_LEDGER_DIRECTORY
+    chat_storage_root = storage_root / task_id
+    storage_root.mkdir(mode=0o700, exist_ok=True)
+    chat_storage_root.mkdir(mode=0o700, exist_ok=True)
+    storage_root.chmod(0o700)
+    chat_storage_root.chmod(0o700)
+    ledger = chat_storage_root / "outstanding-items.json"
+    if ledger.exists():
+        data, _ = reconcile_ledger_file(ledger)
+        if data.get("task_id") != task_id:
+            raise ValueError(
+                f"existing project ledger belongs to {data.get('task_id')!r}, not {task_id!r}"
+            )
+    else:
+        atomic_write_json(ledger, empty_ledger(args.title, task_id, project_root))
+    print("PROJECT_STORAGE_ENABLED=true")
+    print(f"PROJECT_ROOT={project_root}")
+    print(f"LEDGER_PATH={ledger}")
+    print(f"GITIGNORE={gitignore}")
+    return 0
+
+
 def reconcile_ledger_file(ledger: pathlib.Path) -> tuple[dict[str, Any], bool]:
     data = read_json(ledger)
     changed = reconcile_order(data)
@@ -1453,6 +1575,21 @@ def command_transfer(args: argparse.Namespace) -> int:
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(description="Outstanding Items canonical ledger and local HTML UI")
     sub = root.add_subparsers(dest="command", required=True)
+
+    project_ledger = sub.add_parser(
+        "project-ledger",
+        help="create or resolve this chat's default Git-project ledger",
+    )
+    project_ledger.add_argument("--project-root", default=".")
+    project_ledger.add_argument("--task-id")
+    project_ledger.add_argument("--title", default="Outstanding items")
+    project_ledger.add_argument(
+        "--project-storage",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="store the chat ledger under the project (enabled by default)",
+    )
+    project_ledger.set_defaults(func=command_project_ledger)
 
     migrate = sub.add_parser("migrate-markdown", help="migrate a legacy Markdown ledger into canonical JSON")
     migrate.add_argument("--source", required=True)

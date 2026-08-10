@@ -18,7 +18,7 @@ Website: <https://ethansk.github.io/outstanding-items/>
 
 ## Status
 
-Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, eight focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format. Direct standalone installation is deliberately unsupported, so each harness has one discovery path and cannot surface duplicate copies. Installing the plugin starts nothing and opens no port. When you explicitly open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
+Working, and simple on purpose. This is a **skills-only plugin** built on the open Agent Skills format, with one small optional local editor: one canonical `SKILL.md` operating contract, eight focused references, and a standard-library HTML ledger UI. The same folder is packaged for OpenAI's plugin format and Claude Code's plugin format. Direct standalone installation is deliberately unsupported, so each harness has one discovery path and cannot surface duplicate copies. Installing the plugin starts nothing and opens no port. In a Git-project chat, its canonical per-chat JSON ledger lives under the project's ignored `.outstanding-items/` directory by default; project storage can be explicitly disabled. When you open the Full outstanding items view, one loopback-only process edits that task's canonical JSON file; it is not a cross-task service or database. The skill still grants the agent no authority over your work. It may record a genuinely useful cross-task relationship locally, but that link never authorizes contacting or changing the other task; sending even a memory-only delta needs a separate explicit instruction and a non-waking delivery mechanism.
 
 ## What it actually does
 
@@ -38,7 +38,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 | Intentional reminders | Something parked on purpose is labelled `reminder` — visible, never started, never quietly retired, never nagged about. |
 | A real difference between stuck and yours | Something needing your click, key, or approval is `waiting-on-you`, with the exact action. `blocked` is reserved for a genuine external wall. |
 | One suggestion, for you | One item, one small possible first step, one sentence of reasoning — then it waits. Ignore it and it picks something else next time, or says nothing. |
-| Canonical task ledger | Once there is more than a handful, the full list lives in one task-owned `outstanding-items.json` — after asking you for a path. |
+| Canonical project-chat ledger | In a Git project, each chat gets one private `.outstanding-items/<task-id>/outstanding-items.json` by default, and the directory is added to `.gitignore`. An explicit flag turns project storage off. |
 | Editable Full outstanding items | A quiet local list: click task text to edit it, drag or use keyboard controls to set a lasting manual position, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
 | A plain-words detail disclosure | Hover or focus the small caret above the drag grip—or tap it—and a short note explains the item without making the whole row noisy. |
 | Auditable ownership transfer | Moving work to another task preserves its status and notes as read-only history here instead of pretending it was completed. |
@@ -83,6 +83,14 @@ There is still only one ledger: the task-owned `outstanding-items.json`. The UI 
 When you explicitly transfer ownership to another task, the original records stay in that JSON with their status and evidence unchanged. They move into a collapsed, read-only **Owned elsewhere** section, leave the active counts, and show the destination task title, stable task/session ID, and handoff date. On Codex, the local editor refreshes cached destination titles by exact ID when a task is renamed; it never reads the task's turns, wakes it, or sends it a message.
 
 The generic HTML, CSS, and JavaScript ship with the skill, so no page regeneration is needed when the data changes. A migrated Markdown ledger is retained as a frozen source snapshot, then never updated again. See the [data model](plugins/outstanding-items/skills/outstanding-items/references/backlog-artifact.md) and [editor operations](plugins/outstanding-items/skills/outstanding-items/references/ledger-ui.md).
+
+For a project-backed chat, the agent resolves the ledger before the first capture:
+
+```sh
+python3 ledger_ui.py project-ledger --project-root /path/to/project --task-id <stable-task-id>
+```
+
+Project storage is on by default. The command keeps chats separate, creates private `0700` directories and a `0600` ledger, and appends `/.outstanding-items/` to the root `.gitignore` exactly once. `--no-project-storage` is the explicit opt-out and writes nothing. Existing canonical ledgers are not silently copied when a project later enters scope, because two ledgers would be worse than one older location.
 
 ## Who owns what
 
@@ -248,7 +256,10 @@ nothing new to suggest. Anything needing my click, key, or approval is
 prepare, do pre-work for, dispatch, route, hand off, continue, or complete an
 item unless my current message names it and tells you to. That authority ends
 with the response turn. If I ask for the whole list, give it to me in the answer
-and keep the footer to one line.
+and keep the footer to one line. In a Git-project task, create or resolve the
+per-chat ledger under `.outstanding-items/<task-id>/`, add `/.outstanding-items/`
+to the project's `.gitignore`, and keep project storage on unless I explicitly
+opt out.
 ```
 
 Claude Code — append to `~/.claude/CLAUDE.md`:
@@ -267,7 +278,10 @@ footer's last line, never label an item `verified` without evidence you observed
 in this session, and never label something `blocked` when it is really waiting on
 me. Being on the list, being suggested, or being labelled `in-progress` is never
 permission to work on something — only my current message naming the item is, and
-that authority ends with the response turn.
+that authority ends with the response turn. For a Git-project session, create or
+resolve the per-chat ledger under `.outstanding-items/<task-id>/`, add
+`/.outstanding-items/` to `.gitignore`, and keep project storage on unless I
+explicitly opt out.
 ```
 
 Ready-to-paste copies live in [`examples/global-rules/`](examples/global-rules/). Repository-level integration examples: [`AGENTS.md`](AGENTS.md) and [`CLAUDE.md`](CLAUDE.md).
@@ -320,7 +334,7 @@ Stated plainly, because these are the assumptions people arrive with:
 ## Privacy and security
 
 - The skill records **titles and short notes only**. It is instructed never to copy secrets, tokens, credentials, file contents, or personal identifiers into the ledger or the artifact.
-- The canonical JSON ledger is working memory. It is created only after you approve a path, it is offered a `.git/info/exclude` entry together with its `.ledger-ui-*` runtime files when the directory is a Git repository, and it is never committed. This repository's `.gitignore` blocks task ledgers and their local runtime files for the same reason.
+- The canonical JSON ledger is working memory. In a Git project it defaults to a separate `.outstanding-items/<task-id>/` directory for each chat, and `/.outstanding-items/` is added to the root `.gitignore`; `--no-project-storage` opts out before any project write. Non-project chats still ask before creating a durable file. Real ledgers and their `.ledger-ui-*` runtime files are never committed.
 - Every task ID and session ID anywhere in this repository is synthetic and contains the literal string `EXAMPLE`. A check enforces it, so a real identifier cannot be pasted in unnoticed.
 - Cross-task deltas carry one change and no context dumps: never the whole ledger, never file contents, never credentials, never identifiers.
 - The legacy cleanup script removes only hash-matching manifest entries. Modified files and unrecognised files survive; a missing manifest stops removal rather than guessing. It validates path boundaries, refuses symbolic-link traversal, and never deletes recursively.
