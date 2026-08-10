@@ -67,6 +67,8 @@ The approach is agreed, so the limits table is a short first pass.
 ```
 
 > `verified` arrived only after evidence observed in this task, and OI-1 moved into the ledger's Done group — struck through, kept, auditable in the Full outstanding items view. **The footer shows no Done section, no completed item, and no count of either.** Finishing something is not a suggestion, so it does not belong in the one line the user reads. OI-2 moved to `planned` because an approach was agreed in the same turn — an agreement about *how*, not a licence to start.
+>
+> OI-1 was an `Agent` capture, but no extra acceptance item was created. The passing CI evidence completed its scoped outcome, so the same ledger interaction reconciled it directly into Done.
 
 **Turn 6 — User:** Actually forget the handbook thing, we're deleting that page.
 

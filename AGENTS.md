@@ -92,7 +92,13 @@ Use the `outstanding-items` skill in any task where I make more than one request
   quotes one item from it and the UI renders and mutates the rest.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
-  without evidence you observed in this task.
+  without evidence you observed now or exact completion evidence already stored
+  in the canonical item and checked now.
+- Whenever you interact with the ledger, reconcile completion evidence and move
+  genuinely verified or explicitly dropped items to Done while preserving the
+  proof. Apply this to every provenance; never leave completed `Agent` work open
+  merely to demand redundant acceptance. Leave implemented-but-unverified,
+  waiting-on-you, blocked, reminders, transferred, and unfinished work open.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. It is a perfectly
   good thing to suggest.

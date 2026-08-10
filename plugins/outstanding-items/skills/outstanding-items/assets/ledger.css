@@ -199,7 +199,7 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   background: var(--hover);
 }
 
-.ledger-item.transferred { grid-template-columns: minmax(0, 1fr); }
+.ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }
 
 .check-wrap {
   position: relative;
@@ -323,29 +323,15 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 130ms ease;
 }
 
-/* A transparent bridge so the tooltip stays reachable with the pointer. */
-.item-tooltip::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 0.5rem;
-}
-
 .ledger-item .item-tooltip { bottom: calc(100% + 0.4rem); }
-.ledger-item .item-tooltip::after { top: 100%; }
 
 .ledger-item[data-tooltip="below"] .item-tooltip {
   top: calc(100% + 0.4rem);
   bottom: auto;
-}
-
-.ledger-item[data-tooltip="below"] .item-tooltip::after {
-  top: auto;
-  bottom: 100%;
 }
 
 .item-tooltip-label {
@@ -364,20 +350,9 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   overflow-wrap: anywhere;
 }
 
-.ledger-item:hover .item-tooltip,
-.item-title:focus-visible ~ .item-tooltip {
+.ledger-item.details-visible .item-tooltip {
   opacity: 1;
   visibility: visible;
-}
-
-.ledger-item.provenance-hovered .item-tooltip {
-  opacity: 0;
-  visibility: hidden;
-}
-
-.ledger-item.tooltip-dismissed .item-tooltip {
-  opacity: 0;
-  visibility: hidden;
 }
 
 .item-title {
@@ -450,13 +425,17 @@ button.item-title:hover { color: var(--accent); }
 .edit-input:disabled { opacity: 0.62; }
 
 .item-actions {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.18rem;
   min-width: 6.9rem;
+  padding-top: 0.9rem;
   opacity: 0;
   transition: opacity 120ms ease;
 }
+
+.item-actions.item-actions--details-only { min-width: 2.15rem; }
 
 .ledger-item:hover .item-actions,
 .ledger-item:focus-within .item-actions { opacity: 1; }
@@ -472,6 +451,27 @@ button.item-title:hover { color: var(--accent); }
   border-radius: 0.35rem;
   background: transparent;
   color: var(--muted);
+}
+
+.item-actions .details-trigger {
+  position: absolute;
+  top: -0.22rem;
+  left: 0.4rem;
+  width: 1.35rem;
+  height: 1.15rem;
+  border-radius: 0.3rem;
+  line-height: 1;
+}
+
+.details-caret {
+  display: block;
+  font-size: 0.82rem;
+  transform: translateY(-0.06rem);
+  transition: transform 120ms ease;
+}
+
+.details-trigger[aria-expanded="true"] .details-caret {
+  transform: translateY(0.05rem) rotate(180deg);
 }
 
 .drag-handle {

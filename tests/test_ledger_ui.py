@@ -273,6 +273,42 @@ class LedgerModelTests(unittest.TestCase):
             self.assertEqual([item["id"] for item in open_items], ["OI-1", "OI-2"])
             self.assertEqual([item["id"] for item in done_items], ["OI-3", "OI-9"])
 
+    def test_upsert_moves_a_proven_agent_item_to_done_without_changing_its_origin(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-2",
+                title=None,
+                status="verified",
+                provenance=None,
+                group=None,
+                explanation=None,
+                notes_file=None,
+                session_id="sess_EXAMPLE_proof",
+            )
+
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            data = ledger_ui.read_json(ledger)
+            item = next(entry for entry in data["items"] if entry["id"] == "OI-2")
+            self.assertEqual(item["status"], "verified")
+            self.assertTrue(item["completed"])
+            self.assertEqual(item["provenance"], "agent-added")
+            self.assertEqual(item["completed_session_id"], "sess_EXAMPLE_proof")
+            self.assertIsNotNone(item["completed_at"])
+            self.assertEqual(item["details_markdown"], "Synthetic note two.")
+            self.assertEqual(
+                [
+                    entry["id"]
+                    for entry in sorted(
+                        (candidate for candidate in data["items"] if candidate["completed"]),
+                        key=lambda candidate: candidate["position"],
+                    )
+                ],
+                ["OI-3", "OI-2"],
+            )
+
     def test_status_update_clears_the_matching_unanswered_suggestion(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             ledger = pathlib.Path(temp) / "ledger.json"
@@ -830,6 +866,13 @@ class LedgerAssetTests(unittest.TestCase):
             self.assertIn(f'action: "{action}"', script)
         self.assertIn("window.setInterval", script)
         self.assertIn("tracking_state === \"transferred\"", script)
+        self.assertIn('class="details-trigger"', html)
+        self.assertIn('class="details-caret"', html)
+        self.assertRegex(
+            html,
+            r'class="details-trigger"[^>]+aria-expanded="false"[\s\S]+?'
+            r'class="drag-handle"',
+        )
 
     def test_known_provenance_has_a_compact_badge_and_legacy_unknown_stays_hidden(self) -> None:
         html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
@@ -853,12 +896,11 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("badge.hidden = true", script)
         self.assertIn("badge.hidden = false", script)
         self.assertIn("badge.dataset.tooltip", script)
-        self.assertIn('node.classList.add("provenance-hovered")', script)
+        self.assertNotIn("provenance-hovered", script)
         self.assertIn('node.querySelector(".item-title-text").textContent', script)
         self.assertIn(".provenance-badge[hidden]", style)
         self.assertIn(".provenance-badge::after", style)
         self.assertIn(".provenance-badge:hover::after", style)
-        self.assertNotIn("grid-template-columns: minmax(0, 1fr) auto", style)
         self.assertIn('badge.setAttribute("aria-label"', script)
         self.assertIn("attachProvenance(node, item)", script)
         self.assertIn("white-space: nowrap", style)
@@ -874,7 +916,7 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("item-tooltip-label", html)
         self.assertIn("item-tooltip-text", html)
 
-        # Safe text rendering only, wired to the item's own explanation.
+        # Safe text rendering only, wired to the dedicated disclosure control.
         self.assertNotIn("innerHTML", script)
         self.assertNotIn("insertAdjacentHTML", script)
         self.assertIn('querySelector(".item-tooltip-label").textContent', script)
@@ -882,7 +924,8 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("item.explanation", script)
         self.assertIn("tooltipAction(item)", script)
         self.assertIn("return fallback(action)", script)
-        self.assertIn('setAttribute("aria-describedby", tooltip.id)', script)
+        self.assertIn('trigger.setAttribute("aria-describedby", tooltip.id)', script)
+        self.assertIn('trigger.setAttribute("aria-controls", tooltip.id)', script)
         for forbidden in (
             "This one is here",
             "This one is finished",
@@ -908,14 +951,20 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("TOOLTIP_FALLBACK", script)
         self.assertIn("transferred_to?.title", script)
 
-        # Pointer hover, keyboard focus, dismissal, and flipped placement.
-        self.assertIn(":hover .item-tooltip", style)
-        self.assertIn("focus-visible ~ .item-tooltip", style)
-        self.assertIn("tooltip-dismissed", style)
+        # Only the compact disclosure control can reveal the detail tooltip.
+        self.assertNotIn(".ledger-item:hover .item-tooltip", style)
+        self.assertNotIn(".item-title:focus-visible ~ .item-tooltip", style)
+        self.assertIn(".ledger-item.details-visible .item-tooltip", style)
+        self.assertIn(".details-trigger", style)
+        self.assertIn("position: absolute", style)
         self.assertIn('data-tooltip="below"', style)
-        self.assertIn('node.addEventListener("pointerenter", place)', script)
-        self.assertIn('node.addEventListener("focusin", place)', script)
-        self.assertIn("tooltip-dismissed", script)
+        self.assertIn('trigger.addEventListener("pointerenter"', script)
+        self.assertIn('trigger.addEventListener("pointerleave"', script)
+        self.assertIn('trigger.addEventListener("focus"', script)
+        self.assertIn('trigger.addEventListener("blur"', script)
+        self.assertIn('trigger.addEventListener("click"', script)
+        self.assertIn('node.addEventListener("dragstart"', script)
+        self.assertIn('node.classList.toggle("details-visible"', script)
         self.assertIn('event.key !== "Escape"', script)
 
 

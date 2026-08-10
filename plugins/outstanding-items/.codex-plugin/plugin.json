@@ -1,6 +1,6 @@
 {
   "name": "outstanding-items",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Keep a user-owned ledger out of the chat and suggest one next item without starting it.",
   "author": {
     "name": "EthanSK",
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Outstanding Items",
     "shortDescription": "Outsource your memory, one item at a time.",
-    "longDescription": "Capture every request and concrete user-facing loose end in a user-owned ledger, keep the full list out of the conversation, and offer one small next move without treating it as permission to start.",
+    "longDescription": "Capture every request and concrete user-facing loose end in a user-owned ledger, reconcile proven completions into Done, keep the full list out of the conversation, and offer one small next move without treating it as permission to start.",
     "developerName": "EthanSK",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],

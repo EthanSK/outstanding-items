@@ -73,7 +73,9 @@ Still the only thing on the list you could knock out in one sitting.
 Verification happened only after the fresh named instruction and observed
 evidence. OI-1 is now `verified` in the ledger's Done group, struck through and
 auditable in the editor — the footer never shows a Done section, so finishing
-something does not make the reply longer.
+something does not make the reply longer. No redundant acceptance item is added:
+the exact passing evidence closes the scoped item in the same ledger interaction,
+including when its provenance is `Agent`.
 
 ---
 

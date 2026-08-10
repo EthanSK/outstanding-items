@@ -34,7 +34,7 @@
           <h2 id="open-title">Outstanding</h2>
         </div>
         <ol class="item-list" id="open-list" aria-describedby="open-help"></ol>
-        <p class="sr-only" id="open-help">Click task text to edit it. Hovering a task, or giving it keyboard focus, shows a short note describing what it is about; press Escape to dismiss that note. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
+        <p class="sr-only" id="open-help">Click task text to edit it. Use the details disclosure above the reorder grip to show or hide a short note describing the item; press Escape to dismiss that note. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
         <div class="empty-state" id="open-empty" hidden>
           <p>Nothing is outstanding.</p>
         </div>
@@ -92,6 +92,9 @@
         </p>
       </div>
       <div class="item-actions">
+        <button type="button" class="details-trigger" aria-expanded="false">
+          <span class="details-caret" aria-hidden="true">⌄</span>
+        </button>
         <div class="drag-handle" draggable="true" role="button" tabindex="0" aria-label="Drag to reorder">
           <span></span><span></span><span></span><span></span><span></span><span></span>
         </div>

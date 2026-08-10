@@ -12,13 +12,13 @@ Full definitions, transitions, and anti-patterns for the nine labels in `SKILL.m
 | `planned` | Decided, not started. | One sentence naming the approach. | The approach is still a question you are asking. |
 | `in-progress` | Being worked on right now, under a live instruction. | The user's own start instruction, quoted in the note. | You inferred permission from the list, a ranking, or your own suggestion. |
 | `implemented` | Changed, unproven. | The edit or action you performed in this task. | Someone else claims it is done and you did not see it. |
-| `verified` | Proven to work. | Command output, a passing check, or a user confirmation you observed **in this task**. | It "should" work, compiles, or looks right. |
+| `verified` | Proven to work. | Command output, a passing check, or user confirmation you observed now, or exact completion evidence already preserved in the canonical item and checked now. | It "should" work, compiles, or looks right. |
 | `waiting-on-you` | Held up by the user in person. | The exact action they must take, in the note. | You could still do it yourself, under an instruction you already have. |
 | `blocked` | Stopped by a real external wall. | The blocker **and** what you already tried, in the note. | You simply have not been asked to start, or the only obstacle is the user. |
 | `reminder` | Deliberately parked, on purpose, indefinitely. | Nothing. | There is a live request or a deadline attached. |
 | `dropped` | Deliberately abandoned. | Who decided, and why, in the note. | You quietly gave up. That is still open. |
 
-The requested / planned / implemented / verified split exists to stop optimistic reporting. Four labels, four different amounts of proof. Collapsing them is one of the two failure modes this skill was written to prevent.
+The requested / planned / implemented / verified split exists to stop optimistic reporting. Four labels, four different amounts of proof. Collapsing them is one of the two failure modes this skill was written to prevent. The opposite error matters too: once exact recorded evidence proves the item's scoped outcome complete, leave no verified item open merely to obtain redundant acceptance.
 
 ## `in-progress` — the label most likely to be misread
 
@@ -79,11 +79,13 @@ requested ──▶ planned ──▶ in-progress ──▶ implemented ──�
      └──▶ dropped ──▶ Done (struck through, labelled dropped)
 ```
 
-- Forward one rung at a time. Never skip from `planned` to `verified`.
-- Only a fresh explicit instruction moves anything into `in-progress`. No other transition is ever automatic.
+- Move forward one rung at a time while work is unfolding. Never claim `planned` became `verified` without the evidence for the missing stages. When the recorded label itself is stale but exact preserved evidence proves the scoped outcome complete, reconcile the record directly to `verified` and Done; do not manufacture intermediate history.
+- Only a fresh explicit instruction moves anything into `in-progress`. Evidence reconciliation may retire work that was already completed, but it never changes execution state or performs unfinished work.
 - Backwards is honest and expected: a failing check can move `implemented` → `blocked`; an ended turn reconciles `in-progress` to `implemented`, `planned`, or `requested` according to the evidence above.
 - `waiting-on-you` and `blocked` both remember where they came from. When the obstacle clears, the item returns to the label it had — not to `in-progress`.
 - Only `verified` and `dropped` reach Done. Nothing else leaves the open list, and `reminder` never gets there without the user.
+- Reconcile completion on every ledger interaction. Trust exact test output, receipts, or user confirmation already recorded in the item as evidence; do not trust a title, an optimistic state word, or an unsupported claim. Moving proven work to Done is record maintenance, not permission to perform unfinished work.
+- Apply the same evidence rule to every provenance. In particular, close proven `agent-added` work automatically instead of converting it into `waiting-on-you` merely to ask whether the user agrees it is finished.
 
 ## Notes
 
@@ -109,6 +111,7 @@ The compact recommendation names one item, so a status no longer decides which c
 | Tempting | Why it is wrong | Do this instead |
 | --- | --- | --- |
 | Marking everything `verified` at the end | Nothing was checked; the ledger becomes decorative. | Verify what you can, leave the rest `implemented`. |
+| Leaving proven agent-added work open for acceptance | It manufactures work for the user after the result is already checked. | Preserve the evidence and move it to Done automatically. |
 | Using `in-progress` to justify carrying on | The label was a description of a turn that has ended. | Reconcile it to evidence, then wait for a fresh named instruction. |
 | Labelling something `in-progress` because it is next | Nobody said start. | Leave it `planned` and suggest it. |
 | Deleting a finished item | The user loses the audit trail. | Move it to Done, struck through. |

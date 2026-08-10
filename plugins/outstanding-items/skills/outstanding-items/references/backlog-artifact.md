@@ -143,6 +143,8 @@ Checking an open item is the user's direct confirmation that it is complete. The
 
 Unchecking restores the prior non-retiring status when available, otherwise `requested`, and returns the item to the bottom of the open list. `dropped` remains a deliberate agent/CLI status; the checkbox represents completion, not cancellation.
 
+Agent-side ledger maintenance uses the same canonical mutation path. On every ledger interaction, compare each active item's recorded scope with exact completion evidence observed now or already preserved in that item. When that evidence proves the scoped outcome complete, `upsert --status verified` moves it to Done and preserves its provenance and proof. Do this for `agent-added` items without creating a redundant acceptance chore. Leave implemented-but-unverified, waiting-on-user, blocked, reminder, transferred, speculative, and otherwise unfinished items open.
+
 ## Lifecycle
 
 1. **Create or migrate.** Create native JSON, or run `migrate-markdown` once against the existing ledger. Validate the result before retiring the Markdown file from active use.

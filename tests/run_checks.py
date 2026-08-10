@@ -627,8 +627,6 @@ def check_item_provenance() -> list[str]:
     ):
         if fragment not in style:
             problems.append(f"ledger.css is missing compact provenance styling: {fragment!r}")
-    if "grid-template-columns: minmax(0, 1fr) auto" in style:
-        problems.append("ledger.css still reserves a separate provenance column beside task text")
     for fragment in (
         "PROVENANCES",
         "unknown-legacy",
@@ -1427,8 +1425,11 @@ def check_item_explanations() -> list[str]:
     for fragment in ('class="item-tooltip"', 'role="tooltip"', "item-tooltip-label", "item-tooltip-text"):
         if fragment not in html_text:
             problems.append(f"ledger.html has no tooltip {fragment!r}")
-    if "Hovering a task" not in html_text:
-        problems.append("ledger.html does not describe the tooltip for assistive technology")
+    if "Use the details disclosure above the reorder grip" not in html_text:
+        problems.append("ledger.html does not describe the dedicated detail disclosure")
+    for fragment in ('class="details-trigger"', 'class="details-caret"', 'aria-expanded="false"'):
+        if fragment not in html_text:
+            problems.append(f"ledger.html has no dedicated detail control {fragment!r}")
 
     if "innerHTML" in script or "insertAdjacentHTML" in script:
         problems.append("ledger.js renders markup instead of safe text")
@@ -1438,8 +1439,12 @@ def check_item_explanations() -> list[str]:
         "return fallback(action)",
         'querySelector(".item-tooltip-text").textContent',
         'querySelector(".item-tooltip-label").textContent',
-        'setAttribute("aria-describedby"',
-        "tooltip-dismissed",
+        'trigger.setAttribute("aria-describedby"',
+        'trigger.setAttribute("aria-controls"',
+        'trigger.addEventListener("pointerenter"',
+        'trigger.addEventListener("focus"',
+        'trigger.addEventListener("click"',
+        'node.classList.toggle("details-visible"',
     ):
         if fragment not in script:
             problems.append(f"ledger.js is missing the tooltip wiring: {fragment!r}")
@@ -1457,9 +1462,12 @@ def check_item_explanations() -> list[str]:
         if not re.search(rf"^\s*{re.escape(key)}:", script, re.M):
             problems.append(f"ledger.js has no tooltip fallback sentence for {status!r}")
 
-    for fragment in (".item-tooltip", ":hover .item-tooltip", "focus-visible ~ .item-tooltip"):
+    for fragment in (".item-tooltip", ".ledger-item.details-visible .item-tooltip", ".details-trigger"):
         if fragment not in style:
             problems.append(f"ledger.css is missing the tooltip rule: {fragment!r}")
+    for forbidden in (".ledger-item:hover .item-tooltip", ".item-title:focus-visible ~ .item-tooltip"):
+        if forbidden in style:
+            problems.append(f"ledger.css still reveals item details from the whole row: {forbidden!r}")
 
     if "MAX_EXPLANATION_CHARS" not in runtime or '"explanation"' not in runtime:
         problems.append("ledger_ui.py does not validate the explanation field")
@@ -1501,6 +1509,63 @@ def check_item_explanations() -> list[str]:
                 problems.append(f"{item['id']} explanation contains markup: {markup!r}")
         if re.match(r"^(?:This is|This would|This one|The idea is)\b", explanation, re.I):
             problems.append(f"{item['id']} explanation starts with throat-clearing copy")
+    return problems
+
+
+@check("completion-reconciliation", "proven completed items move to Done without redundant acceptance")
+def check_completion_reconciliation() -> list[str]:
+    problems = []
+    required = {
+        "plugins/outstanding-items/skills/outstanding-items/SKILL.md": (
+            "Reconcile completion every time",
+            "never leave completed `agent-added` work open",
+            "Do not close speculative, merely implemented, unverified",
+        ),
+        "plugins/outstanding-items/skills/outstanding-items/references/status-labels.md": (
+            "Reconcile completion on every ledger interaction",
+            "Leaving proven agent-added work open",
+        ),
+        "plugins/outstanding-items/skills/outstanding-items/references/provenance.md": (
+            "Provenance never changes the completion threshold",
+            "move it to Done automatically",
+        ),
+        "plugins/outstanding-items/skills/outstanding-items/references/backlog-artifact.md": (
+            "On every ledger interaction",
+            "without creating a redundant acceptance chore",
+        ),
+        "plugins/outstanding-items/skills/outstanding-items/references/worked-examples.md": (
+            "no extra acceptance item was created",
+            "same ledger interaction reconciled it directly into Done",
+        ),
+        "examples/transcript.md": (
+            "No redundant acceptance item is added",
+            "including when its provenance is `Agent`",
+        ),
+        "README.md": (
+            "Automatic completion reconciliation",
+            "Completed **Agent** items never stay open",
+        ),
+        "AGENTS.md": ("Whenever you interact with the ledger, reconcile completion evidence",),
+        "CLAUDE.md": ("Whenever you interact with the ledger, reconcile completion evidence",),
+        "examples/global-rules/codex-agents-md.md": (
+            "On every ledger interaction, move exact proven completions to",
+        ),
+        "examples/global-rules/claude-code-claude-md.md": (
+            "On every ledger interaction, move exact proven completions to",
+        ),
+        "examples/global-rules/project-instructions.md": (
+            "Whenever you interact with the ledger, reconcile completion evidence",
+        ),
+    }
+    for name, phrases in required.items():
+        text = read(ROOT / name)
+        for phrase in phrases:
+            if phrase not in text:
+                problems.append(f"{name} does not preserve completion reconciliation: {phrase!r}")
+
+    prompt = read(SKILL_DIR / "agents" / "openai.yaml")
+    if "reconcile exact completion evidence into Done" not in prompt:
+        problems.append("openai.yaml default prompt omits completion reconciliation")
     return problems
 
 

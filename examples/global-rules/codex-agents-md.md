@@ -48,8 +48,13 @@ Use the `outstanding-items` skill in any task where I make more than one request
   one line.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
   waiting-on-you, blocked, reminder, dropped. Never label something `verified`
-  without evidence you observed in this task, and never treat a label as a
-  licence to carry on.
+  without evidence you observed now or exact completion evidence already stored
+  in the canonical item and checked now; never treat a label as a licence to carry on.
+- Whenever you interact with the ledger, reconcile completion evidence and move
+  genuinely verified or explicitly dropped items to Done while preserving the
+  proof. Apply this to every provenance; never leave completed `Agent` work open
+  merely to demand redundant acceptance. Leave implemented-but-unverified,
+  waiting-on-you, blocked, reminders, transferred, and unfinished work open.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. Keep `blocked` for a
   real external wall you already tried to get around.
@@ -80,8 +85,9 @@ running local editor as **Full outstanding items** on the last line, or write no
 link at all. The list is mine: never start, resume, continue, investigate,
 research, prepare, do pre-work for, dispatch, route, hand off, or complete an item
 unless I have just told you to, naming it. Never mark something `verified` without
-evidence you saw, and never say `blocked` when it is really waiting on me. Never
-repeat a suggestion I ignored.
+evidence you saw. On every ledger interaction, move exact proven completions to
+Done instead of asking me to accept finished Agent work. Never say `blocked` when
+it is really waiting on me, and never repeat a suggestion I ignored.
 ```
 
 ## Turning it off for one task

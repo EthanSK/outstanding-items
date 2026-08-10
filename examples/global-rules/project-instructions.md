@@ -37,6 +37,10 @@ Work in this repository arrives in bursts of half-related requests. Use the
 - Never label an item `verified` without a passing check from this repository's
   test suite, and never treat `in-progress` from an earlier turn as a reason to
   carry on in this one.
+- Whenever you interact with the ledger, reconcile completion evidence and move
+  genuinely verified or explicitly dropped items to Done while preserving the
+  proof. Never leave completed `Agent` work open merely to demand redundant
+  acceptance; leave implemented-but-unverified and unfinished work open.
 - Anything needing a review approval, a merge button, or a secret from me is
   `waiting-on-you` with the exact action. `blocked` means an upstream wall you
   already tried to route around.

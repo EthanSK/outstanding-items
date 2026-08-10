@@ -22,6 +22,8 @@ The phrases do not need to be letter-for-letter identical. “Put that on my Out
 
 Before reporting `No outstanding items`, inspect the current request, results, blockers, decisions, and unverified outcomes. Every concrete thing the user still needs to look at becomes `agent-added`. An honestly empty ledger is allowed; an empty ledger caused by forgetting a real loose end is not.
 
+Provenance never changes the completion threshold. Reconcile `user-requested`, `agent-added`, and honest legacy items from the same evidence. When an `agent-added` item's scoped outcome is already verified, move it to Done automatically rather than creating a redundant user-acceptance chore; preserve its provenance and proof.
+
 ## Corrections
 
 Ordinary edits, browser mutations, completion, reordering, transfer, and `upsert` preserve provenance. When a recorded origin is demonstrably wrong, use the dedicated agent-side correction command with a short evidence-based reason:

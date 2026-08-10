@@ -229,29 +229,80 @@
 
   function attachTooltip(node, item, transferred) {
     const tooltip = node.querySelector(".item-tooltip");
-    if (!tooltip) return;
+    const trigger = node.querySelector(".details-trigger");
+    if (!tooltip || !trigger) return;
     tooltip.id = `item-tooltip-${item.id}`;
     tooltip.querySelector(".item-tooltip-label").textContent = tooltipLabel(item, transferred);
     tooltip.querySelector(".item-tooltip-text").textContent = tooltipText(item, transferred);
-    node.querySelector(".item-title")?.setAttribute("aria-describedby", tooltip.id);
+    tooltip.setAttribute("aria-hidden", "true");
+    trigger.setAttribute("aria-controls", tooltip.id);
+    trigger.setAttribute("aria-describedby", tooltip.id);
+    trigger.setAttribute("aria-label", `Show details for ${item.id}: ${item.title}`);
     node.dataset.tooltip = "above";
+
+    let hovered = false;
+    let focused = false;
+    let pinned = false;
+    let suppressed = false;
 
     // Prefer showing it above the row, and flip below only when the row sits too
     // close to the top of the viewport for the tooltip to fit.
     const place = () => {
-      node.classList.remove("tooltip-dismissed");
       const room = node.getBoundingClientRect().top;
       node.dataset.tooltip = room < tooltip.offsetHeight + 16 ? "below" : "above";
     };
-    const restore = () => node.classList.remove("tooltip-dismissed");
-    node.addEventListener("pointerenter", place);
-    node.addEventListener("focusin", place);
-    node.addEventListener("pointerleave", restore);
-    node.addEventListener("focusout", restore);
-    node.addEventListener("keydown", (event) => {
-      // Dismissible without moving the pointer or the focus.
-      if (event.key !== "Escape" || state.editing?.id === item.id) return;
-      node.classList.add("tooltip-dismissed");
+    const syncVisibility = () => {
+      const visible = !state.draggingId && !suppressed && (hovered || focused || pinned);
+      node.classList.toggle("details-visible", visible);
+      tooltip.setAttribute("aria-hidden", String(!visible));
+      trigger.setAttribute("aria-expanded", String(visible));
+      trigger.setAttribute(
+        "aria-label",
+        `${visible ? "Hide" : "Show"} details for ${item.id}: ${item.title}`,
+      );
+    };
+    trigger.addEventListener("pointerenter", () => {
+      hovered = true;
+      suppressed = false;
+      place();
+      syncVisibility();
+    });
+    trigger.addEventListener("pointerleave", () => {
+      hovered = false;
+      syncVisibility();
+    });
+    trigger.addEventListener("focus", () => {
+      focused = true;
+      suppressed = false;
+      place();
+      syncVisibility();
+    });
+    trigger.addEventListener("blur", () => {
+      focused = false;
+      syncVisibility();
+    });
+    trigger.addEventListener("click", () => {
+      if (pinned) {
+        pinned = false;
+        suppressed = true;
+      } else {
+        pinned = true;
+        suppressed = false;
+        place();
+      }
+      syncVisibility();
+    });
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      pinned = false;
+      suppressed = true;
+      syncVisibility();
+    });
+    node.addEventListener("dragstart", () => {
+      pinned = false;
+      suppressed = true;
+      syncVisibility();
     });
   }
 
@@ -273,8 +324,6 @@
     badge.dataset.provenance = item.provenance;
     badge.dataset.tooltip = provenance.description;
     badge.setAttribute("aria-label", `Provenance: ${provenance.description}`);
-    badge.addEventListener("pointerenter", () => node.classList.add("provenance-hovered"));
-    badge.addEventListener("pointerleave", () => node.classList.remove("provenance-hovered"));
   }
 
   function beginEdit(node, item, initialValue = item.title) {
@@ -459,7 +508,10 @@
     down.hidden = completed || transferred;
     up.addEventListener("click", () => moveBy(item.id, -1));
     down.addEventListener("click", () => moveBy(item.id, 1));
-    node.querySelector(".item-actions").hidden = completed || transferred;
+    node.querySelector(".item-actions").classList.toggle(
+      "item-actions--details-only",
+      completed || transferred,
+    );
     return node;
   }
 
