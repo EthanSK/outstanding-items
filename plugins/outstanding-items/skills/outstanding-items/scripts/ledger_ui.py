@@ -32,8 +32,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 
-SCHEMA_VERSION = 4
-PREVIOUS_SCHEMA_VERSION = 3
+SCHEMA_VERSION = 5
+LEGACY_SCHEMA_VERSIONS = {3, 4}
 STATUSES = {
     "requested",
     "planned",
@@ -48,6 +48,16 @@ STATUSES = {
 DONE_STATUSES = {"verified", "dropped"}
 TRACKING_STATES = {"active", "transferred"}
 PROVENANCES = {"user-requested", "agent-added", "unknown-legacy"}
+ORDER_INTENTS = {"automatic", "manual"}
+ACTIONABLE_PRIORITY = {
+    "waiting-on-you": 0,
+    "in-progress": 1,
+    "implemented": 2,
+    "planned": 3,
+    "requested": 3,
+    "reminder": 5,
+    "blocked": 6,
+}
 ID_RE = re.compile(r"^OI-\d+$")
 ITEM_HEADING_RE = re.compile(r"^###\s+(OI-\d+)\s+(.+?)\s*$")
 DONE_ITEM_RE = re.compile(r"^-\s+~~(OI-\d+)\s+(.+?)~~\s*(.*?)\s*$")
@@ -83,18 +93,25 @@ def read_json(path: pathlib.Path) -> dict[str, Any]:
     return data
 
 
+def automatic_order_intent(relevance_updated_at: str | None = None) -> dict[str, Any]:
+    return {
+        "kind": "automatic",
+        "relevance_updated_at": relevance_updated_at,
+    }
+
+
 def migrate_schema(data: Any) -> bool:
-    """Upgrade the one supported prior schema without inventing provenance."""
+    """Upgrade supported prior schemas without inventing provenance or manual intent."""
     if not isinstance(data, dict):
         raise ValueError("ledger root must be an object")
     version = data.get("schema_version")
     if version == SCHEMA_VERSION:
         validate_ledger(data)
         return False
-    if version != PREVIOUS_SCHEMA_VERSION:
+    if version not in LEGACY_SCHEMA_VERSIONS:
         raise ValueError(
-            f"schema_version must be {SCHEMA_VERSION} or supported legacy version "
-            f"{PREVIOUS_SCHEMA_VERSION}"
+            f"schema_version must be {SCHEMA_VERSION} or a supported legacy version "
+            f"in {sorted(LEGACY_SCHEMA_VERSIONS)}"
         )
     items = data.get("items")
     if not isinstance(items, list):
@@ -102,7 +119,9 @@ def migrate_schema(data: Any) -> bool:
     for item in items:
         if not isinstance(item, dict):
             raise ValueError("every legacy item must be an object")
-        item["provenance"] = "unknown-legacy"
+        if version == 3:
+            item["provenance"] = "unknown-legacy"
+        item["order_intent"] = automatic_order_intent()
     revision = data.get("revision")
     if not isinstance(revision, int) or revision < 0:
         raise ValueError("revision must be a non-negative integer")
@@ -178,6 +197,36 @@ def validate_ledger(data: Any) -> None:
         provenance = item.get("provenance")
         if provenance not in PROVENANCES:
             raise ValueError(f"{item_id} has unsupported provenance {provenance!r}")
+        order_intent = item.get("order_intent")
+        if not isinstance(order_intent, dict):
+            raise ValueError(f"{item_id} order_intent must be an object")
+        order_kind = order_intent.get("kind")
+        if order_kind not in ORDER_INTENTS:
+            raise ValueError(f"{item_id} has unsupported order_intent kind {order_kind!r}")
+        relevance_updated_at = order_intent.get("relevance_updated_at")
+        if relevance_updated_at is not None and (
+            not isinstance(relevance_updated_at, str) or not relevance_updated_at.strip()
+        ):
+            raise ValueError(
+                f"{item_id} order_intent relevance_updated_at must be null or a non-empty string"
+            )
+        if order_kind == "manual":
+            for key in ("manually_positioned_at", "manual_order_updated_at"):
+                if not isinstance(order_intent.get(key), str) or not order_intent[key].strip():
+                    raise ValueError(f"{item_id} manual order_intent needs non-empty {key}")
+            manual_revision = order_intent.get("manual_order_revision")
+            if not isinstance(manual_revision, int) or manual_revision < 0:
+                raise ValueError(
+                    f"{item_id} manual order_intent needs non-negative manual_order_revision"
+                )
+            for key in ("placed_after_id", "placed_before_id"):
+                anchor = order_intent.get(key)
+                if anchor is not None and (
+                    not isinstance(anchor, str) or not ID_RE.fullmatch(anchor) or anchor == item_id
+                ):
+                    raise ValueError(
+                        f"{item_id} manual order_intent {key} must be null or another item ID"
+                    )
         history = item.get("provenance_history", [])
         if not isinstance(history, list):
             raise ValueError(f"{item_id} provenance_history must be an array")
@@ -330,6 +379,7 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
                 "details_markdown": details,
                 "explanation": "",
                 "provenance": "unknown-legacy",
+                "order_intent": automatic_order_intent(),
                 "completed_at": None,
                 "completed_session_id": None,
             }
@@ -425,6 +475,88 @@ def normalize_positions(data: dict[str, Any]) -> None:
             item["position"] = position
 
 
+def touch_relevance(item: dict[str, Any], when: str) -> None:
+    item["order_intent"]["relevance_updated_at"] = when
+
+
+def automatic_order_key(item: dict[str, Any]) -> tuple[int, int, int]:
+    """Sort actionable status first, then newest relevance and newest stable ID."""
+    relevance = item["order_intent"].get("relevance_updated_at") or ""
+    try:
+        recency = int(dt.datetime.fromisoformat(relevance.replace("Z", "+00:00")).timestamp())
+    except (TypeError, ValueError):
+        recency = -1
+    return (
+        ACTIONABLE_PRIORITY[item["status"]],
+        -recency,
+        -int(item["id"].split("-")[1]),
+    )
+
+
+def reconcile_order(data: dict[str, Any]) -> bool:
+    """Reorder only automatic active items; keep manual items in their current slots."""
+    active = sorted(
+        (
+            item
+            for item in data["items"]
+            if not item["completed"] and item.get("tracking_state", "active") == "active"
+        ),
+        key=lambda item: item["position"],
+    )
+    if len(active) < 2:
+        return False
+    manual_slots = {
+        index: item
+        for index, item in enumerate(active)
+        if item["order_intent"]["kind"] == "manual"
+    }
+    automatic = sorted(
+        (item for item in active if item["order_intent"]["kind"] == "automatic"),
+        key=automatic_order_key,
+    )
+    automatic_iter = iter(automatic)
+    reconciled = [manual_slots.get(index) or next(automatic_iter) for index in range(len(active))]
+    before = [item["id"] for item in active]
+    after = [item["id"] for item in reconciled]
+    if before == after:
+        return False
+    for position, item in enumerate(reconciled):
+        item["position"] = position
+    normalize_positions(data)
+    return True
+
+
+def record_manual_order(data: dict[str, Any], moved_id: str, when: str) -> None:
+    """Record the explicit user-authored placement and refresh existing manual anchors."""
+    ordered = sorted(
+        (
+            item
+            for item in data["items"]
+            if not item["completed"] and item.get("tracking_state", "active") == "active"
+        ),
+        key=lambda item: item["position"],
+    )
+    by_id = {item["id"]: item for item in ordered}
+    if moved_id not in by_id:
+        raise ValueError("moved_id must name one active outstanding item")
+    revision = data["revision"] + 1
+    for index, item in enumerate(ordered):
+        prior = item["order_intent"]
+        if item["id"] != moved_id and prior["kind"] != "manual":
+            continue
+        item["order_intent"] = {
+            "kind": "manual",
+            "relevance_updated_at": prior.get("relevance_updated_at"),
+            "manually_positioned_at": (
+                when if item["id"] == moved_id else prior["manually_positioned_at"]
+            ),
+            "manual_order_updated_at": when,
+            "manual_order_revision": revision,
+            "placed_after_id": ordered[index - 1]["id"] if index else None,
+            "placed_before_id": ordered[index + 1]["id"] if index + 1 < len(ordered) else None,
+        }
+
+
 def clear_suggestion_for(data: dict[str, Any], item_id: str) -> None:
     suggestion = data.get("latest_unanswered_suggestion")
     if isinstance(suggestion, dict) and suggestion.get("id") == item_id:
@@ -449,7 +581,9 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         if len(title.strip()) > 500:
             raise ValueError("title must be at most 500 characters")
         item["title"] = title.strip()
+        touch_relevance(item, utc_now())
         clear_suggestion_for(data, item_id)
+        reconcile_order(data)
     elif action == "toggle":
         completed = payload.get("completed")
         if not isinstance(completed, bool):
@@ -467,8 +601,10 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
             item["completed"] = False
             item["completed_at"] = None
             item["completed_session_id"] = None
+            touch_relevance(item, utc_now())
         clear_suggestion_for(data, item_id)
         normalize_positions(data)
+        reconcile_order(data)
     elif action == "reorder":
         order = payload.get("order")
         if not isinstance(order, list) or not all(isinstance(value, str) for value in order):
@@ -480,9 +616,13 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
         }
         if len(order) != len(set(order)) or set(order) != open_ids:
             raise ValueError("order must contain every open item exactly once")
+        moved_id = payload.get("moved_id")
+        if not isinstance(moved_id, str) or moved_id not in open_ids:
+            raise ValueError("reorder needs moved_id; reload the ledger and try the move again")
         by_id = {entry["id"]: entry for entry in data["items"]}
         for position, ordered_id in enumerate(order):
             by_id[ordered_id]["position"] = position
+        record_manual_order(data, moved_id, utc_now())
     else:
         raise ValueError(f"unsupported action: {action!r}")
     data["revision"] += 1
@@ -813,6 +953,10 @@ class LedgerHandler(BaseHTTPRequestHandler):
                 self.server.refresh_titles()
                 with self.server.write_lock:
                     data = read_json(self.server.ledger_path)
+                    if reconcile_order(data):
+                        data["revision"] += 1
+                        data["updated_at"] = utc_now()
+                        atomic_write_json(self.server.ledger_path, data)
             except ValueError as exc:
                 self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": str(exc)})
                 return
@@ -932,7 +1076,7 @@ def reusable_connection(path: pathlib.Path, ledger: pathlib.Path) -> dict[str, A
 
 def command_serve(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
-    read_json(ledger)
+    reconcile_ledger_file(ledger)
     token = args.token or secrets.token_urlsafe(24)
     instance_id = args.instance_id or secrets.token_hex(12)
     assets = pathlib.Path(__file__).resolve().parent.parent / "assets"
@@ -979,7 +1123,7 @@ def command_serve(args: argparse.Namespace) -> int:
 
 def command_start(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
-    read_json(ledger)
+    reconcile_ledger_file(ledger)
     state_path = state_path_for(ledger)
     existing = load_state(state_path)
     if existing:
@@ -1113,6 +1257,34 @@ def command_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def reconcile_ledger_file(ledger: pathlib.Path) -> tuple[dict[str, Any], bool]:
+    data = read_json(ledger)
+    changed = reconcile_order(data)
+    if changed:
+        data["revision"] += 1
+        data["updated_at"] = utc_now()
+        atomic_write_json(ledger, data)
+    return data, changed
+
+
+def command_reconcile_order(args: argparse.Namespace) -> int:
+    ledger = pathlib.Path(args.ledger).expanduser().resolve()
+    data, changed = reconcile_ledger_file(ledger)
+    active = sorted(
+        (
+            item
+            for item in data["items"]
+            if not item["completed"] and item.get("tracking_state", "active") == "active"
+        ),
+        key=lambda item: item["position"],
+    )
+    print(
+        f"{'reconciled' if changed else 'unchanged'} revision={data['revision']} "
+        f"order={','.join(item['id'] for item in active)}"
+    )
+    return 0
+
+
 def command_upsert(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     data = read_json(ledger)
@@ -1132,15 +1304,10 @@ def command_upsert(args: argparse.Namespace) -> int:
             )
         initial_status = args.status or "requested"
         initial_completed = initial_status in DONE_STATUSES
-        if initial_completed:
-            initial_position = sum(entry["completed"] for entry in data["items"])
-        else:
-            # New work should be visible immediately where the Open view begins.
-            # Preserve the relative order of every existing open item beneath it.
-            for entry in data["items"]:
-                if not entry["completed"]:
-                    entry["position"] += 1
-            initial_position = 0
+        initial_position = sum(
+            entry["completed"] == initial_completed for entry in data["items"]
+        )
+        changed_at = utc_now()
         item = {
             "id": args.id,
             "title": args.title.strip(),
@@ -1152,7 +1319,8 @@ def command_upsert(args: argparse.Namespace) -> int:
             "details_markdown": "",
             "explanation": "",
             "provenance": provenance,
-            "completed_at": utc_now() if initial_completed else None,
+            "order_intent": automatic_order_intent(changed_at),
+            "completed_at": changed_at if initial_completed else None,
             "completed_session_id": args.session_id if initial_completed else None,
         }
         data["items"].append(item)
@@ -1161,6 +1329,11 @@ def command_upsert(args: argparse.Namespace) -> int:
             f"{args.id} provenance is immutable ({item['provenance']}); "
             "use correct-provenance with an evidence-based reason"
         )
+    substantive_update = any(
+        value is not None
+        for value in (args.title, args.status, args.group, args.explanation, args.notes_file)
+    )
+    changed_at = utc_now()
     if args.title:
         item["title"] = args.title.strip()
     if args.explanation is not None:
@@ -1174,15 +1347,18 @@ def command_upsert(args: argparse.Namespace) -> int:
         item["status"] = args.status
         item["completed"] = args.status in DONE_STATUSES
         item["state_text"] = args.status
-        item["completed_at"] = utc_now() if item["completed"] else None
+        item["completed_at"] = changed_at if item["completed"] else None
         item["completed_session_id"] = args.session_id if item["completed"] else None
     if args.group:
         item["group"] = args.group
     if args.notes_file:
         item["details_markdown"] = pathlib.Path(args.notes_file).read_text(encoding="utf-8").strip()
+    if substantive_update:
+        touch_relevance(item, changed_at)
     if args.title or args.status:
         clear_suggestion_for(data, args.id)
     normalize_positions(data)
+    reconcile_order(data)
     data["revision"] += 1
     data["updated_at"] = utc_now()
     atomic_write_json(ledger, data)
@@ -1229,6 +1405,7 @@ def command_correct_provenance(args: argparse.Namespace) -> int:
         item.setdefault("provenance_history", []).append(correction)
         item["provenance"] = args.provenance
 
+    reconcile_order(data)
     data["revision"] += 1
     data["updated_at"] = corrected_at
     atomic_write_json(ledger, data)
@@ -1262,6 +1439,7 @@ def command_transfer(args: argparse.Namespace) -> int:
         item["tracking_state"] = "transferred"
         item["transferred_to"] = dict(destination)
     normalize_positions(data)
+    reconcile_order(data)
     data["revision"] += 1
     data["updated_at"] = transferred_at
     atomic_write_json(ledger, data)
@@ -1287,6 +1465,13 @@ def parser() -> argparse.ArgumentParser:
     validate = sub.add_parser("validate", help="validate one canonical JSON ledger")
     validate.add_argument("--ledger", required=True)
     validate.set_defaults(func=command_validate)
+
+    reconcile = sub.add_parser(
+        "reconcile-order",
+        help="sort automatic items by actionable relevance while preserving manual placement",
+    )
+    reconcile.add_argument("--ledger", required=True)
+    reconcile.set_defaults(func=command_reconcile_order)
 
     upsert = sub.add_parser("upsert", help="add or update one canonical ledger item")
     upsert.add_argument("--ledger", required=True)

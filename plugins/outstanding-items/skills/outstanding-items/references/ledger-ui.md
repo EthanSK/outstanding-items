@@ -129,8 +129,9 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 
 ## Persistence and live updates
 
-- `outstanding-items.json` is the single editable record. Version 3 ledgers upgrade atomically to version 4 with conservative `unknown-legacy` provenance and no item-state or order change.
+- `outstanding-items.json` is the single editable record. Version 3 and 4 ledgers upgrade atomically to version 5. Version 3 receives conservative `unknown-legacy` provenance; both receive automatic ordering metadata without pretending their legacy positions were manual intent.
 - Every browser mutation carries the revision it read. A stale mutation gets HTTP 409 and the new ledger, so it cannot erase an agent-side update.
+- A drag or keyboard move sends the exact moved ID and stores manual placement time, revision, and neighbouring anchors. Automatic reconciliation keeps manual items fixed while ordering only automatic items by actionable status and relevance recency.
 - Writes are validated and atomic.
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
 - The per-ledger private connection file preserves the exact loopback URL across normal stop/start cycles. A disconnected page explains that it will retry instead of surfacing the browser's raw `Failed to fetch` text.

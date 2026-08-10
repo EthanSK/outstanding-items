@@ -55,6 +55,10 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   proof. Apply this to every provenance; never leave completed `Agent` work open
   merely to demand redundant acceptance. Leave implemented-but-unverified,
   waiting-on-you, blocked, reminders, transferred, and unfinished work open.
+- Whenever you open or update the ledger, reconcile its order. Sort automatic
+  items by actionable status and newest relevance, but preserve every explicit
+  drag or keyboard placement recorded as manual order intent. Never rearrange
+  the ledger merely to match the footer recommendation.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. Keep `blocked` for a
   real external wall you already tried to get around.

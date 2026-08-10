@@ -1,6 +1,6 @@
 {
   "name": "outstanding-items",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Keep a user-owned ledger out of the chat and suggest one next item without starting it.",
   "author": {
     "name": "EthanSK",

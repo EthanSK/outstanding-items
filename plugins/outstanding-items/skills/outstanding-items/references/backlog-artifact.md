@@ -29,11 +29,11 @@ Prefer, in order: a path the user names; a task/session scratch directory; `outs
 
 Do not silently create a ledger before those triggers. When the user has already explicitly asked for the Full outstanding items UI or durable ledger file, that request supplies the path-creation authority; choose the task-owned output directory when one exists and report it.
 
-## Schema version 4
+## Schema version 5
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "owner": "user",
   "authorizes_work": false,
   "title": "Outstanding items",
@@ -55,6 +55,10 @@ Do not silently create a ledger before those triggers. When the user has already
       "details_markdown": "Retried 20x locally, not on CI.",
       "explanation": "This is the login test that passes locally and fails at random on CI. The fix is in, and a green CI run is what would settle it.",
       "provenance": "user-requested",
+      "order_intent": {
+        "kind": "automatic",
+        "relevance_updated_at": "2026-05-04T11:20:00Z"
+      },
       "completed_at": null,
       "completed_session_id": null
     },
@@ -68,6 +72,10 @@ Do not silently create a ledger before those triggers. When the user has already
       "state_text": "verified",
       "details_markdown": "`./deploy.sh --help` ran clean.",
       "provenance": "unknown-legacy",
+      "order_intent": {
+        "kind": "automatic",
+        "relevance_updated_at": null
+      },
       "completed_at": "2026-05-04T11:10:00Z",
       "completed_session_id": "sess_EXAMPLE_9d21"
     }
@@ -83,7 +91,7 @@ Do not silently create a ledger before those triggers. When the user has already
 
 | Field | Rule |
 | --- | --- |
-| `schema_version` | Exactly `4` after loading. Version 3 is upgraded atomically; other unknown versions are rejected. |
+| `schema_version` | Exactly `5` after loading. Versions 3 and 4 are upgraded atomically; other unknown versions are rejected. |
 | `owner` / `authorizes_work` | Always `"user"` / `false`. UI edits never change them. |
 | `revision` | Non-negative integer incremented after every successful mutation. It prevents stale overwrites. |
 | `id` | `OI-n`, permanent, unique, never renumbered. Gaps are normal. |
@@ -92,7 +100,8 @@ Do not silently create a ledger before those triggers. When the user has already
 | `completed` | Derived mechanically: true only for `verified` or `dropped`. Completed items render after all open items. |
 | `tracking_state` | Optional `active` (the default) or `transferred`. It is orthogonal to status and never implies completion. |
 | `transferred_to` | Required only when transferred: exact stable destination task/session ID, cached visible title, transfer timestamp, optional handoff path, and optional title source/update time. The ID is identity; the title is refreshable display metadata. |
-| `position` | Contiguous zero-based ordering inside the open or completed group. A new open item is inserted at `0`; dragging changes open positions only. |
+| `position` | Contiguous zero-based ordering inside the open or completed group. Automatic reconciliation changes active automatic positions only; completed and transferred groups remain separate. |
+| `order_intent` | Required ordering metadata. `automatic` stores nullable `relevance_updated_at`. `manual` additionally stores `manually_positioned_at`, `manual_order_updated_at`, `manual_order_revision`, and stable neighbouring `placed_after_id` / `placed_before_id` anchors. A drag or keyboard move changes only the moved item to `manual`; ordinary edits and reconciliation preserve it. |
 | `group` | A display label preserving the originating queue/category. It does not determine execution or section membership. |
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |
@@ -106,9 +115,18 @@ Do not silently create a ledger before those triggers. When the user has already
 
 The server validates IDs, statuses, completion consistency, unique positions, provenance and its optional correction history, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
 
-### Version 3 migration
+### Version 3 migration and version 4 migration
 
-Loading a valid version 3 ledger upgrades it atomically to version 4, increments its revision, and writes `provenance: "unknown-legacy"` on every existing item. The migration deliberately does not guess from titles, status labels, notes, or conversational wording. Item order, status, completion, tracking/transfer state, evidence, and all other item content stay unchanged. Future items must supply provenance explicitly when they are first created. A demonstrably wrong later classification is corrected only through `correct-provenance`, which records the evidence without changing ordinary item state.
+Loading a valid version 3 or 4 ledger upgrades it atomically to version 5 and increments its revision once. Version 3 also receives conservative `provenance: "unknown-legacy"`; both versions receive `order_intent: {"kind": "automatic", "relevance_updated_at": null}`. Migration never fabricates a manual placement from old positions, titles, status labels, notes, or conversational wording, and it preserves the existing item order during the schema write. The next explicit `reconcile-order`, server start, or UI load may then intelligently order those automatic items. Status, completion, tracking/transfer state, evidence, and all other item content stay unchanged.
+
+### Ordering policy
+
+The active list has two kinds of ordering intent:
+
+- **Automatic:** surface `waiting-on-you` first, then `in-progress`, then `implemented`, then `planned`/`requested`, then `reminder`, then `blocked`. Within a status band, newest `relevance_updated_at` comes first; when no timestamp is available, the newest permanent `OI-n` ID breaks the tie. Creating or substantively editing an item refreshes its relevance time.
+- **Manual:** a Full outstanding items drag or keyboard move fixes the moved item in its selected active-list slot. Automatic items may reorder around those fixed slots, but later reconciliation does not move or clear a manual item. Only another explicit user move changes it again.
+
+This policy avoids whole-list churn: reconciliation writes only when the visible active order actually changes, leaves completed/transferred order alone, and never rearranges the ledger to match the footer's one recommendation.
 
 ### Not offering the same thing twice
 

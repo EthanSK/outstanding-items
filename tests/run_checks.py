@@ -504,7 +504,7 @@ def check_authority_matrix() -> list[str]:
     return problems
 
 
-@check("public-examples", "copy-paste examples preserve user ownership and schema v4")
+@check("public-examples", "copy-paste examples preserve user ownership and schema v5")
 def check_public_examples() -> list[str]:
     problems = []
 
@@ -561,8 +561,8 @@ def check_public_examples() -> list[str]:
     except json.JSONDecodeError as exc:
         problems.append(f"example backlog JSON is invalid: {exc}")
     else:
-        if payload.get("schema_version") != 4:
-            problems.append("example backlog JSON must use schema version 4")
+        if payload.get("schema_version") != 5:
+            problems.append("example backlog JSON must use schema version 5")
         if payload.get("owner") != "user" or payload.get("authorizes_work") is not False:
             problems.append("example backlog JSON must say owner=user and authorizes_work=false")
         items = payload.get("items")
@@ -579,6 +579,10 @@ def check_public_examples() -> list[str]:
                 )
                 if positions != list(range(len(positions))):
                     problems.append("example backlog JSON positions must be contiguous per completion group")
+            for item in items:
+                intent = item.get("order_intent") if isinstance(item, dict) else None
+                if not isinstance(intent, dict) or intent.get("kind") not in {"automatic", "manual"}:
+                    problems.append("every example item must carry supported order_intent metadata")
         if not isinstance(payload.get("sections"), list):
             problems.append("example backlog JSON must contain a sections list")
 

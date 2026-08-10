@@ -563,7 +563,7 @@
     const next = index + delta;
     if (index < 0 || next < 0 || next >= order.length) return;
     [order[index], order[next]] = [order[next], order[index]];
-    saveMutation({ action: "reorder", order }, { focusId: id }).then((result) => {
+    saveMutation({ action: "reorder", order, moved_id: id }, { focusId: id }).then((result) => {
       if (result.ok) announce(`Moved ${id} to position ${next + 1} of ${order.length}.`);
     });
   }
@@ -573,7 +573,7 @@
     const targetIndex = order.indexOf(targetId);
     if (targetIndex < 0) return;
     order.splice(targetIndex, 0, sourceId);
-    saveMutation({ action: "reorder", order }).then((result) => {
+    saveMutation({ action: "reorder", order, moved_id: sourceId }).then((result) => {
       if (result.ok) announce(`Moved ${sourceId} to position ${targetIndex + 1} of ${order.length}.`);
     });
   }

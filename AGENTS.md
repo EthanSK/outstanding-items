@@ -28,7 +28,7 @@ The product it describes has one non-negotiable rule, and every file here has to
 ./scripts/check.sh
 ```
 
-12. **Refresh after every local repository change, whoever made it.** At the start of a task, inspect `git status --short` so changes Ethan made locally are not mistaken for already-installed plugin state. Before finishing any task that leaves a coherent local change anywhere in this repository—whether made by Ethan, this agent, or another agent—run `python3 scripts/sync_plugin_dev.py`. It validates the whole repository, cache-busts and reinstalls the plugin, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Never install conflicted or obviously half-written work; preserve it and report the blocker instead. Do not hand-edit plugin caches or marketplace configuration.
+12. **Refresh after every local repository change, whoever made it.** At the start of a task, inspect `git status --short` so changes Ethan made locally are not mistaken for already-installed plugin state. Before finishing any task that leaves a coherent local change anywhere in this repository—whether made by Ethan, this agent, or another agent—run `python3 scripts/sync_plugin_dev.py`. Do not finish until it reports the cache-busted installed plugin is verified and no manifest-owned standalone duplicate remains. It validates the whole repository, reinstalls the plugin, restores the authored versions, verifies the installed copy, and safely removes any manifest-owned legacy standalone copy. Never install conflicted or obviously half-written work; preserve it and report the blocker instead. Do not hand-edit plugin caches or marketplace configuration.
 
 ## Working on the outstanding items of this repository
 
@@ -99,6 +99,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   proof. Apply this to every provenance; never leave completed `Agent` work open
   merely to demand redundant acceptance. Leave implemented-but-unverified,
   waiting-on-you, blocked, reminders, transferred, and unfinished work open.
+- Whenever you open or update the ledger, reconcile its order. Sort automatic
+  items by actionable status and newest relevance, but preserve every explicit
+  drag or keyboard placement recorded as manual order intent. Never rearrange
+  the ledger merely to match the footer recommendation.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. It is a perfectly
   good thing to suggest.
