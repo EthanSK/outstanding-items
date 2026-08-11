@@ -75,6 +75,7 @@ TASK_STORAGE_KEY_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 PROJECT_LEDGER_DIRECTORY = ".outstanding-items"
 PROJECT_GITIGNORE_ENTRY = f"/{PROJECT_LEDGER_DIRECTORY}/"
 TITLE_REFRESH_INTERVAL_SECONDS = 60.0
+UI_ASSET_NAMES = ("ledger.html", "ledger.css", "ledger.js")
 
 
 def utc_now() -> str:
@@ -900,13 +901,13 @@ class LedgerHTTPServer(ThreadingHTTPServer):
         address: tuple[str, int],
         handler: type[BaseHTTPRequestHandler],
         ledger_path: pathlib.Path,
-        assets_path: pathlib.Path,
+        assets: dict[str, bytes],
         token: str,
         instance_id: str,
     ) -> None:
         super().__init__(address, handler)
         self.ledger_path = ledger_path
-        self.assets_path = assets_path
+        self.assets = assets
         self.token = token
         self.instance_id = instance_id
         self.write_lock = threading.Lock()
@@ -987,11 +988,10 @@ class LedgerHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def send_asset(self, name: str, content_type: str) -> None:
-        path = self.server.assets_path / name
-        if not path.is_file():
+        body = self.server.assets.get(name)
+        if body is None:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
-        body = path.read_bytes()
         self.send_response(HTTPStatus.OK)
         self.common_headers()
         self.send_header("Content-Type", content_type)
@@ -1111,6 +1111,43 @@ def health(url: str, token: str, timeout: float = 0.5) -> dict[str, Any] | None:
         return None
 
 
+def ui_health(url: str, token: str, timeout: float = 0.5) -> dict[str, Any] | None:
+    """Return API identity only when the complete browser UI is also available."""
+    probe = health(url, token, timeout=timeout)
+    if not probe:
+        return None
+    parsed = urllib.parse.urlsplit(url)
+    base = f"{parsed.scheme}://{parsed.netloc}"
+    quoted_token = urllib.parse.quote(token)
+    paths = ("/", "/assets/ledger.css", "/assets/ledger.js")
+    try:
+        for path in paths:
+            request = urllib.request.Request(f"{base}{path}?token={quoted_token}")
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                if response.status != HTTPStatus.OK or not response.read():
+                    return None
+    except urllib.error.HTTPError as exc:
+        exc.close()
+        return None
+    except (OSError, urllib.error.URLError):
+        return None
+    return probe
+
+
+def load_ui_assets(assets_path: pathlib.Path) -> dict[str, bytes]:
+    """Snapshot the generic UI before the long-running process begins serving."""
+    loaded: dict[str, bytes] = {}
+    for name in UI_ASSET_NAMES:
+        path = assets_path / name
+        if not path.is_file():
+            raise ValueError(f"ledger UI asset is missing: {path}")
+        body = path.read_bytes()
+        if not body:
+            raise ValueError(f"ledger UI asset is empty: {path}")
+        loaded[name] = body
+    return loaded
+
+
 def load_state(path: pathlib.Path) -> dict[str, Any] | None:
     try:
         state = json.loads(path.read_text(encoding="utf-8"))
@@ -1161,7 +1198,8 @@ def command_serve(args: argparse.Namespace) -> int:
     reconcile_ledger_file(ledger)
     token = args.token or secrets.token_urlsafe(24)
     instance_id = args.instance_id or secrets.token_hex(12)
-    assets = pathlib.Path(__file__).resolve().parent.parent / "assets"
+    assets_path = pathlib.Path(__file__).resolve().parent.parent / "assets"
+    assets = load_ui_assets(assets_path)
     server = LedgerHTTPServer(("127.0.0.1", args.port), LedgerHandler, ledger, assets, token, instance_id)
     port = server.server_address[1]
     url = f"http://127.0.0.1:{port}/?token={urllib.parse.quote(token)}"
@@ -1209,11 +1247,21 @@ def command_start(args: argparse.Namespace) -> int:
     state_path = state_path_for(ledger)
     existing = load_state(state_path)
     if existing:
-        probe = health(existing.get("url", ""), existing.get("token", ""))
+        probe = ui_health(existing.get("url", ""), existing.get("token", ""))
         if probe and probe.get("instance_id") == existing.get("instance_id") and probe.get("ledger") == str(ledger):
             print(f"LEDGER_URL={existing['url']}")
             print(f"LEDGER_PID={existing['pid']}")
             return 0
+        api_probe = health(existing.get("url", ""), existing.get("token", ""))
+        if (
+            api_probe
+            and api_probe.get("instance_id") == existing.get("instance_id")
+            and api_probe.get("ledger") == str(ledger)
+        ):
+            # A previous plugin cache may have been replaced while its process
+            # stayed alive. Stop that exact API-healthy/UI-broken process so the
+            # preserved port and token can be reused by the current runtime.
+            command_stop(argparse.Namespace(ledger=str(ledger)))
     connection_path = connection_path_for(ledger)
     connection = reusable_connection(connection_path, ledger)
     preferred_port = args.port or (connection["port"] if connection else 0)
@@ -1250,7 +1298,7 @@ def command_start(args: argparse.Namespace) -> int:
     while time.monotonic() < deadline:
         state = load_state(state_path)
         if state and state.get("instance_id") == instance_id:
-            probe = health(state.get("url", ""), token)
+            probe = ui_health(state.get("url", ""), token)
             if probe and probe.get("ledger") == str(ledger):
                 print(f"LEDGER_URL={state['url']}")
                 print(f"LEDGER_PID={process.pid}")
@@ -1274,7 +1322,7 @@ def command_status(args: argparse.Namespace) -> int:
     if not state:
         print("stopped")
         return 1
-    probe = health(state.get("url", ""), state.get("token", ""))
+    probe = ui_health(state.get("url", ""), state.get("token", ""))
     if not probe or probe.get("instance_id") != state.get("instance_id") or probe.get("ledger") != str(ledger):
         print("stale state")
         return 1

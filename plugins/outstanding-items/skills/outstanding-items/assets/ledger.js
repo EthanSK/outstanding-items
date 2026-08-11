@@ -13,6 +13,8 @@
     snackbarTimer: null,
     snackbarRemaining: 0,
     snackbarStartedAt: 0,
+    detailsPinnedId: null,
+    detailControllers: new Map(),
   };
 
   const elements = {
@@ -227,6 +229,11 @@
     return fallback(action);
   }
 
+  function setPinnedDetails(id) {
+    state.detailsPinnedId = id;
+    state.detailControllers.forEach((controller) => controller.sync());
+  }
+
   function attachTooltip(node, item, transferred) {
     const tooltip = node.querySelector(".item-tooltip");
     const trigger = node.querySelector(".details-trigger");
@@ -238,11 +245,13 @@
     trigger.setAttribute("aria-controls", tooltip.id);
     trigger.setAttribute("aria-describedby", tooltip.id);
     trigger.setAttribute("aria-label", `Show details for ${item.id}: ${item.title}`);
+    const title = node.querySelector(".item-title");
+    title?.setAttribute("aria-controls", tooltip.id);
+    title?.setAttribute("aria-keyshortcuts", "Alt+Enter");
     node.dataset.tooltip = "above";
 
     let hovered = false;
     let focused = false;
-    let pinned = false;
     let suppressed = false;
 
     // Prefer showing it above the row, and flip below only when the row sits too
@@ -252,14 +261,32 @@
       node.dataset.tooltip = room < tooltip.offsetHeight + 16 ? "below" : "above";
     };
     const syncVisibility = () => {
+      const pinned = state.detailsPinnedId === item.id;
       const visible = !state.draggingId && !suppressed && (hovered || focused || pinned);
       node.classList.toggle("details-visible", visible);
+      node.classList.toggle("details-pinned", pinned);
       tooltip.setAttribute("aria-hidden", String(!visible));
       trigger.setAttribute("aria-expanded", String(visible));
+      title?.setAttribute("aria-expanded", String(visible));
       trigger.setAttribute(
         "aria-label",
         `${visible ? "Hide" : "Show"} details for ${item.id}: ${item.title}`,
       );
+    };
+    const togglePinned = () => {
+      if (state.detailsPinnedId === item.id) {
+        suppressed = true;
+        setPinnedDetails(null);
+      } else {
+        suppressed = false;
+        place();
+        setPinnedDetails(item.id);
+      }
+    };
+    const dismiss = () => {
+      if (state.detailsPinnedId === item.id) setPinnedDetails(null);
+      suppressed = true;
+      syncVisibility();
     };
     trigger.addEventListener("pointerenter", () => {
       hovered = true;
@@ -281,29 +308,30 @@
       focused = false;
       syncVisibility();
     });
-    trigger.addEventListener("click", () => {
-      if (pinned) {
-        pinned = false;
-        suppressed = true;
-      } else {
-        pinned = true;
-        suppressed = false;
-        place();
-      }
-      syncVisibility();
-    });
+    trigger.addEventListener("click", togglePinned);
     trigger.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
-      pinned = false;
-      suppressed = true;
-      syncVisibility();
+      dismiss();
+    });
+    node.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && node.classList.contains("details-visible")) {
+        event.preventDefault();
+        dismiss();
+        return;
+      }
+      if (!event.altKey || event.key !== "Enter" || !event.target.closest(".item-title")) return;
+      event.preventDefault();
+      togglePinned();
     });
     node.addEventListener("dragstart", () => {
-      pinned = false;
-      suppressed = true;
-      syncVisibility();
+      dismiss();
     });
+    const controller = { sync: syncVisibility, togglePinned, dismiss };
+    state.detailControllers.set(item.id, controller);
+    if (state.detailsPinnedId === item.id) place();
+    syncVisibility();
+    return controller;
   }
 
   function attachProvenance(node, item) {
@@ -436,12 +464,18 @@
       node.querySelector(".check-wrap").hidden = true;
     }
 
+    let editTimer = null;
+    const cancelPendingEdit = () => {
+      window.clearTimeout(editTimer);
+      editTimer = null;
+    };
     const title = node.querySelector(".item-title");
     node.querySelector(".item-title-text").textContent = item.title;
     if (transferred) {
       const readOnlyTitle = document.createElement("span");
       readOnlyTitle.className = "item-title item-title--readonly";
       readOnlyTitle.tabIndex = 0;
+      readOnlyTitle.setAttribute("role", "button");
       const readOnlyText = document.createElement("span");
       readOnlyText.className = "item-title-text";
       readOnlyText.textContent = item.title;
@@ -465,7 +499,15 @@
         "aria-label",
         `${item.title}. ${item.id}. Status ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Click to edit.`,
       );
-      title.addEventListener("click", () => beginEdit(node, item));
+      title.addEventListener("click", (event) => {
+        cancelPendingEdit();
+        if (event.detail === 0) {
+          beginEdit(node, item);
+          return;
+        }
+        if (event.detail !== 1) return;
+        editTimer = window.setTimeout(() => beginEdit(node, item), 320);
+      });
       title.addEventListener("keydown", (event) => {
         if (!event.altKey || !["ArrowUp", "ArrowDown"].includes(event.key) || completed) return;
         event.preventDefault();
@@ -473,7 +515,18 @@
       });
     }
 
-    attachTooltip(node, item, transferred);
+    const details = attachTooltip(node, item, transferred);
+    node.addEventListener("dblclick", (event) => {
+      if (state.draggingId || state.editing?.id === item.id) return;
+      if (
+        event.target.closest(
+          ".check-wrap, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
+        )
+      ) return;
+      event.preventDefault();
+      cancelPendingEdit();
+      details.togglePinned();
+    });
 
     const dragHandle = node.querySelector(".drag-handle");
     dragHandle.hidden = completed || transferred;
@@ -525,6 +578,7 @@
     const open = orderedItems(false);
     const done = orderedItems(true);
     const transferred = transferredItems();
+    state.detailControllers = new Map();
     elements.title.textContent = state.ledger.title;
     document.title = `${state.ledger.title} — Outstanding Items`;
     elements.openCount.textContent = String(open.length);

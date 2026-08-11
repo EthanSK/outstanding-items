@@ -8,6 +8,7 @@ import importlib.util
 import json
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,7 @@ import unittest
 import urllib.error
 import urllib.parse
 import urllib.request
+from unittest import mock
 
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -866,11 +868,49 @@ class LedgerLifecycleTests(unittest.TestCase):
                 if state and ledger_ui.health(state.get("url", ""), state.get("token", "")):
                     ledger_ui.command_stop(types.SimpleNamespace(ledger=str(ledger)))
 
+    def test_start_replaces_an_exact_api_healthy_ui_broken_runtime(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(ledger=str(ledger), port=0, token=None)
+            try:
+                self.assertEqual(ledger_ui.command_start(args), 0)
+                first = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                self.assertIsNotNone(first)
+                real_ui_health = ledger_ui.ui_health
+                calls = 0
+
+                def fail_first_ui_probe(url: str, token: str, timeout: float = 0.5):
+                    nonlocal calls
+                    calls += 1
+                    if calls == 1:
+                        return None
+                    return real_ui_health(url, token, timeout)
+
+                with mock.patch.object(ledger_ui, "ui_health", side_effect=fail_first_ui_probe):
+                    self.assertEqual(ledger_ui.command_start(args), 0)
+
+                second = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                self.assertIsNotNone(second)
+                self.assertEqual(second["url"], first["url"])
+                self.assertNotEqual(second["instance_id"], first["instance_id"])
+            finally:
+                state = ledger_ui.load_state(ledger_ui.state_path_for(ledger.resolve()))
+                if state and ledger_ui.health(state.get("url", ""), state.get("token", "")):
+                    ledger_ui.command_stop(types.SimpleNamespace(ledger=str(ledger)))
+
 
 class LedgerServerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         root = pathlib.Path(self.temp.name)
+        runtime_skill = root / "runtime-skill"
+        runtime_scripts = runtime_skill / "scripts"
+        runtime_scripts.mkdir(parents=True)
+        self.runtime_assets = runtime_skill / "assets"
+        shutil.copytree(ASSETS, self.runtime_assets)
+        self.runtime_script = runtime_scripts / "ledger_ui.py"
+        shutil.copy2(SCRIPT, self.runtime_script)
         self.ledger = root / "ledger.json"
         ledger_ui.atomic_write_json(self.ledger, sample_ledger())
         self.state_file = root / "state.json"
@@ -878,7 +918,7 @@ class LedgerServerTests(unittest.TestCase):
         self.process = subprocess.Popen(
             [
                 sys.executable,
-                str(SCRIPT),
+                str(self.runtime_script),
                 "serve",
                 "--ledger",
                 str(self.ledger),
@@ -1113,6 +1153,43 @@ class LedgerServerTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 401)
         raised.exception.close()
 
+    def test_ui_remains_available_after_runtime_asset_directory_is_removed(self) -> None:
+        shutil.rmtree(self.runtime_assets)
+        for path in ("/", "/assets/ledger.css", "/assets/ledger.js"):
+            status, body = self.request("GET", path)
+            self.assertEqual(status, 200)
+            self.assertTrue(body)
+
+
+class LedgerUIHealthTests(unittest.TestCase):
+    def test_ui_health_rejects_an_api_healthy_ui_broken_server(self) -> None:
+        class APIOnlyHandler(ledger_ui.BaseHTTPRequestHandler):
+            def log_message(self, _fmt: str, *_args: object) -> None:
+                pass
+
+            def do_GET(self) -> None:  # noqa: N802
+                if urllib.parse.urlsplit(self.path).path == "/api/health":
+                    body = json.dumps({"ok": True, "instance_id": "old", "ledger": "/tmp/x"}).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
+                self.send_error(404)
+
+        server = ledger_ui.ThreadingHTTPServer(("127.0.0.1", 0), APIOnlyHandler)
+        thread = ledger_ui.threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_address[1]}/?token=test"
+            self.assertIsNotNone(ledger_ui.health(url, "test"))
+            self.assertIsNone(ledger_ui.ui_health(url, "test"))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
+
 
 class LedgerAssetTests(unittest.TestCase):
     def test_ui_contains_required_interactions(self) -> None:
@@ -1248,6 +1325,49 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn('node.addEventListener("dragstart"', script)
         self.assertIn('node.classList.toggle("details-visible"', script)
         self.assertIn('event.key !== "Escape"', script)
+
+    def test_row_double_click_pins_details_without_stealing_other_interactions(self) -> None:
+        html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
+        script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+        style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
+
+        # The pinned state is shared across renders and visibly distinct.
+        self.assertIn("detailsPinnedId: null", script)
+        self.assertIn("detailControllers: new Map()", script)
+        self.assertIn("function setPinnedDetails(id)", script)
+        self.assertIn('node.classList.toggle("details-pinned", pinned)', script)
+        self.assertIn(".ledger-item.details-pinned", style)
+
+        # Double-click and the keyboard equivalent use the same disclosure
+        # controller; repeating either action therefore closes the same popover.
+        self.assertIn('node.addEventListener("dblclick"', script)
+        self.assertIn('title?.setAttribute("aria-keyshortcuts", "Alt+Enter")', script)
+        self.assertIn('event.altKey || event.key !== "Enter"', script)
+        self.assertIn("details.togglePinned()", script)
+        self.assertIn("setPinnedDetails(null)", script)
+        self.assertIn("press Alt and Enter", html)
+
+        # Interactive controls and an active drag/edit cannot be mistaken for a
+        # row disclosure gesture. A normal single click still starts editing.
+        for selector in (
+            ".check-wrap",
+            ".item-actions",
+            ".edit-input",
+            ".item-tooltip",
+            ".transfer-meta",
+        ):
+            self.assertIn(selector, script)
+        self.assertIn("if (state.draggingId || state.editing?.id === item.id) return", script)
+        self.assertIn("if (event.detail === 0)", script)
+        self.assertIn("if (event.detail !== 1) return", script)
+        self.assertIn("beginEdit(node, item)", script)
+        self.assertIn('dragHandle.addEventListener("dragstart"', script)
+
+        # Escape works from the row, while click/tap on the original disclosure
+        # remains the touch-safe path where double-click is unavailable.
+        self.assertIn('event.key === "Escape" && node.classList.contains("details-visible")', script)
+        self.assertIn('trigger.addEventListener("click", togglePinned)', script)
+        self.assertIn("@media (hover: none)", style)
 
 
 if __name__ == "__main__":
