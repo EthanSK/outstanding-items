@@ -880,12 +880,22 @@ class LedgerLifecycleTests(unittest.TestCase):
                 real_ui_health = ledger_ui.ui_health
                 calls = 0
 
-                def fail_first_ui_probe(url: str, token: str, timeout: float = 0.5):
+                def fail_first_ui_probe(
+                    url: str,
+                    token: str,
+                    timeout: float = 0.5,
+                    expected_ui_assets_sha256: str | None = None,
+                ):
                     nonlocal calls
                     calls += 1
                     if calls == 1:
                         return None
-                    return real_ui_health(url, token, timeout)
+                    return real_ui_health(
+                        url,
+                        token,
+                        timeout,
+                        expected_ui_assets_sha256,
+                    )
 
                 with mock.patch.object(ledger_ui, "ui_health", side_effect=fail_first_ui_probe):
                     self.assertEqual(ledger_ui.command_start(args), 0)
@@ -1160,6 +1170,30 @@ class LedgerServerTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertTrue(body)
 
+    def test_health_exposes_and_enforces_the_complete_ui_asset_fingerprint(self) -> None:
+        status, payload = self.request("GET", "/api/health")
+        self.assertEqual(status, 200)
+        fingerprint = payload["ui_assets_sha256"]
+        self.assertRegex(fingerprint, r"^[0-9a-f]{64}$")
+        self.assertEqual(
+            fingerprint,
+            ledger_ui.ui_assets_sha256(ledger_ui.load_ui_assets(self.runtime_assets)),
+        )
+        self.assertIsNotNone(
+            ledger_ui.ui_health(
+                self.state["url"],
+                self.token,
+                expected_ui_assets_sha256=fingerprint,
+            )
+        )
+        self.assertIsNone(
+            ledger_ui.ui_health(
+                self.state["url"],
+                self.token,
+                expected_ui_assets_sha256="0" * 64,
+            )
+        )
+
 
 class LedgerUIHealthTests(unittest.TestCase):
     def test_ui_health_rejects_an_api_healthy_ui_broken_server(self) -> None:
@@ -1341,6 +1375,10 @@ class LedgerAssetTests(unittest.TestCase):
         # Double-click and the keyboard equivalent use the same disclosure
         # controller; repeating either action therefore closes the same popover.
         self.assertIn('node.addEventListener("dblclick"', script)
+        self.assertIn('node.addEventListener("click"', script)
+        self.assertIn("event.detail % 2 !== 0", script)
+        self.assertIn("suppressNativeDoubleClick", script)
+        self.assertIn("Handle every even click here", script)
         self.assertIn('title?.setAttribute("aria-keyshortcuts", "Alt+Enter")', script)
         self.assertIn('event.altKey || event.key !== "Enter"', script)
         self.assertIn("details.togglePinned()", script)

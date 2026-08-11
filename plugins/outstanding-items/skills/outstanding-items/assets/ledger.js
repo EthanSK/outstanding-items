@@ -465,6 +465,7 @@
     }
 
     let editTimer = null;
+    let suppressNativeDoubleClick = false;
     const cancelPendingEdit = () => {
       window.clearTimeout(editTimer);
       editTimer = null;
@@ -516,13 +517,35 @@
     }
 
     const details = attachTooltip(node, item, transferred);
-    node.addEventListener("dblclick", (event) => {
-      if (state.draggingId || state.editing?.id === item.id) return;
+    const isDetailsActivationTarget = (target) =>
+      target instanceof Element && !target.closest(
+        ".check-wrap, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
+      );
+    node.addEventListener("click", (event) => {
       if (
-        event.target.closest(
-          ".check-wrap, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
-        )
+        event.detail <= 0
+        || event.detail % 2 !== 0
+        || state.draggingId
+        || state.editing?.id === item.id
+        || !isDetailsActivationTarget(event.target)
       ) return;
+      event.preventDefault();
+      cancelPendingEdit();
+      details.togglePinned();
+      // A stationary pointer can continue with click counts 3 and 4 without
+      // producing another native dblclick. Handle every even click here, then
+      // suppress the redundant native event when the browser does emit it.
+      suppressNativeDoubleClick = true;
+      window.setTimeout(() => { suppressNativeDoubleClick = false; }, 0);
+    });
+    node.addEventListener("dblclick", (event) => {
+      if (suppressNativeDoubleClick) {
+        event.preventDefault();
+        suppressNativeDoubleClick = false;
+        return;
+      }
+      if (state.draggingId || state.editing?.id === item.id) return;
+      if (!isDetailsActivationTarget(event.target)) return;
       event.preventDefault();
       cancelPendingEdit();
       details.togglePinned();

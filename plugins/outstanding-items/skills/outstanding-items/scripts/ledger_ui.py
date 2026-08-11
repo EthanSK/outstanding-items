@@ -908,6 +908,7 @@ class LedgerHTTPServer(ThreadingHTTPServer):
         super().__init__(address, handler)
         self.ledger_path = ledger_path
         self.assets = assets
+        self.ui_assets_sha256 = ui_assets_sha256(assets)
         self.token = token
         self.instance_id = instance_id
         self.write_lock = threading.Lock()
@@ -1024,6 +1025,7 @@ class LedgerHandler(BaseHTTPRequestHandler):
                     "ok": True,
                     "instance_id": self.server.instance_id,
                     "ledger": str(self.server.ledger_path),
+                    "ui_assets_sha256": self.server.ui_assets_sha256,
                 },
             )
             return
@@ -1111,10 +1113,20 @@ def health(url: str, token: str, timeout: float = 0.5) -> dict[str, Any] | None:
         return None
 
 
-def ui_health(url: str, token: str, timeout: float = 0.5) -> dict[str, Any] | None:
+def ui_health(
+    url: str,
+    token: str,
+    timeout: float = 0.5,
+    expected_ui_assets_sha256: str | None = None,
+) -> dict[str, Any] | None:
     """Return API identity only when the complete browser UI is also available."""
     probe = health(url, token, timeout=timeout)
     if not probe:
+        return None
+    if (
+        expected_ui_assets_sha256 is not None
+        and probe.get("ui_assets_sha256") != expected_ui_assets_sha256
+    ):
         return None
     parsed = urllib.parse.urlsplit(url)
     base = f"{parsed.scheme}://{parsed.netloc}"
@@ -1146,6 +1158,23 @@ def load_ui_assets(assets_path: pathlib.Path) -> dict[str, bytes]:
             raise ValueError(f"ledger UI asset is empty: {path}")
         loaded[name] = body
     return loaded
+
+
+def ui_assets_sha256(assets: dict[str, bytes]) -> str:
+    """Return one stable fingerprint for the complete generic browser shell."""
+    digest = hashlib.sha256()
+    for name in UI_ASSET_NAMES:
+        body = assets[name]
+        digest.update(name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(len(body).to_bytes(8, "big"))
+        digest.update(body)
+    return digest.hexdigest()
+
+
+def current_ui_assets_sha256() -> str:
+    assets_path = pathlib.Path(__file__).resolve().parent.parent / "assets"
+    return ui_assets_sha256(load_ui_assets(assets_path))
 
 
 def load_state(path: pathlib.Path) -> dict[str, Any] | None:
@@ -1244,10 +1273,15 @@ def command_serve(args: argparse.Namespace) -> int:
 def command_start(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     reconcile_ledger_file(ledger)
+    expected_ui_assets_sha256 = current_ui_assets_sha256()
     state_path = state_path_for(ledger)
     existing = load_state(state_path)
     if existing:
-        probe = ui_health(existing.get("url", ""), existing.get("token", ""))
+        probe = ui_health(
+            existing.get("url", ""),
+            existing.get("token", ""),
+            expected_ui_assets_sha256=expected_ui_assets_sha256,
+        )
         if probe and probe.get("instance_id") == existing.get("instance_id") and probe.get("ledger") == str(ledger):
             print(f"LEDGER_URL={existing['url']}")
             print(f"LEDGER_PID={existing['pid']}")
@@ -1258,9 +1292,9 @@ def command_start(args: argparse.Namespace) -> int:
             and api_probe.get("instance_id") == existing.get("instance_id")
             and api_probe.get("ledger") == str(ledger)
         ):
-            # A previous plugin cache may have been replaced while its process
-            # stayed alive. Stop that exact API-healthy/UI-broken process so the
-            # preserved port and token can be reused by the current runtime.
+            # Stop only the exact matching runtime when its browser shell is
+            # missing or older than the currently installed plugin. Preserve
+            # its port and token so existing links reconnect after replacement.
             command_stop(argparse.Namespace(ledger=str(ledger)))
     connection_path = connection_path_for(ledger)
     connection = reusable_connection(connection_path, ledger)
@@ -1298,7 +1332,11 @@ def command_start(args: argparse.Namespace) -> int:
     while time.monotonic() < deadline:
         state = load_state(state_path)
         if state and state.get("instance_id") == instance_id:
-            probe = ui_health(state.get("url", ""), token)
+            probe = ui_health(
+                state.get("url", ""),
+                token,
+                expected_ui_assets_sha256=expected_ui_assets_sha256,
+            )
             if probe and probe.get("ledger") == str(ledger):
                 print(f"LEDGER_URL={state['url']}")
                 print(f"LEDGER_PID={process.pid}")
@@ -1318,11 +1356,16 @@ def command_start(args: argparse.Namespace) -> int:
 
 def command_status(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
+    expected_ui_assets_sha256 = current_ui_assets_sha256()
     state = load_state(state_path_for(ledger))
     if not state:
         print("stopped")
         return 1
-    probe = ui_health(state.get("url", ""), state.get("token", ""))
+    probe = ui_health(
+        state.get("url", ""),
+        state.get("token", ""),
+        expected_ui_assets_sha256=expected_ui_assets_sha256,
+    )
     if not probe or probe.get("instance_id") != state.get("instance_id") or probe.get("ledger") != str(ledger):
         print("stale state")
         return 1

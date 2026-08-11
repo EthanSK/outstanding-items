@@ -23,7 +23,7 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py start \
   --ledger /absolute/task/path/outstanding-items.json
 ```
 
-Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger only after both its API and browser assets respond. If a plugin cache was replaced beneath a still-running process, `start` replaces that exact stale runtime automatically. After a deliberate stop or replacement, it reuses the same private loopback port and token from the user-only connection file, so an existing browser tab and previously supplied link reconnect instead of becoming a dead URL.
+Use the equivalent `~/.claude/skills/` path under Claude Code. The command prints `LEDGER_URL`, `LEDGER_PID`, and `LEDGER_LOG`. It reuses the exact healthy process for that ledger only after both its API and browser assets respond and their fingerprint matches the currently installed plugin. If a plugin cache was replaced beneath a still-running process, or a healthy process serves an older UI, `start` replaces that exact stale runtime automatically. After a deliberate stop or replacement, it reuses the same private loopback port and token from the user-only connection file, so an existing browser tab and previously supplied link reconnect instead of becoming a dead URL.
 
 Use the printed URL as the last line of the compact footer:
 
@@ -147,11 +147,12 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 - Writes are validated and atomic.
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
 - The per-ledger private connection file preserves the exact loopback URL across normal stop/start cycles. A disconnected page explains that it will retry instead of surfacing the browser's raw `Failed to fetch` text.
-- The server snapshots its generic HTML, CSS, and JavaScript at startup. Removing or replacing the plugin cache cannot strand a running API with a 404 browser shell; `start` also refuses to reuse any runtime whose full UI is unavailable.
+- The server snapshots its generic HTML, CSS, and JavaScript at startup and exposes one SHA-256 fingerprint for that complete browser shell. Removing or replacing the plugin cache cannot strand a running API with a 404 or outdated browser shell; `start` refuses to reuse a runtime whose UI is unavailable or whose fingerprint differs from the installed plugin.
 - The HTML, CSS, and JavaScript are a generic shell installed with the skill. They contain no task items and never need regeneration when ledger data changes.
 - Transferred items render read-only inside a collapsed **Owned elsewhere** disclosure, show their destination metadata, and are excluded from active outstanding/completed counts without being deleted.
 - `explanation` is an optional per-item string of at most 600 characters. It travels with the rest of the ledger, needs no schema bump, and an item or ledger without it stays valid; the browser supplies the status fallback at render time and stores nothing of its own. Only the dedicated caret discloses it; row hover and task-text focus do not.
 - Double-click a non-control part of a row to pin that same detail popover open, or focus the task text and press `Alt+Enter`. Repeat either action, use the existing disclosure control, or press `Escape` to dismiss it. A single task-text click still enters editing, checkbox clicks still control completion, and drag/reorder controls never trigger row disclosure.
+- Treat every even stationary click count as a double-click toggle. Browsers can continue a fixed-pointer sequence as clicks three and four without emitting another native `dblclick`; the even-click handler keeps the second toggle reliable and suppresses any redundant native event.
 - `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, transfer, and ordinary `upsert` mutations. The browser cannot change it. Only the agent-side, reason-required `correct-provenance` command may repair a proven mistake, and it appends an audit record.
 
 ## Stop or inspect
