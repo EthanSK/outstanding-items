@@ -37,10 +37,10 @@ Twenty minutes if you want a small one. Nothing depends on it either way.
 > Unrelated is fine. Capture it, do not start it, and do not change the execution state of anything else. It is a `reminder` rather than a `requested` item because there is no execution request and no deadline — the user wants it held, not done.
 
 ```text
-Nothing new to suggest; your list is unchanged.
+Open items remain, but none is currently suggestible.
 ```
 
-> Both open items have now been offered once and left unanswered, and OI-3 was parked on purpose, so a reminder is never promoted to fill the line. The honest footer is the quiet one. Nothing was hidden, dropped, or reordered to produce it.
+> Both actionable items have now been offered once and left unanswered, and OI-3 was parked on purpose, so a reminder is never promoted to fill the line. The footer explicitly says open items remain, preventing the quiet state from looking like an empty ledger. Nothing was hidden, dropped, or reordered to produce it. If any other eligible item existed, the footer would have to suggest that item instead.
 
 **Turn 4 — User:** Where are we?
 
@@ -73,7 +73,7 @@ The approach is agreed, so the limits table is a short first pass.
 **Turn 6 — User:** Actually forget the handbook thing, we're deleting that page.
 
 ```text
-Nothing here needs you right now.
+Open items remain, but none is currently suggestible.
 ```
 
 > OI-2 is struck through and kept in the ledger's Done group with the reason and who decided. The only thing still open is an intentional reminder, and promoting it to fill the line would be nagging, so the footer says what is true. Dropped items are never deleted, and never shown here.
@@ -260,7 +260,7 @@ A short one, and the only item nobody has offered you yet.
 | "All done!" after editing files | Editing is not verifying. | `implemented`, and name the check you would run. |
 | Skipping an off-topic aside because it is off-topic | The user chose to park it here. | Capture it as a `reminder`. |
 | Marking "needs your approval" as `blocked` | It reads as nothing-to-be-done and sits for a week. | `waiting-on-you`, with the exact click in the note. |
-| Offering the same item again next turn because they said nothing | Once is advice, twice is nagging, three times is noise. | Pick a different eligible item, or use the no-suggestion line. |
+| Offering the same item again next turn because they said nothing | Once is advice, twice is nagging, three times is noise. | Exclude that item, pick a different eligible item whenever one exists, and use the no-suggestion line only when none is suggestible. |
 | Suggesting the oldest item because it is oldest | Age is not urgency, and a `reminder` was parked deliberately. | Weigh dependencies, momentum, effort, and load. |
 | Quietly reordering the ledger to match your advice | The user's record silently changes underneath them. | Suggest in one line; leave every item where it was. |
 | Renaming "the flaky login test" to "CI stability" | The user scans for their own words. | Keep their phrasing. |

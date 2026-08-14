@@ -48,8 +48,9 @@ Work in this repository arrives in bursts of half-related requests. Use the
   `waiting-on-you` with the exact action. `blocked` means an upstream wall you
   already tried to route around.
 - The footer's one item is a suggestion, not a plan: one item, one small step,
-  then stop. Do not repeat one I ignored or declined, and say there is nothing
-  new to suggest rather than inventing a pick.
+  then stop. Do not repeat one I ignored or declined; exclude it and choose
+  another eligible open item. Only when no open item is currently suggestible,
+  say explicitly that open items remain.
 ```
 
 ## Variant: repositories with a strict review culture

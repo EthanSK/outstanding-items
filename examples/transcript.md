@@ -167,7 +167,7 @@ Seven open, one of them waiting on you:
 OI-1 is done and verified; it lives under Done in the editor.
 
 ```text
-Nothing new to suggest; your list is unchanged.
+Open items remain, but none is currently suggestible.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
@@ -175,7 +175,9 @@ The whole list goes in the answer because you asked for it, and the footer stays
 one line. The live URL appears once, on the last line, and only because an editor
 is actually running — in every earlier turn there was none, so no link line
 appeared and no URL was invented to fill the gap. Everything eligible had already
-been offered once, so the footer says so rather than repeating itself.
+been offered once, so the footer explicitly says open items remain while making
+clear that none is currently suggestible. If even one unoffered eligible item
+remained, the footer would have to suggest it instead.
 
 After the final open item is completed, the footer becomes:
 

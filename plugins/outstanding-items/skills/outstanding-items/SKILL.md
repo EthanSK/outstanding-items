@@ -57,10 +57,10 @@ With no live UI, the link line is simply absent and nothing replaces it:
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
-When nothing can honestly be suggested — the last suggestion is still unanswered, the user declined it, everything left is blocked or deliberately parked, or they are winding down — say so in one quiet line instead of inventing a pick:
+When open items remain but none is currently suggestible — every remaining item is blocked, transferred, deliberately parked, already excluded by prior advice, or the user is winding down — say that explicitly instead of implying the ledger is empty. A prior unanswered, ignored, or declined suggestion excludes only that item: if another eligible item exists, suggest the other item.
 
 ```text
-Nothing new to suggest; your list is unchanged.
+Open items remain, but none is currently suggestible.
 [Full outstanding items](<live local UI URL>)
 ```
 
@@ -77,10 +77,10 @@ Rules:
 - **No heading or label.** Start immediately with the item itself. Never prefix the block with `Outstanding`, `Suggested for you`, `Next`, or another heading.
 - **Exactly one item.** One `OI-n` appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
 - **No Done section, ever.** A `verified`, `dropped`, or `transferred` item never appears in the footer — not as a line, not struck through, not as a count, not as a heading. Completions live in the ledger's Done group and in the Full outstanding items view, which is where the user audits them.
-- Line one starts with `**OI-n <short title>**`, immediately followed by the inline-code source marker `You` or `Agent`; append ` — <status>` only for a non-default state. Use `You` for `user-requested`, `Agent` for `agent-added`, and omit the marker for `unknown-legacy` rather than inventing an origin. Use the user's own words trimmed to roughly 60 characters. Use the quiet no-suggestion line when open items exist but none should be offered. Before using `**No outstanding items**`, perform the Core contract 5 loose-end scan; use it only when zero items remain open and no concrete user-facing loose end was omitted. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
+- Line one starts with `**OI-n <short title>**`, immediately followed by the inline-code source marker `You` or `Agent`; append ` — <status>` only for a non-default state. Use `You` for `user-requested`, `Agent` for `agent-added`, and omit the marker for `unknown-legacy` rather than inventing an origin. Use the user's own words trimmed to roughly 60 characters. Use the explicit open-items-remain line only when no open item is currently suggestible. Before using `**No outstanding items**`, perform the Core contract 5 loose-end scan; use it only when zero items remain open and no concrete user-facing loose end was omitted. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
 - Line two is optional and never more than one line: a small first step, one plain reason, or the exact action a `waiting-on-you` item needs. Leave it out when it adds nothing.
 - **The Full outstanding items link appears once, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line as the last line of the footer, using the exact URL `ledger_ui.py start` printed. With no live UI, write no link line at all: never invent a URL, and never link raw JSON or Markdown.
-- **Never repeat a suggestion the user ignored, declined, or has not answered.** Choose a different eligible item, or use the no-suggestion line. When the user asks what to do next, the slate is clear and the best item may be named again. Once is advice; twice is nagging.
+- **Never repeat a suggestion the user ignored, declined, or has not answered.** Exclude that item and choose a different eligible open item whenever one exists. Use the explicit open-items-remain line only when no open item is currently suggestible. When the user asks what to do next, the slate is clear and the best item may be named again. Once is advice; twice is nagging.
 - The item you name is a suggestion, never a claim. Nothing about appearing in the footer changes an item's status, position, or execution state, and every item you did not name is exactly as open as it was.
 - If the surface cannot render Markdown, drop the link syntax and print `Full outstanding items: <live local UI URL>` on its own last line.
 - Omit the footer inside tool calls, commit messages, file contents, and anything you write on the user's behalf. It belongs to the conversation only.
@@ -125,8 +125,8 @@ Then:
 - Never state more confidence than the evidence supports. If it is a close call, say so in the reason; do not name the runner-up, because the whole list is one click away.
 - A suggestion never edits the ledger. Nothing is dropped, reordered, merged, hidden, or quietly deprioritised because it was not chosen.
 - If the user has stated a priority, record and acknowledge it, leave the ledger unchanged, suggest that item while it stands, and wait for a fresh instruction that names what the agent should start.
-- If they ignore or decline it, drop it: never repeat it in a later footer, and never start it. Record the offer against the item so a resumed task does not offer it again either.
-- When no item can honestly be suggested, use the one-line no-suggestion footer rather than picking something to fill the space.
+- If they ignore or decline it, drop it from the candidate set: never repeat it in a later footer, and never start it. Record the offer against the item so a resumed task does not offer it again either. Keep checking the other eligible open items and suggest one of them when available.
+- Use the one-line no-suggestion footer only when no open item is currently suggestible. State that open items remain so the line cannot be mistaken for an empty ledger.
 
 Then stop and wait for the user. Weighing, wording, and the cases where you should refuse to pick: [references/next-action.md](references/next-action.md).
 

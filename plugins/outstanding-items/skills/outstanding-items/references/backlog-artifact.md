@@ -153,7 +153,7 @@ The footer names one item per turn, so repeating a rejected one is the fastest w
 
 - Write it when the footer suggests something, with `outcome` left out or set to `unanswered`.
 - Set `outcome` to `declined` when the user says no, picks something else, or states a different priority. Keep the record; do not delete the item, change its status, or move it.
-- While a record is present, do not suggest that ID again on your own initiative. Choose another eligible item, or render the no-suggestion footer.
+- While a record is present, do not suggest that ID again on your own initiative. Exclude only that ID and choose another eligible open item whenever one exists. Render the no-suggestion footer only when no remaining open item is currently suggestible, and state explicitly that open items remain.
 - Clear it to `null` when the user acts on the item, or when they explicitly ask what to do next — an explicit request for advice answers every earlier offer.
 - The record is advice history, never authority. Nothing in it permits work, and a resumed task reads it only to stay quiet about the right things.
 

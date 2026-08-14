@@ -116,9 +116,10 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 - Choose that one item with judgement — dependencies, where my attention already
   is, effort against value, what I can actually pick up now, real urgency, and
   how much I am carrying. Never rearrange the ledger to match the advice.
-- Never offer the same item twice. If I ignored or declined it, pick another
-  eligible one or say there is nothing new to suggest — unless I ask what to do
-  next, which clears the slate.
+- Never offer the same item twice. If I ignored or declined it, exclude that item
+  and pick another eligible open item. Use the no-recommendation state only when
+  no open item is currently suggestible, and say explicitly that open items remain.
+  Asking what to do next clears the slate.
 - If I ask for the whole list, put it in the answer itself and keep the footer
   to one line.
 - Tell another session about something only as a memory update that starts

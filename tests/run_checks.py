@@ -232,7 +232,8 @@ FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
 FOOTER_ITEM_RE = re.compile(
     rf"^\*\*(OI-\d+) (.+)\*\* `(?:You|Agent)`(?: {DASH} ([a-z][a-z-]*))?$"
 )
-FOOTER_QUIET_RE = re.compile(r"^Nothing\b.*$")
+OPEN_ITEMS_NONE_SUGGESTIBLE = "Open items remain, but none is currently suggestible."
+FOOTER_QUIET_RE = re.compile(rf"^{re.escape(OPEN_ITEMS_NONE_SUGGESTIBLE)}$")
 FOOTER_EMPTY_RE = re.compile(r"^\*\*No outstanding items\*\*$")
 FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
 OI_ID_RE = re.compile(r"\bOI-\d+\b")
@@ -261,7 +262,47 @@ STALE_FOOTER_PROMISES = [
     (re.compile(r"crossed-out Done section", re.I), "a Done section in the footer"),
     (re.compile(r"Four sections, always in this order"), "the retired four-section footer"),
     (re.compile(r"at most \d+ lines under", re.I), "the retired per-section line budget"),
+    (
+        re.compile(r"Nothing new to suggest; your list is unchanged\."),
+        "the misleading quiet footer that can look like an empty ledger",
+    ),
 ]
+
+
+def footer_policy_errors(
+    items: list[dict[str, object]],
+    excluded_suggestion_ids: set[str],
+    footer_header: str,
+) -> list[str]:
+    """Validate the recommendation state against the active open candidate pool."""
+    active_open = [
+        item
+        for item in items
+        if not item.get("completed") and item.get("tracking_state", "active") == "active"
+    ]
+    suggestible = [
+        item
+        for item in active_open
+        if item.get("status") in SUGGESTIBLE_STATUSES
+        and item.get("id") not in excluded_suggestion_ids
+    ]
+    item_match = FOOTER_ITEM_RE.match(footer_header)
+    if suggestible:
+        allowed_ids = {str(item["id"]) for item in suggestible}
+        if item_match is None:
+            return [
+                "a suggestible open item exists, so the footer must recommend one instead of going quiet"
+            ]
+        if item_match.group(1) not in allowed_ids:
+            return [f"footer recommends excluded or ineligible item {item_match.group(1)}"]
+        return []
+    if active_open:
+        if footer_header != OPEN_ITEMS_NONE_SUGGESTIBLE:
+            return ["open items remain with no candidate, so the footer must say that explicitly"]
+        return []
+    if footer_header != "**No outstanding items**":
+        return ["zero open items must use the distinct empty-ledger footer"]
+    return []
 
 
 def squash(text: str) -> str:
@@ -1369,7 +1410,9 @@ def check_compact_footer() -> list[str]:
         "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
         "Never leave a real loose end out",
         "inline-code source marker",
-        "Nothing new to suggest",
+        "Open items remain, but none is currently suggestible.",
+        "if another eligible item exists, suggest the other item",
+        "Use the one-line no-suggestion footer only when no open item is currently suggestible",
         "**No outstanding items**",
         "never let it become the footer's suggestion",
         "A `blocked` item is never suggested",
@@ -1385,6 +1428,48 @@ def check_compact_footer() -> list[str]:
             found = pattern.search(text)
             if found:
                 problems.append(f"{rel(path)} still promises {why}: {found.group(0)!r}")
+    return problems
+
+
+@check(
+    "suggestible-open-item-footer",
+    "an ignored suggestion cannot suppress another eligible open item",
+)
+def check_suggestible_open_item_footer() -> list[str]:
+    """Regression for the OBS case: eight open items, one already offered."""
+    obs_items = [
+        {
+            "id": f"OI-{number}",
+            "status": "implemented" if number == 1 else "requested",
+            "completed": False,
+            "tracking_state": "active",
+        }
+        for number in range(1, 9)
+    ]
+    excluded = {"OI-1"}
+    valid_footer = "**OI-2 Check OBS scene-switch controls** `Agent`"
+    problems = [
+        f"eight-open-item valid recommendation failed: {problem}"
+        for problem in footer_policy_errors(obs_items, excluded, valid_footer)
+    ]
+
+    # Spell this historical wording in two pieces so shipped-policy scans can
+    # ban it everywhere else while this regression still proves it is rejected.
+    old_misleading_footer = "Nothing new to suggest; " + "your list is unchanged."
+    if not footer_policy_errors(obs_items, excluded, old_misleading_footer):
+        problems.append(
+            "eight-open-item regression accepted the old misleading no-recommendation footer"
+        )
+
+    all_ineligible = [
+        {**item, "status": "blocked" if item["id"] != "OI-8" else "reminder"}
+        for item in obs_items
+    ]
+    if footer_policy_errors(all_ineligible, set(), OPEN_ITEMS_NONE_SUGGESTIBLE):
+        problems.append("explicit open-items-remain footer failed for an ineligible open pool")
+    completed = [{**item, "completed": True, "status": "verified"} for item in obs_items]
+    if footer_policy_errors(completed, set(), "**No outstanding items**"):
+        problems.append("empty-ledger footer failed when every item was completed")
     return problems
 
 

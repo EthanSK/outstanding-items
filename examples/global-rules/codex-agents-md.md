@@ -44,9 +44,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   using the exact URL it printed. With no live editor, write no link line, and
   never link raw JSON or Markdown. Keep one task-owned JSON ledger as the source
   of truth, and let it hold everything the footer does not show.
-- Never offer the same item twice. If I ignored or declined it, choose another
-  eligible one, or say plainly that there is nothing new to suggest — unless I
-  ask what to do next, which clears the slate.
+- Never offer the same item twice. If I ignored or declined it, exclude that item
+  and choose another eligible open item. Use the no-recommendation state only
+  when no open item is currently suggestible, and say explicitly that open items
+  remain. Asking what to do next clears the slate.
 - If I ask for the whole list, put it in the answer itself and keep the footer to
   one line.
 - Use only these labels: requested, planned, in-progress, implemented, verified,

@@ -1,6 +1,6 @@
 # Choosing the one item
 
-How to choose the single item the compact recommendation names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when you suspect the honest answer is "nothing new".
+How to choose the single item the compact recommendation names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when no open item appears suggestible.
 
 The footer is one suggestion addressed to the person. It proposes and then waits. It is never a plan you carry out, and it never becomes authority to start — see [authority.md](authority.md).
 
@@ -10,13 +10,13 @@ The final response carries the footer. What varies is whether it can honestly na
 
 | Name an item | Use the no-suggestion line |
 | --- | --- |
-| Something is genuinely the next sensible thing for the user to pick up. | The last suggestion is still unanswered, and nothing else is eligible. |
-| They asked what to do next, where to start, or what matters most. | They declined your last one and nothing has changed since. |
+| Something is genuinely the next sensible thing for the user to pick up. | The last suggestion is still unanswered, and every other open item is ineligible. |
+| They asked what to do next, where to start, or what matters most. | They declined your last one, and every other open item is ineligible. |
 | They returned after a gap, or a burst of items just landed. | Everything left is `blocked`, `transferred`, or deliberately parked. |
 | Something finished and the obvious path opened or closed. | They are winding down, and the kind answer is "nothing needs you tonight". |
 | Everything left needs them personally — a click, a key, a yes. | You genuinely cannot tell, and inventing a rationale would be dishonest. |
 
-The no-suggestion line is one quiet sentence — `Nothing new to suggest; your list is unchanged.` — with no item, no count, and no reproach. It means open items still exist but none should be offered now. When zero items remain open, use the distinct bold line `**No outstanding items**`. Both are legitimate outcomes, not failures.
+The no-suggestion line is one explicit sentence — `Open items remain, but none is currently suggestible.` — with no item, no count, and no reproach. Use it only when open items exist but every one is blocked, transferred, deliberately parked, already excluded by prior advice, or unsuitable because the user is winding down. A prior ignored, unanswered, or declined suggestion excludes only that item; it never makes another eligible item disappear. When zero items remain open, use the distinct bold line `**No outstanding items**`. Both are legitimate outcomes, not failures.
 
 ## What to weigh
 
@@ -69,12 +69,12 @@ If the user wants the alternatives, they will ask — and then you answer in the
 
 A suggestion the user did not take up is answered. Repeating it is nagging, and nagging is how a footer becomes something people skim past.
 
-- **Unanswered.** They replied about something else. Do not re-offer that item; pick a different eligible one, or use the no-suggestion line.
+- **Unanswered.** They replied about something else. Exclude that item and pick a different eligible one whenever one exists. Use the no-suggestion line only if the remaining open pool has no suggestible item.
 - **Unless they ask.** "What should I do next?" clears the slate. An explicit request for advice answers every earlier offer, so name the best item even if you named it before.
-- **Declined.** "No", "not that one", "skip link first" — drop it without argument, and never bring it back on your own initiative.
+- **Declined.** "No", "not that one", "skip link first" — exclude it without argument, never bring it back on your own initiative, and consider the other eligible open items normally.
 - **Record it.** Keep `latest_unanswered_suggestion` current, and note the offer against the item, so a task resumed tomorrow does not start the same loop again.
 - **When they act on it**, the record is answered and cleared. The same item may legitimately be suggested again later if it is genuinely the next thing — for example, after the user asked you to implement it and the honest next move is their own verification.
-- **When the eligible pool empties but work remains open**, use the no-suggestion line and let the footer go quiet until something changes.
+- **When the eligible pool empties but work remains open**, say `Open items remain, but none is currently suggestible.` and let the footer go quiet until something changes.
 - **When the ledger itself has zero open items after the loose-end scan**, use `**No outstanding items**`. Do not use it merely because suggestions were declined, blocked, or exhausted, and never let a concrete user-facing follow-up disappear just to make the ledger look empty.
 
 ## Items that need the user in person
@@ -91,7 +91,7 @@ A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall
 
 - **The user already stated a priority.** Record and acknowledge it, leave every status and item order unchanged, and wait for a fresh instruction naming what the agent should start. The footer may name that item; it may not name a rival.
 - **The information is not there.** If you genuinely cannot tell, say what you would need to know instead of inventing a rationale.
-- **They are winding down.** "Nothing here needs you tonight" is a legitimate footer and often the right one.
+- **They are winding down.** Use the explicit open-items-remain footer when nothing should be put in front of them tonight; do not imply the ledger is empty.
 - **The honest answer is rest, or a decision that is not yours.** Say it plainly and briefly, once.
 
 ## What a suggestion must never do
@@ -147,14 +147,14 @@ Just the first section of it, if anything. Nothing here has a date on it.
 **They declined the last one, and nothing else is eligible**
 
 ```text
-Nothing new to suggest; your list is unchanged.
+Open items remain, but none is currently suggestible.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 **Winding down**
 
 ```text
-Nothing here needs you tonight.
+Open items remain, but none is currently suggestible.
 ```
 
 **Everything is complete**

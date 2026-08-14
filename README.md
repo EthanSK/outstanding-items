@@ -61,10 +61,10 @@ The link is the exact URL the local editor printed. If no editor is running, tha
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
-And when there is honestly nothing to suggest — you ignored the last one, everything left is blocked or parked, or you are winding down — it says that instead of inventing a pick:
+When open items remain but none is currently suggestible — everything left is blocked, transferred, parked, already excluded by prior advice, or you are winding down — it says that explicitly. Ignoring one suggestion never suppresses a different eligible item:
 
 ```text
-Nothing new to suggest; your list is unchanged.
+Open items remain, but none is currently suggestible.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
@@ -164,8 +164,8 @@ And the rules that keep it from becoming a productivity lecture:
 - **It never edits the ledger.** Nothing is dropped, reordered, merged, hidden, or deprioritised out of existence because it was not the thing chosen. An item that was not suggested is exactly as open as it was.
 - **Your priorities win.** Say what you want and it stops, immediately and without a counter-proposal.
 - **Calibrated, not confident.** If it is a close call it says so — and leaves the alternative in the editor rather than turning the line into a menu.
-- **Advice, once.** Ignore it and it moves on to something else next turn, or says nothing at all. It does not repeat it, and it certainly does not start it.
-- **Silence is a legitimate answer.** When everything left is blocked, parked, or already offered, the footer says "nothing new to suggest" instead of inventing a pick.
+- **Advice, once.** Ignore it and it excludes that item, then moves to another eligible item next turn. It does not repeat it, and it certainly does not start it.
+- **Silence is a legitimate answer.** Only when no open item is currently suggestible, the footer explicitly says open items remain instead of looking like an empty ledger.
 
 Weighing, wording, and the cases where it should refuse to pick: [`references/next-action.md`](plugins/outstanding-items/skills/outstanding-items/references/next-action.md).
 
@@ -250,8 +250,9 @@ at most one line about it, and nothing else — no list, no counts, no reminders
 no Done section. Never put it in commentary or progress messages. When a local
 ledger UI is running, put **Full outstanding items** on the footer's last line
 using the exact URL it printed; with no live UI, write no link at all. Do not
-repeat a suggestion I ignored or declined — pick another one, or say there is
-nothing new to suggest. Anything needing my click, key, or approval is
+repeat a suggestion I ignored or declined — exclude it and pick another eligible
+open item. Only when none is currently suggestible, say explicitly that open
+items remain. Anything needing my click, key, or approval is
 `waiting-on-you`, not `blocked`. Never start, resume, investigate, research,
 prepare, do pre-work for, dispatch, route, hand off, continue, or complete an
 item unless my current message names it and tells you to. That authority ends
