@@ -33,6 +33,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   ask to add it to Outstanding Items. Before saying there are no outstanding
   items, check the current results, blockers, decisions, and unverified outcomes
   for such a loose end. Never invent filler or speculative work when nothing remains.
+- Keep an actionable frontier whenever active work remains. If a parent is
+  blocked, capture its nearest useful prerequisite, workaround, decision, or
+  sensible time/condition-bound check as a separate `agent-added` item and note
+  what it unblocks. Prefer an existing action; never invent busywork.
 - Keep the ledger silently while you work, then end the **final response of the
   turn** with one compact recommendation that starts directly with the single item you think I should
   do next, immediately followed by a compact `You` or `Agent` source marker,
@@ -44,10 +48,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   using the exact URL it printed. With no live editor, write no link line, and
   never link raw JSON or Markdown. Keep one task-owned JSON ledger as the source
   of truth, and let it hold everything the footer does not show.
-- Never offer the same item twice. If I ignored or declined it, exclude that item
-  and choose another eligible open item. Use the no-recommendation state only
-  when no open item is currently suggestible, and say explicitly that open items
-  remain. Asking what to do next clears the slate.
+- Rotate before repeating. If I ignored or declined an item, exclude it while
+  another actionable open item exists. Once every alternative has been
+  considered, recommend the best still-open item again with a current first
+  step rather than going silent. Asking what to do next clears the slate.
 - If I ask for the whole list, put it in the answer itself and keep the footer to
   one line.
 - Use only these labels: requested, planned, in-progress, implemented, verified,
@@ -66,8 +70,9 @@ Use the `outstanding-items` skill in any task where I make more than one request
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. Keep `blocked` for a
   real external wall you already tried to get around.
-- Something I parked on purpose is a `reminder`. Keep it in the ledger, do not
-  start it, do not suggest it, and do not nag me about it.
+- Something I parked on purpose is a `reminder`. Keep it in the ledger and do
+  not start it. Prefer ordinary actionable work, but let it be the fallback
+  recommendation if it is the only active unfinished item.
 - Choose the one item you show me with judgement — dependencies, where my
   attention already is, effort against value, what I can actually pick up now,
   real urgency, and how much I am carrying. Name a small first step, address it
@@ -95,7 +100,8 @@ research, prepare, do pre-work for, dispatch, route, hand off, or complete an it
 unless I have just told you to, naming it. Never mark something `verified` without
 evidence you saw. On every ledger interaction, move exact proven completions to
 Done instead of asking me to accept finished Agent work. Never say `blocked` when
-it is really waiting on me, and never repeat a suggestion I ignored. In a Git
+it is really waiting on me; add an actionable unblock or sensible follow-up for
+every blocked parent, and rotate alternatives before repeating advice. In a Git
 project, keep this chat's ledger under the Git-ignored `.outstanding-items/`
 directory by default unless I opt out.
 ```

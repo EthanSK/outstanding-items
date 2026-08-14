@@ -61,12 +61,7 @@ The link is the exact URL the local editor printed. If no editor is running, tha
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
-When open items remain but none is currently suggestible — everything left is blocked, transferred, parked, already excluded by prior advice, or you are winding down — it says that explicitly. Ignoring one suggestion never suppresses a different eligible item:
-
-```text
-Open items remain, but none is currently suggestible.
-[Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
-```
+When active work remains, the footer always names one item. Ignoring one suggestion rotates to another actionable item; after every alternative has been considered, the best still-open item returns with a useful current first step. A blocked parent never creates silence: the ledger captures its nearest useful prerequisite, workaround, decision, or sensible time/condition-bound check as a separate **Agent** item, then recommends from that actionable frontier. It does not invent busywork or pretend an external wait can be accelerated.
 
 If the ledger has no open items at all, the agent first checks the current request, results, blockers, decisions, and unverified outcomes for anything concrete you still need to look at. A real loose end is added as **Agent**. Only a genuinely empty list says `**No outstanding items**`; the agent does not invent filler merely to avoid that honest result.
 
@@ -130,7 +125,7 @@ The other thing that makes the ledger worth trusting: the skill may not claim a 
 
 - **A label is not a licence.** `in-progress` is a description of a turn you authorized. When that turn ends, the permission ends with it — resuming needs you to say so again.
 - **`waiting-on-you` is not `blocked`.** "Blocked" reads as *nothing to be done* and gets ignored for a week. If the only missing thing is your click, your key, or your yes, the ledger says so and tells you exactly what to press.
-- **`reminder` is not a neglected request.** It was parked deliberately, so it stays visible, never retires itself, and never becomes a suggestion unless you ask or something genuinely becomes urgent.
+- **`reminder` is not a neglected request.** It was parked deliberately, so it stays visible and never retires itself. Ordinary actionable work comes first; if the reminder is the only active unfinished item, it can be the recommendation without changing status or starting anything.
 
 Full definitions, transitions, and anti-patterns: [`references/status-labels.md`](plugins/outstanding-items/skills/outstanding-items/references/status-labels.md).
 
@@ -151,9 +146,9 @@ What goes into that choice — weighed as judgement, never as a score:
 | Dependencies | Does finishing this make other things possible? Is anything already waiting on it? |
 | Momentum | Are you already inside this file, this idea, this mood? Restarting is the expensive part. |
 | Effort against value | The smallest thing with a real payoff. Twenty minutes with an outcome beats three hours toward a milestone. |
-| Availability to you | Can *you* pick it up now? A `blocked` item is never suggested; something needing your approval may well be. |
+| Availability to you | Can *you* pick it up now? A blocked parent is never suggested; its captured actionable prerequisite or follow-up may be. Something needing your approval may well be. |
 | Urgency | Real consequences only. Age is not urgency and neither is list length. |
-| Load | What you are carrying right now. After a long push, the honest suggestion is a small one — or none. |
+| Load | What you are carrying right now. After a long push, the honest suggestion is the smallest useful restart, phrased without pressure. |
 | Autonomy | It is your call. The line offers a move, not a verdict on your week. |
 
 And the rules that keep it from becoming a productivity lecture:
@@ -164,8 +159,8 @@ And the rules that keep it from becoming a productivity lecture:
 - **It never edits the ledger.** Nothing is dropped, reordered, merged, hidden, or deprioritised out of existence because it was not the thing chosen. An item that was not suggested is exactly as open as it was.
 - **Your priorities win.** Say what you want and it stops, immediately and without a counter-proposal.
 - **Calibrated, not confident.** If it is a close call it says so — and leaves the alternative in the editor rather than turning the line into a menu.
-- **Advice, once.** Ignore it and it excludes that item, then moves to another eligible item next turn. It does not repeat it, and it certainly does not start it.
-- **Silence is a legitimate answer.** Only when no open item is currently suggestible, the footer explicitly says open items remain instead of looking like an empty ledger.
+- **Rotate before repeating.** Ignore it and the next turn considers another actionable item. Once every alternative has been considered, the best still-open item can return with an updated first step. It never starts itself.
+- **Keep an actionable frontier.** If a parent is blocked, capture the nearest honest unblock or future check as its own item. `**No outstanding items**` is reserved for a genuinely empty active ledger.
 
 Weighing, wording, and the cases where it should refuse to pick: [`references/next-action.md`](plugins/outstanding-items/skills/outstanding-items/references/next-action.md).
 
@@ -250,9 +245,9 @@ at most one line about it, and nothing else — no list, no counts, no reminders
 no Done section. Never put it in commentary or progress messages. When a local
 ledger UI is running, put **Full outstanding items** on the footer's last line
 using the exact URL it printed; with no live UI, write no link at all. Do not
-repeat a suggestion I ignored or declined — exclude it and pick another eligible
-open item. Only when none is currently suggestible, say explicitly that open
-items remain. Anything needing my click, key, or approval is
+rotate away from a suggestion I ignored or declined while another actionable
+item exists; after every alternative has been considered, return the best
+still-open item with a current first step. Anything needing my click, key, or approval is
 `waiting-on-you`, not `blocked`. Never start, resume, investigate, research,
 prepare, do pre-work for, dispatch, route, hand off, continue, or complete an
 item unless my current message names it and tells you to. That authority ends
@@ -308,7 +303,7 @@ Stated plainly, because these are the assumptions people arrive with:
 - It **does not discover other conversations by itself**. Without task tools in the harness, it says `registered (manual)` and gives you the text to carry.
 - The plugin tooling and website make **no project-owned outbound application requests** and add no analytics or third-party runtime dependency. Your agent and harness may still use their existing model, task, or filesystem tools; this project does not hide or replace those calls.
 - It **does not read your existing tasks** during installation, and it never edits a skill it did not install.
-- It **does not know what you have the appetite for**. The suggestion is a judgement made from what you said in this task — offered once, dropped if ignored. It is not a prediction, not a schedule, and not a claim about what matters most in your life.
+- It **does not know what you have the appetite for**. The suggestion is a judgement made from what you said in this task. It rotates through alternatives before repeating and is not a prediction, schedule, or claim about what matters most in your life.
 
 ## Repository layout
 

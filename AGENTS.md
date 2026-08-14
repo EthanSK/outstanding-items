@@ -75,6 +75,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   add it to Outstanding Items. Before saying there are no outstanding items,
   check the current results, blockers, decisions, and unverified outcomes for
   such a loose end. Never invent filler or speculative work when nothing remains.
+- Keep an actionable frontier whenever active work remains. If a parent item is
+  blocked, capture its nearest useful prerequisite, workaround, decision, or
+  sensible time/condition-bound check as a separate `Agent` item and record what
+  it unblocks. Prefer another existing actionable item; never invent busywork.
 - Use `You` / `user-requested` only when I explicitly tell you to add that
   specific thing to Outstanding Items. If I merely request or discuss the work
   and you capture it automatically, use `Agent` / `agent-added`.
@@ -110,15 +114,16 @@ Use the `outstanding-items` skill in any task where I make more than one request
 - If the only thing missing is me — a click, an approval, a key, a choice — that
   is `waiting-on-you` with the exact action, not `blocked`. It is a perfectly
   good thing to suggest.
-- Something I parked on purpose is a `reminder`. Keep it in the ledger, do not
-  start it, do not suggest it, and do not nag me about it.
+- Something I parked on purpose is a `reminder`. Keep it in the ledger and do
+  not start it. Prefer ordinary actionable work, but if it is the only active
+  unfinished item it may be the recommendation without changing its status.
 - Choose that one item with judgement — dependencies, where my attention already
   is, effort against value, what I can actually pick up now, real urgency, and
   how much I am carrying. Never rearrange the ledger to match the advice.
-- Never offer the same item twice. If I ignored or declined it, exclude that item
-  and pick another eligible open item. Use the no-recommendation state only when
-  no open item is currently suggestible, and say explicitly that open items remain.
-  Asking what to do next clears the slate.
+- Rotate before repeating. If I ignored or declined an item, exclude it while
+  another actionable open item exists. Once every alternative has been
+  considered, recommend the best still-open item again with a current first
+  step rather than going silent. Asking what to do next clears the slate.
 - If I ask for the whole list, put it in the answer itself and keep the footer
   to one line.
 - Tell another task about something only as a memory update that starts nothing

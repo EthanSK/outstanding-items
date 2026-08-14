@@ -1,22 +1,21 @@
 # Choosing the one item
 
-How to choose the single item the compact recommendation names, how to word it, and when to name nothing at all. Load when the choice is not obvious, or when no open item appears suggestible.
+How to choose the single item the compact recommendation names and how to preserve an actionable next step whenever work remains. Load when the choice is not obvious, when every candidate was already offered, or when the remaining work is blocked.
 
 The footer is one suggestion addressed to the person. It proposes and then waits. It is never a plan you carry out, and it never becomes authority to start — see [authority.md](authority.md).
 
-## The footer always ends the turn; the suggestion does not always exist
+## The footer always ends the turn and names an item while work remains
 
-The final response carries the footer. What varies is whether it can honestly name an item. Before treating the ledger as empty, scan the current request, results, blockers, decisions, and unverified outcomes. If any concrete unresolved thing still needs the user to review, decide, provide, verify, or return to, add it as `agent-added` and consider it normally. If nothing remains after that scan, use `**No outstanding items**`; that is different from having open items that should not be suggested again.
+Before treating the ledger as empty, scan the current request, results, blockers, decisions, and unverified outcomes. Add every concrete unresolved thing the user still needs to review, decide, provide, verify, or return to as `agent-added`. Then inspect the actionable frontier:
 
-| Name an item | Use the no-suggestion line |
-| --- | --- |
-| Something is genuinely the next sensible thing for the user to pick up. | The last suggestion is still unanswered, and every other open item is ineligible. |
-| They asked what to do next, where to start, or what matters most. | They declined your last one, and every other open item is ineligible. |
-| They returned after a gap, or a burst of items just landed. | Everything left is `blocked`, `transferred`, or deliberately parked. |
-| Something finished and the obvious path opened or closed. | They are winding down, and the kind answer is "nothing needs you tonight". |
-| Everything left needs them personally — a click, a key, a yes. | You genuinely cannot tell, and inventing a rationale would be dishonest. |
+- If a normal actionable item exists, recommend the best one.
+- If the best result is blocked, recommend another actionable item instead.
+- If blocked work has no captured next step, add the nearest useful prerequisite, workaround, decision, or time/condition-bound follow-up as a separate `agent-added` item, note which parent it unblocks, and recommend from those actionable items.
+- If every item has been offered before, choose the best still-open item again rather than going silent. Refresh the small first step so the line is useful now.
+- If only an intentional reminder remains, it may be the recommendation without changing its status. Do not start it or invent urgency.
+- If nothing remains after the loose-end and actionable-frontier scans, use `**No outstanding items**`.
 
-The no-suggestion line is one explicit sentence — `Open items remain, but none is currently suggestible.` — with no item, no count, and no reproach. Use it only when open items exist but every one is blocked, transferred, deliberately parked, already excluded by prior advice, or unsuitable because the user is winding down. A prior ignored, unanswered, or declined suggestion excludes only that item; it never makes another eligible item disappear. When zero items remain open, use the distinct bold line `**No outstanding items**`. Both are legitimate outcomes, not failures.
+Transferred records are not active in this ledger. A pure external wait is still a real blocker, but silence is not the next action: capture an honest check tied to a meaningful time or condition. Never add immediate busywork merely to satisfy the footer.
 
 ## What to weigh
 
@@ -27,9 +26,9 @@ There is no score. Hold these together and use judgement.
 | Dependencies | Does something else become possible once this is done? Is anything already waiting on it? |
 | Momentum | Is the user already inside this file, this idea, this mood? Continuing costs far less than restarting. |
 | Effort against value | What is the smallest thing with a real payoff? Prefer twenty minutes with an outcome over three hours with a milestone. |
-| Availability to them | Can *they* pick it up right now? A `blocked` item is not a candidate. An item that needs them in person is. |
+| Availability to them | Can *they* pick it up right now? A blocked parent is not a candidate; its captured prerequisite or follow-up is. An item that needs them in person is. |
 | Urgency | Real deadlines and real consequences only. Volume is not urgency, and neither is age. |
-| Load | How much is this person carrying right now? After a long push, the kind suggestion is the small one, or none at all. |
+| Load | How much is this person carrying right now? After a long push, choose the smallest honest next move and phrase it gently. |
 | Kindness | Would a thoughtful colleague say this out loud right now, or leave them alone? |
 | Autonomy | Is this their call to make? It always is. Offer the move, not a verdict on their week. |
 
@@ -65,17 +64,17 @@ A close call, but this is the smaller restart and you were already in that file.
 
 If the user wants the alternatives, they will ask — and then you answer in the body of the reply, not by widening the footer.
 
-## Do not offer the same thing twice
+## Rotate before repeating
 
-A suggestion the user did not take up is answered. Repeating it is nagging, and nagging is how a footer becomes something people skim past.
+A suggestion the user did not take up should not be repeated while another useful option exists. Rotation prevents nagging; it does not permit the footer to go empty while work remains.
 
-- **Unanswered.** They replied about something else. Exclude that item and pick a different eligible one whenever one exists. Use the no-suggestion line only if the remaining open pool has no suggestible item.
+- **Unanswered.** They replied about something else. Exclude that item and pick a different actionable one whenever one exists.
 - **Unless they ask.** "What should I do next?" clears the slate. An explicit request for advice answers every earlier offer, so name the best item even if you named it before.
-- **Declined.** "No", "not that one", "skip link first" — exclude it without argument, never bring it back on your own initiative, and consider the other eligible open items normally.
+- **Declined.** "No", "not that one", "skip link first" — exclude it without argument while another actionable item exists, and consider the alternatives normally.
 - **Record it.** Keep `latest_unanswered_suggestion` current, and note the offer against the item, so a task resumed tomorrow does not start the same loop again.
 - **When they act on it**, the record is answered and cleared. The same item may legitimately be suggested again later if it is genuinely the next thing — for example, after the user asked you to implement it and the honest next move is their own verification.
-- **When the eligible pool empties but work remains open**, say `Open items remain, but none is currently suggestible.` and let the footer go quiet until something changes.
-- **When the ledger itself has zero open items after the loose-end scan**, use `**No outstanding items**`. Do not use it merely because suggestions were declined, blocked, or exhausted, and never let a concrete user-facing follow-up disappear just to make the ledger look empty.
+- **When every alternative has been considered but work remains open**, return the best still-open item to the pool. Use a current first step instead of copying the previous line mechanically.
+- **When the ledger itself has zero open items after both scans**, use `**No outstanding items**`. Never let a concrete user-facing follow-up disappear just to make the ledger look empty.
 
 ## Items that need the user in person
 
@@ -85,14 +84,14 @@ A `waiting-on-you` item is a perfectly good suggestion: they are the one who wou
 - Do not perform it, dispatch it, arrange it, or write to another system to chase it.
 - Do not repeat it every turn because it is small. It is still their decision.
 
-A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall in the body of the reply if it explains why the rest of the list looks the way it does — never in the footer.
+A `blocked` parent is not a suggestion. Nothing they do moves the parent directly. Ensure its nearest useful unblock or follow-up exists as a separate open item, then suggest that item or another actionable one. Mention the wall in the body only when it helps explain the choice.
 
-## When to refuse to pick
+## When the choice is awkward
 
 - **The user already stated a priority.** Record and acknowledge it, leave every status and item order unchanged, and wait for a fresh instruction naming what the agent should start. The footer may name that item; it may not name a rival.
-- **The information is not there.** If you genuinely cannot tell, say what you would need to know instead of inventing a rationale.
-- **They are winding down.** Use the explicit open-items-remain footer when nothing should be put in front of them tonight; do not imply the ledger is empty.
-- **The honest answer is rest, or a decision that is not yours.** Say it plainly and briefly, once.
+- **The information is not there.** Choose the smallest reversible open action and say the choice is close; do not invent a strong rationale.
+- **They are winding down.** Still name the smallest honest item, but phrase it as something to return to, not pressure to act tonight.
+- **The honest answer is rest.** The footer may name the next item for later while the body says to stop now. Recommendation timing never becomes urgency.
 
 ## What a suggestion must never do
 
@@ -101,12 +100,12 @@ A `blocked` item is not a suggestion. Nothing they do moves it. Mention the wall
 | Start, resume, continue, investigate, research, prepare, do pre-work for, dispatch, route, or complete the thing it suggested | The suggestion was a question. Answering it yourself takes the decision away. |
 | Drop, hide, merge, or reorder items that were not chosen | The ledger is the user's record, not a queue you manage. Suggesting is a comment, not an edit. |
 | Deprioritise something out of existence | An item not suggested is still exactly as open as it was. |
-| Promote a `reminder` unprompted | It was parked on purpose. Wait for the user, or for real new urgency. |
+| Promote a `reminder` merely to fill the line | It was parked on purpose. Keep its status; suggest it only when no better actionable item remains. |
 | Put the assistant forward as the next move | The line is about the user's work, not about who is busy. |
 | Turn into a plan, a checklist, or a set of numbered phases | That is a proposal to run the person's week. Offer one move. |
-| Repeat the same suggestion every turn | Once is advice, twice is nagging, three times is noise. |
+| Repeat the same suggestion while alternatives exist | Rotation is more useful and less noisy. Consider every actionable alternative first. |
 | Name a runner-up so the user can choose | Two items is a list, and the list is what the footer exists to keep out of the chat. |
-| Invent a pick because the line looks empty | A suggestion nobody believes costs more than an honest silence. |
+| Invent busywork because a parent is blocked | Capture the nearest honest prerequisite or scheduled/conditional check, not motion for its own sake. |
 | Argue after a "no" | They know things you do not. Drop the suggestion and wait. |
 | Claim certainty about value, effort, or urgency | You are estimating from a transcript. Say so when it matters. |
 | Moralise about the backlog | No commentary on how long something has been open, or on how much is on the list. |
@@ -144,17 +143,19 @@ You left it half-done and the suite still passes, so it is the cheapest restart.
 Just the first section of it, if anything. Nothing here has a date on it.
 ```
 
-**They declined the last one, and nothing else is eligible**
+**They declined the last one, and every alternative was considered**
 
 ```text
-Open items remain, but none is currently suggestible.
+**OI-5 Skip link** `You`
+The other options were considered; this remains the smallest useful restart.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 **Winding down**
 
 ```text
-Open items remain, but none is currently suggestible.
+**OI-5 Skip link** `You`
+Leave this as the clean restart for tomorrow; nothing needs to begin tonight.
 ```
 
 **Everything is complete**
@@ -162,6 +163,12 @@ Open items remain, but none is currently suggestible.
 ```text
 **No outstanding items**
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
+```
+
+**Everything is complete, with no editor running**
+
+```text
+**No outstanding items**
 ```
 
 **The user already decided** — the body says it, the footer names their choice and nothing else:

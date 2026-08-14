@@ -29,6 +29,10 @@ Work in this repository arrives in bursts of half-related requests. Use the
   decide, provide, verify, or return to as `agent-added`. Before saying there
   are no outstanding items, check current results, blockers, decisions, and
   unverified outcomes for anything omitted. Never invent filler or speculative work.
+- Keep an actionable frontier whenever active work remains. If a parent item is
+  blocked, capture its nearest useful prerequisite, workaround, decision, or
+  sensible time/condition-bound check as a separate `agent-added` item and note
+  what it unblocks. Prefer an existing action; never invent busywork.
 - Before the first captured item, create or resolve this chat's canonical ledger
   under `.outstanding-items/<task-id>/outstanding-items.json`. Project storage is
   on by default; add `/.outstanding-items/` to the root `.gitignore` and use the
@@ -48,9 +52,9 @@ Work in this repository arrives in bursts of half-related requests. Use the
   `waiting-on-you` with the exact action. `blocked` means an upstream wall you
   already tried to route around.
 - The footer's one item is a suggestion, not a plan: one item, one small step,
-  then stop. Do not repeat one I ignored or declined; exclude it and choose
-  another eligible open item. Only when no open item is currently suggestible,
-  say explicitly that open items remain.
+  then stop. Rotate away from advice I ignored or declined while another
+  actionable item exists. Once every alternative has been considered, return
+  the best still-open item with a current first step rather than going silent.
 ```
 
 ## Variant: repositories with a strict review culture

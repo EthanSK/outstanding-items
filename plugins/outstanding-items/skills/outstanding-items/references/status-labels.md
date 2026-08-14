@@ -61,7 +61,7 @@ A `reminder` is an item the user deliberately wants tracked, with no execution r
 - Keep it visible in the ledger's **Intentional reminders** group. It is not a second-class item and it is never hidden to tidy the list.
 - Do not start it. Do not ask clarifying questions about it unless invited.
 - It never moves to Done on its own. Only the user retires it, by acting on it or dropping it.
-- It never becomes the footer's suggestion, unless the user asks for it or something makes it genuinely urgent. At that point it becomes `requested` — which is still not permission.
+- Keep it behind ordinary actionable work. If it is the only active unfinished item, it may be the footer's recommendation without changing its `reminder` status; recommending it still grants no permission and invents no urgency.
 - Do not editorialise about how long it has been sitting there. That is the point of it.
 
 An item that is merely unrelated to the current work is not automatically a `reminder`. If the user wants it done eventually and just mentioned it out of order, it is `requested` with a note such as `(unrelated to current work)`. The difference is whether they want it done, not whether it fits the current topic.
@@ -101,8 +101,8 @@ Notes are optional for most labels and mandatory for `in-progress`, `blocked`, `
 The compact recommendation names one item, so a status no longer decides which chat section an item lands in. It decides how the item reads in the Full outstanding items view, and whether the item can be the one the recommendation suggests.
 
 - Grouping in the ledger and its UI is mechanical: `waiting-on-you` → **Waiting on you**, `reminder` → **Intentional reminders**, every other open item → **Outstanding for you**, `verified` and `dropped` → **Done**, and anything with `tracking_state=transferred` → the read-only **Owned elsewhere** group.
-- Eligible to be suggested: any open item the user could pick up now, including `waiting-on-you`.
-- Never suggested on your own initiative: `blocked` (nothing they do moves it), `reminder` (parked on purpose), and `transferred` (owned elsewhere now).
+- Eligible to be suggested: any open item the user could pick up now, including `waiting-on-you`; an intentional reminder becomes a fallback only when no ordinary actionable item remains.
+- Never suggest a `blocked` parent directly. Capture its nearest useful prerequisite, workaround, decision, or time/condition-bound follow-up as a separate open item and recommend that, or choose another actionable item. A `transferred` record is owned elsewhere and is not active here.
 - The footer carries no counts, no section headings, and no overflow row. Nothing is ever trimmed by dropping items, because nothing is listed there in the first place.
 - When the user wants the whole list, give it to them in the body of that reply or open the UI — see [backlog-artifact.md](backlog-artifact.md).
 
@@ -122,5 +122,5 @@ The compact recommendation names one item, so a status no longer decides which c
 | Leaving `blocked` without a blocker | Unactionable. | Name the blocker or pick a different label. |
 | Marking `dropped` because the user went quiet | Silence is not cancellation. | Leave it open and ask. |
 | Calling it `blocked` when you need a click from the user | It reads as nothing-to-be-done, so it gets ignored for days. | `waiting-on-you`, with the exact action in the note. |
-| Turning a `reminder` into `requested` to make the list look active | Rewrites what the user asked for. | Leave it. It changes when they say so. |
+| Turning a `reminder` into `requested` to make the list look active | Rewrites what the user asked for. | Keep the status; it may be a fallback recommendation without being promoted. |
 | Promoting an item's status to justify starting it | Status is a description; this would make it a permission slip. | Leave the status alone and ask. |

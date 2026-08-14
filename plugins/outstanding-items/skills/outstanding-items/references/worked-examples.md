@@ -37,10 +37,11 @@ Twenty minutes if you want a small one. Nothing depends on it either way.
 > Unrelated is fine. Capture it, do not start it, and do not change the execution state of anything else. It is a `reminder` rather than a `requested` item because there is no execution request and no deadline — the user wants it held, not done.
 
 ```text
-Open items remain, but none is currently suggestible.
+**OI-3 Ask the design channel about the empty state** `You` — reminder
+The ordinary options were already considered; keep this as the smallest useful thing to return to.
 ```
 
-> Both actionable items have now been offered once and left unanswered, and OI-3 was parked on purpose, so a reminder is never promoted to fill the line. The footer explicitly says open items remain, preventing the quiet state from looking like an empty ledger. Nothing was hidden, dropped, or reordered to produce it. If any other eligible item existed, the footer would have to suggest that item instead.
+> Both ordinary actionable items have now been offered once and left unanswered, so the reminder is the honest fallback. Its status stays `reminder`; the suggestion neither starts it nor invents urgency. Nothing was hidden, dropped, or reordered to produce the line.
 
 **Turn 4 — User:** Where are we?
 
@@ -73,10 +74,11 @@ The approach is agreed, so the limits table is a short first pass.
 **Turn 6 — User:** Actually forget the handbook thing, we're deleting that page.
 
 ```text
-Open items remain, but none is currently suggestible.
+**OI-3 Ask the design channel about the empty state** `You` — reminder
+It is the only unfinished item; keep it as the next thing to revisit when useful.
 ```
 
-> OI-2 is struck through and kept in the ledger's Done group with the reason and who decided. The only thing still open is an intentional reminder, and promoting it to fill the line would be nagging, so the footer says what is true. Dropped items are never deleted, and never shown here.
+> OI-2 is struck through and kept in the ledger's Done group with the reason and who decided. The only thing still open is an intentional reminder, so it becomes the fallback recommendation without being promoted or started. Dropped items are never deleted, and never shown here.
 
 ---
 
@@ -100,7 +102,7 @@ Twenty minutes, and the shared token is the whole first step.
 
 > "Yeah do it" authorized the canonical JSON and its editor, and nothing on the list. Eight items were created in one final response — the file creation itself produced no interim recommendation block.
 >
-> The chat gets one of them. The other seven, the reminder, and both completed items are one click away in the editor instead of eleven more lines of conversation. OI-9 is `blocked` on an upstream bug, so it is never the suggestion: nothing the user does moves it. The UI is live, so the exact URL `start` printed sits on the last line — and it would be absent entirely if no editor were running.
+> The chat gets one of them. The other seven, the reminder, and both completed items are one click away in the editor instead of eleven more lines of conversation. OI-9 is `blocked` on an upstream bug, so its actionable follow-up OI-10 records when to check for a fix; the blocked parent itself is never suggested. The UI is live, so the exact URL `start` printed sits on the last line — and it would be absent entirely if no editor were running.
 
 ---
 
@@ -116,7 +118,7 @@ Click approve in the deploy UI; it is the one thing here that only you can do.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-> Not `blocked`. Nothing external is broken; the pipeline is working exactly as designed. An item that needs the user in person is a perfectly good suggestion, because they are the one who would act — and the line is the action itself, in the imperative, so it can be done without re-reading anything. If the deploy service were down, that would be `blocked`, it would never be suggested, and its note would have to say both what broke and what was tried.
+> Not `blocked`. Nothing external is broken; the pipeline is working exactly as designed. An item that needs the user in person is a perfectly good suggestion, because they are the one who would act — and the line is the action itself, in the imperative, so it can be done without re-reading anything. If the deploy service were down, the parent would be `blocked` and a separate item would capture the nearest useful retry or status check.
 
 ---
 
@@ -260,7 +262,7 @@ A short one, and the only item nobody has offered you yet.
 | "All done!" after editing files | Editing is not verifying. | `implemented`, and name the check you would run. |
 | Skipping an off-topic aside because it is off-topic | The user chose to park it here. | Capture it as a `reminder`. |
 | Marking "needs your approval" as `blocked` | It reads as nothing-to-be-done and sits for a week. | `waiting-on-you`, with the exact click in the note. |
-| Offering the same item again next turn because they said nothing | Once is advice, twice is nagging, three times is noise. | Exclude that item, pick a different eligible item whenever one exists, and use the no-suggestion line only when none is suggestible. |
+| Offering the same item again next turn while alternatives exist | Once is advice; immediate repetition is noise. | Rotate through actionable alternatives first, then reuse the best still-open item when the pool has been considered. |
 | Suggesting the oldest item because it is oldest | Age is not urgency, and a `reminder` was parked deliberately. | Weigh dependencies, momentum, effort, and load. |
 | Quietly reordering the ledger to match your advice | The user's record silently changes underneath them. | Suggest in one line; leave every item where it was. |
 | Renaming "the flaky login test" to "CI stability" | The user scans for their own words. | Keep their phrasing. |

@@ -167,17 +167,18 @@ Seven open, one of them waiting on you:
 OI-1 is done and verified; it lives under Done in the editor.
 
 ```text
-Open items remain, but none is currently suggestible.
+**OI-8 Carry the prepared delta to the design audit** `You` — waiting-on-you
+Paste the prepared note if you want that task's memory updated; it is the clearest live action.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
 The whole list goes in the answer because you asked for it, and the footer stays
-one line. The live URL appears once, on the last line, and only because an editor
+one item. The live URL appears once, on the last line, and only because an editor
 is actually running — in every earlier turn there was none, so no link line
-appeared and no URL was invented to fill the gap. Everything eligible had already
-been offered once, so the footer explicitly says open items remain while making
-clear that none is currently suggestible. If even one unoffered eligible item
-remained, the footer would have to suggest it instead.
+appeared and no URL was invented to fill the gap. Earlier advice does not make
+the footer go silent: it rotates to the clearest still-open action. If every
+alternative had already been considered, the best still-open item would return
+with an updated small first step.
 
 After the final open item is completed, the footer becomes:
 

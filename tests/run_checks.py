@@ -232,23 +232,22 @@ FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
 FOOTER_ITEM_RE = re.compile(
     rf"^\*\*(OI-\d+) (.+)\*\* `(?:You|Agent)`(?: {DASH} ([a-z][a-z-]*))?$"
 )
-OPEN_ITEMS_NONE_SUGGESTIBLE = "Open items remain, but none is currently suggestible."
-FOOTER_QUIET_RE = re.compile(rf"^{re.escape(OPEN_ITEMS_NONE_SUGGESTIBLE)}$")
 FOOTER_EMPTY_RE = re.compile(r"^\*\*No outstanding items\*\*$")
 FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
 OI_ID_RE = re.compile(r"\bOI-\d+\b")
 LIST_ROW_RE = re.compile(rf"^\s*(?:[-*+{BULLET}]\s|{ELLIPSIS}|\d+[.)]\s)")
 OVERFLOW_RE = re.compile(rf"\+\s*\d+\s+more|{ELLIPSIS}\s*\+")
 
-# A footer only ever suggests something the user could pick up right now.
-# `verified` and `dropped` are Done, `blocked` cannot be moved by them, and
-# `reminder` was parked on purpose.
+# A footer only ever suggests something the user could pick up. A reminder is
+# a fallback when no ordinary action remains. A blocked parent is not eligible:
+# it must have a separately captured actionable prerequisite or follow-up.
 SUGGESTIBLE_STATUSES = {
     "requested",
     "planned",
     "in-progress",
     "implemented",
     "waiting-on-you",
+    "reminder",
 }
 
 # Footer shapes that this project deliberately removed. None of them may come
@@ -265,6 +264,10 @@ STALE_FOOTER_PROMISES = [
     (
         re.compile(r"Nothing new to suggest; your list is unchanged\."),
         "the misleading quiet footer that can look like an empty ledger",
+    ),
+    (
+        re.compile(r"Open items remain, but none is currently suggestible\."),
+        "the retired no-suggestion footer",
     ),
 ]
 
@@ -286,6 +289,12 @@ def footer_policy_errors(
         if item.get("status") in SUGGESTIBLE_STATUSES
         and item.get("id") not in excluded_suggestion_ids
     ]
+    if not suggestible:
+        # Rotate away from prior advice while alternatives exist. Once every
+        # alternative was considered, the best still-open item returns.
+        suggestible = [
+            item for item in active_open if item.get("status") in SUGGESTIBLE_STATUSES
+        ]
     item_match = FOOTER_ITEM_RE.match(footer_header)
     if suggestible:
         allowed_ids = {str(item["id"]) for item in suggestible}
@@ -297,9 +306,9 @@ def footer_policy_errors(
             return [f"footer recommends excluded or ineligible item {item_match.group(1)}"]
         return []
     if active_open:
-        if footer_header != OPEN_ITEMS_NONE_SUGGESTIBLE:
-            return ["open items remain with no candidate, so the footer must say that explicitly"]
-        return []
+        return [
+            "active work has no actionable frontier; add a prerequisite, workaround, decision, or sensible follow-up item"
+        ]
     if footer_header != "**No outstanding items**":
         return ["zero open items must use the distinct empty-ledger footer"]
     return []
@@ -321,7 +330,6 @@ def footer_blocks() -> list[tuple[str, int, list[str]]]:
             lines = match.group(1).splitlines()
             if not lines or not (
                 FOOTER_ITEM_RE.match(lines[0])
-                or FOOTER_QUIET_RE.match(lines[0])
                 or FOOTER_EMPTY_RE.match(lines[0])
             ):
                 continue
@@ -546,12 +554,12 @@ def check_authority_matrix() -> list[str]:
         if f"`{label}`" not in status_text or f"`{label}`" not in artifact_text:
             problems.append(f"stale in-progress reconciliation no longer covers {label!r}")
 
-    # A footer that shows one item can only stay honest if a rejected suggestion
-    # never comes back on the agent's own initiative.
+    # A footer rotates away from rejected advice while alternatives exist, then
+    # returns the best still-open item instead of going silent.
     for phrase in (
         "latest_unanswered_suggestion",
         "Set `outcome` to `declined`",
-        "do not suggest that ID again on your own initiative",
+        "every alternative has been considered",
         "Clear it to `null`",
         "never authority",
     ):
@@ -559,7 +567,7 @@ def check_authority_matrix() -> list[str]:
             problems.append(f"backlog-artifact.md does not govern repeat suggestions: {phrase!r}")
 
     for phrase in (
-        "Never suggested on your own initiative",
+        "Never suggest a `blocked` parent directly",
         "The footer carries no counts, no section headings, and no overflow row",
     ):
         if phrase not in status_text:
@@ -572,7 +580,7 @@ def check_authority_matrix() -> list[str]:
         "**Unanswered.**",
         "**Declined.**",
         "**Unless they ask.**",
-        "no-suggestion line",
+        "actionable frontier",
     ):
         if phrase not in next_action:
             problems.append(f"next-action.md no longer governs the single suggestion: {phrase!r}")
@@ -614,7 +622,7 @@ def check_public_examples() -> list[str]:
         "OI-4 was declined, so it is not offered again unless you ask",
         "it is never promoted to fill a line",
         "the footer never shows a Done section",
-        "The whole list goes in the answer because you asked for it, and the footer stays one line",
+        "The whole list goes in the answer because you asked for it, and the footer stays one item",
         "The live URL appears once, on the last line",
     ):
         if squash(required) not in normalized_transcript:
@@ -1268,8 +1276,8 @@ def check_footer_once_per_turn() -> list[str]:
     description = frontmatter(read(SKILL_MD))[0].get("description", "")
     if "final response" not in description:
         problems.append("SKILL.md description must say the footer lands in the final response")
-    if "single suggested next item" not in description:
-        problems.append("SKILL.md description must say the footer names a single suggested item")
+    if "one compact recommendation" not in description:
+        problems.append("SKILL.md description must say the footer carries one compact recommendation")
     return problems
 
 
@@ -1286,8 +1294,8 @@ def check_compact_footer() -> list[str]:
     blocks = footer_blocks()
     with_link = 0
     without_link = 0
-    quiet = 0
-    quiet_with_link = 0
+    empty = 0
+    empty_with_link = 0
     waiting_on_you = 0
     statuses: set[str] = set()
     files: set[str] = set()
@@ -1321,15 +1329,15 @@ def check_compact_footer() -> list[str]:
                 problems.append(f"{where} uses a {len(title)}-character title; trim it to about 60")
             if status == "waiting-on-you":
                 waiting_on_you += 1
-        elif FOOTER_QUIET_RE.match(header) or FOOTER_EMPTY_RE.match(header):
-            quiet += 1
+        elif FOOTER_EMPTY_RE.match(header):
+            empty += 1
             if ids:
                 problems.append(
-                    f"{where} is a no-suggestion footer but still names {', '.join(ids)}"
+                    f"{where} is an empty-ledger footer but still names {', '.join(ids)}"
                 )
             if len(lines) > 2:
                 problems.append(
-                    f"{where} is a no-suggestion footer of {len(lines)} lines; one line plus the link"
+                    f"{where} is an empty-ledger footer of {len(lines)} lines; one line plus the link"
                 )
         elif header.startswith("**Outstanding**"):
             problems.append(f"{where} still uses the retired counts header: {header!r}")
@@ -1372,7 +1380,7 @@ def check_compact_footer() -> list[str]:
                 problems.append(f"{where} points the footer link at {target}")
             with_link += 1
             if not item:
-                quiet_with_link += 1
+                empty_with_link += 1
         else:
             without_link += 1
 
@@ -1384,10 +1392,10 @@ def check_compact_footer() -> list[str]:
         problems.append(f"only {with_link} footer(s) demonstrate the live Full outstanding items link")
     if without_link < 8:
         problems.append(f"only {without_link} footer(s) demonstrate the no-live-URL case")
-    if quiet < 4:
-        problems.append(f"only {quiet} footer(s) demonstrate having nothing to suggest")
-    if quiet_with_link < 2 or quiet - quiet_with_link < 2:
-        problems.append("the no-suggestion footer must be shown both with and without a live link")
+    if empty < 2:
+        problems.append(f"only {empty} footer(s) demonstrate a genuinely empty ledger")
+    if empty_with_link < 1 or empty - empty_with_link < 1:
+        problems.append("the empty-ledger footer must be shown both with and without a live link")
     if waiting_on_you < 4:
         problems.append(f"only {waiting_on_you} footer(s) suggest a waiting-on-you item")
     if len(statuses) < 4:
@@ -1407,15 +1415,13 @@ def check_compact_footer() -> list[str]:
         "At most three lines",
         "**Exactly one item.**",
         "**No Done section, ever.**",
-        "**Never repeat a suggestion the user ignored, declined, or has not answered.**",
+        "**Rotate before repeating.**",
         "Never leave a real loose end out",
+        "Keep an actionable frontier",
         "inline-code source marker",
-        "Open items remain, but none is currently suggestible.",
-        "if another eligible item exists, suggest the other item",
-        "Use the one-line no-suggestion footer only when no open item is currently suggestible",
+        "once every alternative has been considered",
         "**No outstanding items**",
-        "never let it become the footer's suggestion",
-        "A `blocked` item is never suggested",
+        "Never suggest a `blocked` parent directly",
     ):
         if phrase not in skill:
             problems.append(f"SKILL.md no longer states the compact-footer rule: {phrase!r}")
@@ -1461,12 +1467,32 @@ def check_suggestible_open_item_footer() -> list[str]:
             "eight-open-item regression accepted the old misleading no-recommendation footer"
         )
 
-    all_ineligible = [
+    blocked_with_reminder = [
         {**item, "status": "blocked" if item["id"] != "OI-8" else "reminder"}
         for item in obs_items
     ]
-    if footer_policy_errors(all_ineligible, set(), OPEN_ITEMS_NONE_SUGGESTIBLE):
-        problems.append("explicit open-items-remain footer failed for an ineligible open pool")
+    reminder_footer = "**OI-8 Revisit the parked OBS note** `Agent` — reminder"
+    if footer_policy_errors(blocked_with_reminder, set(), reminder_footer):
+        problems.append("reminder fallback failed when every ordinary item was blocked")
+
+    blocked_only = [{**item, "status": "blocked"} for item in obs_items]
+    blocked_errors = footer_policy_errors(
+        blocked_only, set(), "**OI-1 Retry the blocked OBS work** `Agent` — blocked"
+    )
+    if not blocked_errors or "actionable frontier" not in blocked_errors[0]:
+        problems.append("blocked-only pool did not require a separately captured actionable frontier")
+
+    with_follow_up = blocked_only + [
+        {
+            "id": "OI-9",
+            "status": "requested",
+            "completed": False,
+            "tracking_state": "active",
+        }
+    ]
+    follow_up_footer = "**OI-9 Check whether the OBS fix has landed** `Agent`"
+    if footer_policy_errors(with_follow_up, set(), follow_up_footer):
+        problems.append("captured blocker follow-up was not accepted as the actionable frontier")
     completed = [{**item, "completed": True, "status": "verified"} for item in obs_items]
     if footer_policy_errors(completed, set(), "**No outstanding items**"):
         problems.append("empty-ledger footer failed when every item was completed")
