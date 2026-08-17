@@ -160,6 +160,19 @@ def migrate_schema(data: Any) -> bool:
     for item in items:
         if not isinstance(item, dict):
             raise ValueError("every legacy item must be an object")
+        legacy_explanation = item.get("explanation")
+        if isinstance(legacy_explanation, str) and len(legacy_explanation) > MAX_EXPLANATION_CHARS:
+            # Older ledgers could contain a longer tooltip paragraph. Keep the
+            # complete original in the item's durable notes while making the
+            # compact UI explanation satisfy the current bounded schema.
+            details = item.get("details_markdown", "")
+            if not isinstance(details, str):
+                raise ValueError(f"{item.get('id', 'legacy item')} details_markdown must be a string")
+            if legacy_explanation not in details:
+                preserved = f"## Full legacy explanation\n\n{legacy_explanation}"
+                item["details_markdown"] = f"{details.rstrip()}\n\n{preserved}".lstrip()
+            shortened = legacy_explanation[: MAX_EXPLANATION_CHARS - 1].rstrip()
+            item["explanation"] = f"{shortened}…"
         if version == 3:
             item["provenance"] = "unknown-legacy"
         if version in {3, 4}:
@@ -970,6 +983,7 @@ class LedgerHTTPServer(ThreadingHTTPServer):
         self.ledger_path = ledger_path
         self.assets = assets
         self.ui_assets_sha256 = ui_assets_sha256(assets)
+        self.runtime_sha256 = current_runtime_sha256()
         self.token = token
         self.instance_id = instance_id
         self.write_lock = threading.Lock()
@@ -1087,6 +1101,7 @@ class LedgerHandler(BaseHTTPRequestHandler):
                     "instance_id": self.server.instance_id,
                     "ledger": str(self.server.ledger_path),
                     "ui_assets_sha256": self.server.ui_assets_sha256,
+                    "runtime_sha256": self.server.runtime_sha256,
                 },
             )
             return
@@ -1179,14 +1194,20 @@ def ui_health(
     token: str,
     timeout: float = 0.5,
     expected_ui_assets_sha256: str | None = None,
+    expected_runtime_sha256: str | None = None,
 ) -> dict[str, Any] | None:
-    """Return API identity only when the complete browser UI is also available."""
+    """Return identity only when the complete browser UI and runtime match."""
     probe = health(url, token, timeout=timeout)
     if not probe:
         return None
     if (
         expected_ui_assets_sha256 is not None
         and probe.get("ui_assets_sha256") != expected_ui_assets_sha256
+    ):
+        return None
+    if (
+        expected_runtime_sha256 is not None
+        and probe.get("runtime_sha256") != expected_runtime_sha256
     ):
         return None
     parsed = urllib.parse.urlsplit(url)
@@ -1236,6 +1257,11 @@ def ui_assets_sha256(assets: dict[str, bytes]) -> str:
 def current_ui_assets_sha256() -> str:
     assets_path = pathlib.Path(__file__).resolve().parent.parent / "assets"
     return ui_assets_sha256(load_ui_assets(assets_path))
+
+
+def current_runtime_sha256() -> str:
+    """Fingerprint the installed local server implementation used by this process."""
+    return hashlib.sha256(pathlib.Path(__file__).resolve().read_bytes()).hexdigest()
 
 
 def load_state(path: pathlib.Path) -> dict[str, Any] | None:
@@ -1335,6 +1361,7 @@ def command_start(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     reconcile_ledger_file(ledger)
     expected_ui_assets_sha256 = current_ui_assets_sha256()
+    expected_runtime_sha256 = current_runtime_sha256()
     state_path = state_path_for(ledger)
     existing = load_state(state_path)
     if existing:
@@ -1342,6 +1369,7 @@ def command_start(args: argparse.Namespace) -> int:
             existing.get("url", ""),
             existing.get("token", ""),
             expected_ui_assets_sha256=expected_ui_assets_sha256,
+            expected_runtime_sha256=expected_runtime_sha256,
         )
         if probe and probe.get("instance_id") == existing.get("instance_id") and probe.get("ledger") == str(ledger):
             print(f"LEDGER_URL={existing['url']}")
@@ -1397,6 +1425,7 @@ def command_start(args: argparse.Namespace) -> int:
                 state.get("url", ""),
                 token,
                 expected_ui_assets_sha256=expected_ui_assets_sha256,
+                expected_runtime_sha256=expected_runtime_sha256,
             )
             if probe and probe.get("ledger") == str(ledger):
                 print(f"LEDGER_URL={state['url']}")
@@ -1418,6 +1447,7 @@ def command_start(args: argparse.Namespace) -> int:
 def command_status(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     expected_ui_assets_sha256 = current_ui_assets_sha256()
+    expected_runtime_sha256 = current_runtime_sha256()
     state = load_state(state_path_for(ledger))
     if not state:
         print("stopped")
@@ -1426,6 +1456,7 @@ def command_status(args: argparse.Namespace) -> int:
         state.get("url", ""),
         state.get("token", ""),
         expected_ui_assets_sha256=expected_ui_assets_sha256,
+        expected_runtime_sha256=expected_runtime_sha256,
     )
     if not probe or probe.get("instance_id") != state.get("instance_id") or probe.get("ledger") != str(ledger):
         print("stale state")

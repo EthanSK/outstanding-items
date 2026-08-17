@@ -179,7 +179,7 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
 
 .ledger-item {
   display: grid;
-  grid-template-columns: 2rem 5.15rem minmax(0, 1fr) auto;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
   gap: 0.7rem;
   align-items: center;
   min-height: 3.4rem;
@@ -205,23 +205,26 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   background: var(--hover);
 }
 
-.ledger-item.transferred { grid-template-columns: 5.15rem minmax(0, 1fr) auto; }
+.ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }
 
 .item-reference {
   display: flex;
   align-items: center;
   min-width: 0;
+  min-height: 0.72rem;
+  margin-bottom: -0.08rem;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-variant-numeric: tabular-nums;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .priority-select {
-  width: 2.15rem;
+  width: 1.9rem;
   margin: 0;
-  padding: 0.18rem 0.05rem;
+  padding: 0.08rem 0.03rem;
   border: 0;
   border-radius: 0.3rem;
   appearance: none;
@@ -636,8 +639,8 @@ footer p { margin: 0; }
   .shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.5rem; }
   .masthead { gap: 1rem; }
   .save-state { padding-top: 0.25rem; }
-  .ledger-item { grid-template-columns: 1.8rem 4.8rem minmax(0, 1fr) auto; gap: 0.4rem; }
-  .ledger-item.transferred { grid-template-columns: 4.8rem minmax(0, 1fr) auto; }
+  .ledger-item { grid-template-columns: 1.8rem minmax(0, 1fr) auto; gap: 0.4rem; }
+  .ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }
   .check-wrap { width: 1.8rem; }
   .item-actions { min-width: 2.15rem; }
   .item-actions .move-up,

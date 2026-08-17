@@ -793,6 +793,8 @@ def check_item_priority() -> list[str]:
         "PRIORITY_RANK",
         "ITEM_REFERENCE_RE",
         "def display_id",
+        "def current_runtime_sha256",
+        "## Full legacy explanation",
         'elif action == "priority"',
         '"--priority"',
         'item["priority"] = DEFAULT_PRIORITY',
@@ -814,9 +816,25 @@ def check_item_priority() -> list[str]:
     ):
         if fragment not in script:
             problems.append(f"ledger.js is missing composite priority UI: {fragment!r}")
-    for fragment in (".item-reference", ".priority-select", 'data-priority="P0"'):
+    for fragment in (
+        ".item-reference",
+        ".priority-select",
+        'data-priority="P0"',
+        "grid-template-columns: 2rem minmax(0, 1fr) auto;",
+        ".ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }",
+        "font-size: 0.65rem;",
+    ):
         if fragment not in style:
             problems.append(f"ledger.css is missing compact priority styling: {fragment!r}")
+    if not re.search(
+        r'class="item-copy">\s*<div class="item-reference">[\s\S]+?'
+        r'</div>\s*<button type="button" class="item-title">',
+        html_text,
+    ):
+        problems.append("ledger.html does not place the reference above the task title")
+    for forbidden in ("5.15rem", "4.8rem"):
+        if forbidden in style:
+            problems.append(f"ledger.css still reserves a side column for the reference: {forbidden}")
 
     skill = read(SKILL_MD)
     artifact = read(SKILL_DIR / "references" / "backlog-artifact.md")

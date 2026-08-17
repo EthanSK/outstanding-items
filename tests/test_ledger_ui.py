@@ -317,6 +317,31 @@ class LedgerModelTests(unittest.TestCase):
             self.assertTrue(all(item["priority"] == "P2" for item in migrated["items"]))
             self.assertEqual(migrated["items"][0]["order_intent"]["kind"], "manual")
 
+    def test_v5_overlong_explanation_migrates_without_stranding_the_ui(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            legacy = sample_ledger()
+            legacy["schema_version"] = 5
+            legacy["revision"] = 30
+            original = "Keep this complete legacy explanation. " * 25
+            legacy["items"][0]["explanation"] = original
+            legacy["items"][0]["details_markdown"] = "Existing evidence."
+            for item in legacy["items"]:
+                item.pop("priority")
+            ledger.write_text(json.dumps(legacy), encoding="utf-8")
+
+            migrated = ledger_ui.read_json(ledger)
+            item = migrated["items"][0]
+
+            self.assertEqual(migrated["schema_version"], 6)
+            self.assertEqual(migrated["revision"], 31)
+            self.assertLessEqual(len(item["explanation"]), ledger_ui.MAX_EXPLANATION_CHARS)
+            self.assertTrue(item["explanation"].endswith("…"))
+            self.assertIn("Existing evidence.", item["details_markdown"])
+            self.assertIn("## Full legacy explanation", item["details_markdown"])
+            self.assertIn(original, item["details_markdown"])
+            ledger_ui.validate_ledger(migrated)
+
     def test_current_schema_requires_supported_provenance(self) -> None:
         data = sample_ledger()
         data["items"][0].pop("provenance")
@@ -985,6 +1010,7 @@ class LedgerLifecycleTests(unittest.TestCase):
                     token: str,
                     timeout: float = 0.5,
                     expected_ui_assets_sha256: str | None = None,
+                    expected_runtime_sha256: str | None = None,
                 ):
                     nonlocal calls
                     calls += 1
@@ -995,6 +1021,7 @@ class LedgerLifecycleTests(unittest.TestCase):
                         token,
                         timeout,
                         expected_ui_assets_sha256,
+                        expected_runtime_sha256,
                     )
 
                 with mock.patch.object(ledger_ui, "ui_health", side_effect=fail_first_ui_probe):
@@ -1289,11 +1316,13 @@ class LedgerServerTests(unittest.TestCase):
             self.assertEqual(status, 200)
             self.assertTrue(body)
 
-    def test_health_exposes_and_enforces_the_complete_ui_asset_fingerprint(self) -> None:
+    def test_health_exposes_and_enforces_ui_and_runtime_fingerprints(self) -> None:
         status, payload = self.request("GET", "/api/health")
         self.assertEqual(status, 200)
         fingerprint = payload["ui_assets_sha256"]
+        runtime_fingerprint = payload["runtime_sha256"]
         self.assertRegex(fingerprint, r"^[0-9a-f]{64}$")
+        self.assertRegex(runtime_fingerprint, r"^[0-9a-f]{64}$")
         self.assertEqual(
             fingerprint,
             ledger_ui.ui_assets_sha256(ledger_ui.load_ui_assets(self.runtime_assets)),
@@ -1303,6 +1332,7 @@ class LedgerServerTests(unittest.TestCase):
                 self.state["url"],
                 self.token,
                 expected_ui_assets_sha256=fingerprint,
+                expected_runtime_sha256=runtime_fingerprint,
             )
         )
         self.assertIsNone(
@@ -1310,6 +1340,13 @@ class LedgerServerTests(unittest.TestCase):
                 self.state["url"],
                 self.token,
                 expected_ui_assets_sha256="0" * 64,
+            )
+        )
+        self.assertIsNone(
+            ledger_ui.ui_health(
+                self.state["url"],
+                self.token,
+                expected_runtime_sha256="0" * 64,
             )
         )
 
@@ -1423,6 +1460,33 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn(".provenance-badge:hover::after", style)
         self.assertIn('badge.setAttribute("aria-label"', script)
         self.assertIn("attachProvenance(node, item)", script)
+
+    def test_reference_uses_a_slim_top_line_instead_of_a_side_column(self) -> None:
+        html = (ASSETS / "ledger.html").read_text(encoding="utf-8")
+        style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
+
+        self.assertRegex(
+            html,
+            r'class="item-copy">\s*<div class="item-reference">[\s\S]+?'
+            r'</div>\s*<button type="button" class="item-title">',
+        )
+        self.assertIn(
+            "grid-template-columns: 2rem minmax(0, 1fr) auto;",
+            style,
+        )
+        self.assertIn(
+            ".ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }",
+            style,
+        )
+        self.assertIn("font-size: 0.65rem;", style)
+        self.assertIn("line-height: 1;", style)
+        self.assertIn("min-height: 0.72rem;", style)
+        self.assertNotIn("5.15rem", style)
+        self.assertNotIn("4.8rem", style)
+        self.assertIn(
+            "grid-template-columns: 1.8rem minmax(0, 1fr) auto;",
+            style,
+        )
         self.assertIn("white-space: nowrap", style)
 
     def test_every_row_carries_an_accessible_explanation_tooltip(self) -> None:
