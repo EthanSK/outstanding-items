@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "owner": "user",
   "authorizes_work": false,
   "title": "Synthetic outstanding items",
@@ -14,6 +14,7 @@
   "items": [
     {
       "id": "OI-4",
+      "priority": "P1",
       "title": "Focus ring on interactive elements",
       "status": "requested",
       "completed": false,
@@ -32,6 +33,7 @@
     },
     {
       "id": "OI-10",
+      "priority": "P0",
       "title": "Carry the focus-token memory update",
       "status": "waiting-on-you",
       "completed": false,
@@ -50,6 +52,7 @@
     },
     {
       "id": "OI-3",
+      "priority": "P3",
       "title": "Ask the design channel about the empty state",
       "status": "reminder",
       "completed": false,
@@ -68,6 +71,7 @@
     },
     {
       "id": "OI-1",
+      "priority": "P2",
       "title": "Fix the flaky login test",
       "status": "verified",
       "completed": true,

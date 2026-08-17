@@ -33,7 +33,7 @@ SPEC.loader.exec_module(ledger_ui)
 
 def sample_ledger() -> dict:
     return {
-        "schema_version": 5,
+        "schema_version": 6,
         "owner": "user",
         "authorizes_work": False,
         "title": "Synthetic full ledger",
@@ -45,6 +45,7 @@ def sample_ledger() -> dict:
         "items": [
             {
                 "id": "OI-1",
+                "priority": "P2",
                 "title": "First open item",
                 "status": "requested",
                 "completed": False,
@@ -63,6 +64,7 @@ def sample_ledger() -> dict:
             },
             {
                 "id": "OI-2",
+                "priority": "P2",
                 "title": "Second open item",
                 "status": "planned",
                 "completed": False,
@@ -80,6 +82,7 @@ def sample_ledger() -> dict:
             },
             {
                 "id": "OI-3",
+                "priority": "P2",
                 "title": "Already complete",
                 "status": "verified",
                 "completed": True,
@@ -217,6 +220,15 @@ class LedgerModelTests(unittest.TestCase):
         )
         self.assertIsNone(edited["latest_unanswered_suggestion"])
 
+    def test_suggestion_pointer_keeps_the_permanent_key_not_the_priority_suffix(self) -> None:
+        data = sample_ledger()
+        data["latest_unanswered_suggestion"] = {
+            "id": "OI-1-P2",
+            "text": "Synthetic suggestion",
+        }
+        with self.assertRaisesRegex(ValueError, "permanent OI-n item key"):
+            ledger_ui.validate_ledger(data)
+
     def test_v3_ledger_migrates_to_unknown_legacy_without_item_state_drift(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             ledger = pathlib.Path(temp) / "ledger.json"
@@ -226,12 +238,13 @@ class LedgerModelTests(unittest.TestCase):
             for item in legacy["items"]:
                 item.pop("provenance")
                 item.pop("order_intent")
+                item.pop("priority")
             before = copy.deepcopy(legacy["items"])
             ledger.write_text(json.dumps(legacy), encoding="utf-8")
 
             migrated = ledger_ui.read_json(ledger)
 
-            self.assertEqual(migrated["schema_version"], 5)
+            self.assertEqual(migrated["schema_version"], 6)
             self.assertEqual(migrated["revision"], 9)
             self.assertTrue(all(item["provenance"] == "unknown-legacy" for item in migrated["items"]))
             self.assertTrue(
@@ -241,12 +254,14 @@ class LedgerModelTests(unittest.TestCase):
                     for item in migrated["items"]
                 )
             )
+            self.assertTrue(all(item["priority"] == "P2" for item in migrated["items"]))
             after = copy.deepcopy(migrated["items"])
             for item in after:
                 item.pop("provenance")
                 item.pop("order_intent")
+                item.pop("priority")
             self.assertEqual(after, before)
-            self.assertEqual(json.loads(ledger.read_text(encoding="utf-8"))["schema_version"], 5)
+            self.assertEqual(json.loads(ledger.read_text(encoding="utf-8"))["schema_version"], 6)
 
     def test_v4_ledger_migrates_to_automatic_order_without_claiming_manual_intent(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -258,11 +273,12 @@ class LedgerModelTests(unittest.TestCase):
             original_provenance = [item["provenance"] for item in legacy["items"]]
             for item in legacy["items"]:
                 item.pop("order_intent")
+                item.pop("priority")
             ledger.write_text(json.dumps(legacy), encoding="utf-8")
 
             migrated = ledger_ui.read_json(ledger)
 
-            self.assertEqual(migrated["schema_version"], 5)
+            self.assertEqual(migrated["schema_version"], 6)
             self.assertEqual(migrated["revision"], 13)
             self.assertEqual([item["id"] for item in migrated["items"]], original_order)
             self.assertEqual([item["provenance"] for item in migrated["items"]], original_provenance)
@@ -273,6 +289,33 @@ class LedgerModelTests(unittest.TestCase):
                     for item in migrated["items"]
                 )
             )
+            self.assertTrue(all(item["priority"] == "P2" for item in migrated["items"]))
+
+    def test_v5_ledger_migrates_priority_without_erasing_manual_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            legacy = sample_ledger()
+            legacy["schema_version"] = 5
+            legacy["revision"] = 20
+            for item in legacy["items"]:
+                item.pop("priority")
+            legacy["items"][0]["order_intent"] = {
+                "kind": "manual",
+                "relevance_updated_at": "2026-08-07T10:05:00Z",
+                "manually_positioned_at": "2026-08-07T10:10:00Z",
+                "manual_order_updated_at": "2026-08-07T10:10:00Z",
+                "manual_order_revision": 2,
+                "placed_after_id": None,
+                "placed_before_id": "OI-2",
+            }
+            ledger.write_text(json.dumps(legacy), encoding="utf-8")
+
+            migrated = ledger_ui.read_json(ledger)
+
+            self.assertEqual(migrated["schema_version"], 6)
+            self.assertEqual(migrated["revision"], 21)
+            self.assertTrue(all(item["priority"] == "P2" for item in migrated["items"]))
+            self.assertEqual(migrated["items"][0]["order_intent"]["kind"], "manual")
 
     def test_current_schema_requires_supported_provenance(self) -> None:
         data = sample_ledger()
@@ -305,6 +348,17 @@ class LedgerModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported provenance"):
             ledger_ui.validate_ledger(data)
 
+    def test_current_schema_requires_a_supported_priority(self) -> None:
+        data = sample_ledger()
+        data["items"][0].pop("priority")
+        with self.assertRaisesRegex(ValueError, "unsupported priority"):
+            ledger_ui.validate_ledger(data)
+
+        data = sample_ledger()
+        data["items"][0]["priority"] = "urgent"
+        with self.assertRaisesRegex(ValueError, "unsupported priority"):
+            ledger_ui.validate_ledger(data)
+
     def test_automatic_reconciliation_prefers_actionability_then_recency(self) -> None:
         data = sample_ledger()
         first, second = data["items"][:2]
@@ -321,12 +375,29 @@ class LedgerModelTests(unittest.TestCase):
         self.assertEqual([item["id"] for item in active], ["OI-2", "OI-1"])
         self.assertFalse(ledger_ui.reconcile_order(data))
 
+    def test_automatic_reconciliation_uses_priority_before_recency_within_status(self) -> None:
+        data = sample_ledger()
+        first, second = data["items"][:2]
+        first["status"] = second["status"] = "requested"
+        first["priority"] = "P3"
+        first["order_intent"]["relevance_updated_at"] = "2026-08-07T12:00:00Z"
+        second["priority"] = "P0"
+        second["order_intent"]["relevance_updated_at"] = "2026-08-07T10:00:00Z"
+
+        self.assertTrue(ledger_ui.reconcile_order(data))
+        active = sorted(
+            (item for item in data["items"] if not item["completed"]),
+            key=lambda item: item["position"],
+        )
+        self.assertEqual([ledger_ui.display_id(item) for item in active], ["OI-2-P0", "OI-1-P3"])
+
     def test_manual_item_keeps_its_slot_while_automatic_items_reconcile(self) -> None:
         data = sample_ledger()
         data["items"].insert(
             2,
             {
                 "id": "OI-4",
+                "priority": "P0",
                 "title": "Newest automatic item",
                 "status": "waiting-on-you",
                 "completed": False,
@@ -476,6 +547,7 @@ class LedgerModelTests(unittest.TestCase):
             )
             self.assertEqual(created["explanation"], "A gentle sentence spread over two lines.")
             self.assertEqual(created["provenance"], "user-requested")
+            self.assertEqual(created["priority"], "P2")
             open_items = sorted(
                 (item for item in ledger_ui.read_json(ledger)["items"] if not item["completed"]),
                 key=lambda item: item["position"],
@@ -495,6 +567,34 @@ class LedgerModelTests(unittest.TestCase):
 
             args.explanation = "y" * (ledger_ui.MAX_EXPLANATION_CHARS + 1)
             with self.assertRaisesRegex(ValueError, "at most"):
+                ledger_ui.command_upsert(args)
+
+    def test_upsert_accepts_display_references_and_updates_priority_explicitly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = types.SimpleNamespace(
+                ledger=str(ledger),
+                id="OI-1-P2",
+                title=None,
+                status=None,
+                priority="P0",
+                provenance=None,
+                group=None,
+                explanation=None,
+                notes_file=None,
+                session_id=None,
+            )
+
+            self.assertEqual(ledger_ui.command_upsert(args), 0)
+            saved = ledger_ui.read_json(ledger)
+            item = next(entry for entry in saved["items"] if entry["id"] == "OI-1")
+            self.assertEqual(item["priority"], "P0")
+            self.assertEqual(ledger_ui.display_id(item), "OI-1-P0")
+
+            args.id = "OI-1-P2"
+            args.priority = None
+            with self.assertRaisesRegex(ValueError, "stale priority"):
                 ledger_ui.command_upsert(args)
 
     def test_new_completed_history_does_not_reorder_open_items(self) -> None:
@@ -1063,6 +1163,25 @@ class LedgerServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(refreshed["title"], "Externally updated title")
 
+    def test_priority_mutation_updates_display_reference_and_automatic_order(self) -> None:
+        status, updated = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 1, "action": "priority", "id": "OI-2", "priority": "P0"},
+        )
+        self.assertEqual(status, 200)
+        item = next(entry for entry in updated["items"] if entry["id"] == "OI-2")
+        self.assertEqual(item["priority"], "P0")
+        self.assertEqual(ledger_ui.display_id(item), "OI-2-P0")
+
+        status, error = self.request(
+            "POST",
+            "/api/mutate",
+            {"base_revision": 2, "action": "priority", "id": "OI-2-P2", "priority": "P1"},
+        )
+        self.assertEqual(status, 400)
+        self.assertIn("stale priority", error["error"])
+
     def test_stale_revision_conflicts_without_overwrite(self) -> None:
         status, _ = self.request(
             "POST",
@@ -1256,6 +1375,14 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("NETWORK_ERROR_MESSAGE", script)
         for action in ("toggle", "reorder", "edit"):
             self.assertIn(f'action: "{action}"', script)
+        self.assertIn('action: "priority"', script)
+        self.assertIn('class="item-reference"', html)
+        self.assertIn('class="priority-select"', html)
+        for priority in ("P0", "P1", "P2", "P3"):
+            self.assertIn(f'<option value="{priority}">{priority}</option>', html)
+        self.assertIn("function displayId(item)", script)
+        self.assertIn("`${item.id}-${item.priority}`", script)
+        self.assertIn("P0 is highest and P3 is lowest", script)
         self.assertIn("moved_id", script)
         self.assertIn("window.setInterval", script)
         self.assertIn("tracking_state === \"transferred\"", script)
@@ -1389,6 +1516,7 @@ class LedgerAssetTests(unittest.TestCase):
         # row disclosure gesture. A normal single click still starts editing.
         for selector in (
             ".check-wrap",
+            ".item-reference",
             ".item-actions",
             ".edit-input",
             ".item-tooltip",

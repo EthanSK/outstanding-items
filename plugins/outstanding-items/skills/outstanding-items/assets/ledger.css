@@ -29,7 +29,8 @@ body {
 }
 
 button,
-textarea { font: inherit; }
+textarea,
+select { font: inherit; }
 
 button { cursor: pointer; }
 
@@ -178,7 +179,7 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
 
 .ledger-item {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  grid-template-columns: 2rem 5.15rem minmax(0, 1fr) auto;
   gap: 0.7rem;
   align-items: center;
   min-height: 3.4rem;
@@ -204,7 +205,47 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   background: var(--hover);
 }
 
-.ledger-item.transferred { grid-template-columns: minmax(0, 1fr) auto; }
+.ledger-item.transferred { grid-template-columns: 5.15rem minmax(0, 1fr) auto; }
+
+.item-reference {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.priority-select {
+  width: 2.15rem;
+  margin: 0;
+  padding: 0.18rem 0.05rem;
+  border: 0;
+  border-radius: 0.3rem;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+}
+
+.priority-select:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); }
+
+.priority-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.priority-select[data-priority="P0"] { color: #a33a34; }
+.priority-select[data-priority="P1"] { color: #966417; }
+.priority-select[data-priority="P2"] { color: var(--muted); }
+.priority-select[data-priority="P3"] { color: color-mix(in srgb, var(--muted) 70%, transparent); }
+
+.priority-readonly { font-weight: 650; }
 
 .check-wrap {
   position: relative;
@@ -595,7 +636,8 @@ footer p { margin: 0; }
   .shell { width: min(100% - 1.25rem, 48rem); padding-top: 1.5rem; }
   .masthead { gap: 1rem; }
   .save-state { padding-top: 0.25rem; }
-  .ledger-item { grid-template-columns: 1.8rem minmax(0, 1fr) auto; gap: 0.45rem; }
+  .ledger-item { grid-template-columns: 1.8rem 4.8rem minmax(0, 1fr) auto; gap: 0.4rem; }
+  .ledger-item.transferred { grid-template-columns: 4.8rem minmax(0, 1fr) auto; }
   .check-wrap { width: 1.8rem; }
   .item-actions { min-width: 2.15rem; }
   .item-actions .move-up,

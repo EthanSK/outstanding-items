@@ -32,8 +32,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 
-SCHEMA_VERSION = 5
-LEGACY_SCHEMA_VERSIONS = {3, 4}
+SCHEMA_VERSION = 6
+LEGACY_SCHEMA_VERSIONS = {3, 4, 5}
 STATUSES = {
     "requested",
     "planned",
@@ -49,6 +49,9 @@ DONE_STATUSES = {"verified", "dropped"}
 TRACKING_STATES = {"active", "transferred"}
 PROVENANCES = {"user-requested", "agent-added", "unknown-legacy"}
 ORDER_INTENTS = {"automatic", "manual"}
+PRIORITIES = {"P0", "P1", "P2", "P3"}
+DEFAULT_PRIORITY = "P2"
+PRIORITY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 ACTIONABLE_PRIORITY = {
     "waiting-on-you": 0,
     "in-progress": 1,
@@ -59,8 +62,14 @@ ACTIONABLE_PRIORITY = {
     "blocked": 6,
 }
 ID_RE = re.compile(r"^OI-\d+$")
-ITEM_HEADING_RE = re.compile(r"^###\s+(OI-\d+)\s+(.+?)\s*$")
-DONE_ITEM_RE = re.compile(r"^-\s+~~(OI-\d+)\s+(.+?)~~\s*(.*?)\s*$")
+ITEM_REFERENCE_RE = re.compile(r"^(OI-\d+)(?:-(P[0-3]))?$")
+ITEM_HEADING_RE = re.compile(
+    r"^###\s+(?P<id>OI-\d+)(?:-(?P<priority>P[0-3]))?\s+(?P<title>.+?)\s*$"
+)
+DONE_ITEM_RE = re.compile(
+    r"^-\s+~~(?P<id>OI-\d+)(?:-(?P<priority>P[0-3]))?\s+"
+    r"(?P<title>.+?)~~\s*(?P<state>.*?)\s*$"
+)
 SECTION_HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 STATE_RE = re.compile(r"^-\s+\*\*State:\*\*\s*(.+?)\s*$", re.I)
 MAX_BODY_BYTES = 1_000_000
@@ -104,6 +113,34 @@ def automatic_order_intent(relevance_updated_at: str | None = None) -> dict[str,
     }
 
 
+def split_item_reference(reference: str) -> tuple[str, str | None]:
+    """Return the permanent ID and optional priority suffix from a display reference."""
+    if not isinstance(reference, str):
+        raise ValueError("item reference must be a string")
+    match = ITEM_REFERENCE_RE.fullmatch(reference)
+    if not match:
+        raise ValueError("item reference must look like OI-35 or OI-35-P1")
+    return match.group(1), match.group(2)
+
+
+def display_id(item: dict[str, Any]) -> str:
+    """Build the user-facing reference without changing the permanent ledger key."""
+    return f"{item['id']}-{item['priority']}"
+
+
+def item_for_reference(items: list[dict[str, Any]], reference: str) -> dict[str, Any]:
+    """Resolve a stable or display reference and reject a stale priority suffix."""
+    item_id, supplied_priority = split_item_reference(reference)
+    item = next((entry for entry in items if entry["id"] == item_id), None)
+    if item is None:
+        raise ValueError(f"unknown item id: {reference!r}")
+    if supplied_priority is not None and supplied_priority != item["priority"]:
+        raise ValueError(
+            f"{reference} has stale priority; current reference is {display_id(item)}"
+        )
+    return item
+
+
 def migrate_schema(data: Any) -> bool:
     """Upgrade supported prior schemas without inventing provenance or manual intent."""
     if not isinstance(data, dict):
@@ -125,7 +162,9 @@ def migrate_schema(data: Any) -> bool:
             raise ValueError("every legacy item must be an object")
         if version == 3:
             item["provenance"] = "unknown-legacy"
-        item["order_intent"] = automatic_order_intent()
+        if version in {3, 4}:
+            item["order_intent"] = automatic_order_intent()
+        item["priority"] = DEFAULT_PRIORITY
     revision = data.get("revision")
     if not isinstance(revision, int) or revision < 0:
         raise ValueError("revision must be a non-negative integer")
@@ -272,6 +311,9 @@ def validate_ledger(data: Any) -> None:
         status = item.get("status")
         if status not in STATUSES:
             raise ValueError(f"{item_id} has unsupported status {status!r}")
+        priority = item.get("priority")
+        if priority not in PRIORITIES:
+            raise ValueError(f"{item_id} has unsupported priority {priority!r}")
         completed = item.get("completed")
         if not isinstance(completed, bool):
             raise ValueError(f"{item_id} completed must be boolean")
@@ -397,6 +439,10 @@ def validate_ledger(data: Any) -> None:
             raise ValueError("latest_unanswered_suggestion must be an object or null")
         if not isinstance(suggestion.get("id"), str) or not isinstance(suggestion.get("text"), str):
             raise ValueError("latest_unanswered_suggestion needs string id and text")
+        if not ID_RE.fullmatch(suggestion["id"]) or suggestion["id"] not in seen:
+            raise ValueError(
+                "latest_unanswered_suggestion id must be one permanent OI-n item key"
+            )
 
 
 def normalized_status(state_text: str) -> str:
@@ -475,12 +521,13 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
         done_match = DONE_ITEM_RE.match(line)
         if done_match:
             flush_item()
-            title_text = done_match.group(2).strip()
+            title_text = done_match.group("title").strip()
             if title_text.endswith("."):
                 title_text = title_text[:-1]
-            state = done_match.group(3).strip()
+            state = done_match.group("state").strip()
             current_item = {
-                "id": done_match.group(1),
+                "id": done_match.group("id"),
+                "priority": done_match.group("priority") or DEFAULT_PRIORITY,
                 "title": title_text,
                 "_from_done_bullet": True,
             }
@@ -489,7 +536,11 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
         item_match = ITEM_HEADING_RE.match(line)
         if item_match:
             flush_item()
-            current_item = {"id": item_match.group(1), "title": item_match.group(2).strip()}
+            current_item = {
+                "id": item_match.group("id"),
+                "priority": item_match.group("priority") or DEFAULT_PRIORITY,
+                "title": item_match.group("title").strip(),
+            }
             item_lines = []
             continue
         section_match = SECTION_HEADING_RE.match(line)
@@ -562,8 +613,8 @@ def touch_relevance(item: dict[str, Any], when: str) -> None:
     item["order_intent"]["relevance_updated_at"] = when
 
 
-def automatic_order_key(item: dict[str, Any]) -> tuple[int, int, int]:
-    """Sort actionable status first, then newest relevance and newest stable ID."""
+def automatic_order_key(item: dict[str, Any]) -> tuple[int, int, int, int]:
+    """Sort status first, then priority, relevance recency, and stable ID."""
     relevance = item["order_intent"].get("relevance_updated_at") or ""
     try:
         recency = int(dt.datetime.fromisoformat(relevance.replace("Z", "+00:00")).timestamp())
@@ -571,6 +622,7 @@ def automatic_order_key(item: dict[str, Any]) -> tuple[int, int, int]:
         recency = -1
     return (
         ACTIONABLE_PRIORITY[item["status"]],
+        PRIORITY_RANK[item["priority"]],
         -recency,
         -int(item["id"].split("-")[1]),
     )
@@ -651,11 +703,12 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     if base_revision != data["revision"]:
         raise ConflictError("The ledger changed elsewhere. Reloaded the newest version; retry your edit.")
     action = payload.get("action")
-    item_id = payload.get("id")
-    item = next((entry for entry in data["items"] if entry["id"] == item_id), None)
-    if action in {"edit", "toggle"} and item is None:
-        raise ValueError(f"unknown item id: {item_id!r}")
-    if action in {"edit", "toggle"} and item.get("tracking_state") == "transferred":
+    item_reference = payload.get("id")
+    item = None
+    if action in {"edit", "toggle", "priority"}:
+        item = item_for_reference(data["items"], item_reference)
+    item_id = item["id"] if item is not None else item_reference
+    if action in {"edit", "toggle", "priority"} and item.get("tracking_state") == "transferred":
         raise ValueError(f"{item_id} is transferred history and is read-only here")
     if action == "edit":
         title = payload.get("title")
@@ -687,6 +740,14 @@ def mutate(data: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
             touch_relevance(item, utc_now())
         clear_suggestion_for(data, item_id)
         normalize_positions(data)
+        reconcile_order(data)
+    elif action == "priority":
+        priority = payload.get("priority")
+        if priority not in PRIORITIES:
+            raise ValueError("priority must be P0, P1, P2, or P3")
+        item["priority"] = priority
+        touch_relevance(item, utc_now())
+        clear_suggestion_for(data, item_id)
         reconcile_order(data)
     elif action == "reorder":
         order = payload.get("order")
@@ -1493,7 +1554,7 @@ def command_reconcile_order(args: argparse.Namespace) -> int:
     )
     print(
         f"{'reconciled' if changed else 'unchanged'} revision={data['revision']} "
-        f"order={','.join(item['id'] for item in active)}"
+        f"order={','.join(display_id(item) for item in active)}"
     )
     return 0
 
@@ -1501,15 +1562,23 @@ def command_reconcile_order(args: argparse.Namespace) -> int:
 def command_upsert(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     data = read_json(ledger)
-    item = next((entry for entry in data["items"] if entry["id"] == args.id), None)
+    item_id, reference_priority = split_item_reference(args.id)
+    requested_priority = getattr(args, "priority", None)
+    item = next((entry for entry in data["items"] if entry["id"] == item_id), None)
+    if item is None and reference_priority and requested_priority and reference_priority != requested_priority:
+        raise ValueError(
+            f"--id priority {reference_priority} disagrees with --priority {requested_priority}"
+        )
+    if item is not None and reference_priority and reference_priority != item["priority"]:
+        raise ValueError(
+            f"{args.id} has stale priority; current reference is {display_id(item)}"
+        )
     if item is not None and item.get("tracking_state") == "transferred":
-        raise ValueError(f"{args.id} is transferred history and cannot be updated in this task")
+        raise ValueError(f"{display_id(item)} is transferred history and cannot be updated in this task")
     provenance = getattr(args, "provenance", None)
     if item is None:
         if not args.title:
             raise ValueError("--title is required when adding a new item")
-        if not ID_RE.fullmatch(args.id):
-            raise ValueError("--id must look like OI-35")
         if provenance is None:
             raise ValueError(
                 "--provenance is required when adding a new item; choose "
@@ -1522,7 +1591,8 @@ def command_upsert(args: argparse.Namespace) -> int:
         )
         changed_at = utc_now()
         item = {
-            "id": args.id,
+            "id": item_id,
+            "priority": requested_priority or reference_priority or DEFAULT_PRIORITY,
             "title": args.title.strip(),
             "status": initial_status,
             "completed": initial_completed,
@@ -1539,12 +1609,19 @@ def command_upsert(args: argparse.Namespace) -> int:
         data["items"].append(item)
     elif provenance is not None and provenance != item["provenance"]:
         raise ValueError(
-            f"{args.id} provenance is immutable ({item['provenance']}); "
+            f"{display_id(item)} provenance is immutable ({item['provenance']}); "
             "use correct-provenance with an evidence-based reason"
         )
     substantive_update = any(
         value is not None
-        for value in (args.title, args.status, args.group, args.explanation, args.notes_file)
+        for value in (
+            args.title,
+            args.status,
+            requested_priority,
+            args.group,
+            args.explanation,
+            args.notes_file,
+        )
     )
     changed_at = utc_now()
     if args.title:
@@ -1562,20 +1639,22 @@ def command_upsert(args: argparse.Namespace) -> int:
         item["state_text"] = args.status
         item["completed_at"] = changed_at if item["completed"] else None
         item["completed_session_id"] = args.session_id if item["completed"] else None
+    if requested_priority:
+        item["priority"] = requested_priority
     if args.group:
         item["group"] = args.group
     if args.notes_file:
         item["details_markdown"] = pathlib.Path(args.notes_file).read_text(encoding="utf-8").strip()
     if substantive_update:
         touch_relevance(item, changed_at)
-    if args.title or args.status:
-        clear_suggestion_for(data, args.id)
+    if args.title or args.status or requested_priority:
+        clear_suggestion_for(data, item_id)
     normalize_positions(data)
     reconcile_order(data)
     data["revision"] += 1
     data["updated_at"] = utc_now()
     atomic_write_json(ledger, data)
-    print(f"saved {args.id} at revision {data['revision']}")
+    print(f"saved {display_id(item)} at revision {data['revision']}")
     return 0
 
 
@@ -1584,12 +1663,11 @@ def command_correct_provenance(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     data = read_json(ledger)
     by_id = {item["id"]: item for item in data["items"]}
-    requested = list(dict.fromkeys(args.ids))
+    requested = list(
+        dict.fromkeys(item_for_reference(data["items"], reference)["id"] for reference in args.ids)
+    )
     if not requested:
         raise ValueError("--ids must name at least one item")
-    missing = [item_id for item_id in requested if item_id not in by_id]
-    if missing:
-        raise ValueError(f"unknown item id(s): {', '.join(missing)}")
     reason = " ".join(args.reason.split())
     if not reason:
         raise ValueError("--reason must explain the evidence for this correction")
@@ -1633,10 +1711,9 @@ def command_transfer(args: argparse.Namespace) -> int:
     ledger = pathlib.Path(args.ledger).expanduser().resolve()
     data = read_json(ledger)
     by_id = {item["id"]: item for item in data["items"]}
-    requested = list(dict.fromkeys(args.ids))
-    missing = [item_id for item_id in requested if item_id not in by_id]
-    if missing:
-        raise ValueError(f"unknown item id(s): {', '.join(missing)}")
+    requested = list(
+        dict.fromkeys(item_for_reference(data["items"], reference)["id"] for reference in args.ids)
+    )
     transferred_at = utc_now()
     destination = {
         "task_id": args.task_id,
@@ -1696,7 +1773,7 @@ def parser() -> argparse.ArgumentParser:
 
     reconcile = sub.add_parser(
         "reconcile-order",
-        help="sort automatic items by actionable relevance while preserving manual placement",
+        help="sort automatic items by status, priority, and relevance while preserving manual placement",
     )
     reconcile.add_argument("--ledger", required=True)
     reconcile.set_defaults(func=command_reconcile_order)
@@ -1706,6 +1783,11 @@ def parser() -> argparse.ArgumentParser:
     upsert.add_argument("--id", required=True)
     upsert.add_argument("--title")
     upsert.add_argument("--status", choices=sorted(STATUSES))
+    upsert.add_argument(
+        "--priority",
+        choices=sorted(PRIORITIES),
+        help=f"P0 (highest) through P3 (lowest); new items default to {DEFAULT_PRIORITY}",
+    )
     upsert.add_argument(
         "--provenance",
         choices=sorted(PROVENANCES),

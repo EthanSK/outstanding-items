@@ -28,6 +28,7 @@ There is no score. Hold these together and use judgement.
 | Effort against value | What is the smallest thing with a real payoff? Prefer twenty minutes with an outcome over three hours with a milestone. |
 | Availability to them | Can *they* pick it up right now? A blocked parent is not a candidate; its captured prerequisite or follow-up is. An item that needs them in person is. |
 | Urgency | Real deadlines and real consequences only. Volume is not urgency, and neither is age. |
+| Recorded priority | Among similarly actionable choices, prefer P0 before P1 before P2 before P3. Treat it as a fallback signal, not a score that overrides dependencies, momentum, or availability. |
 | Load | How much is this person carrying right now? After a long push, choose the smallest honest next move and phrase it gently. |
 | Kindness | Would a thoughtful colleague say this out loud right now, or leave them alone? |
 | Autonomy | Is this their call to make? It always is. Offer the move, not a verdict on their week. |
@@ -39,12 +40,12 @@ Availability is judged from the user's side, not yours. Something you cannot tou
 Two lines maximum, plus the live UI link when one exists:
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4-P1 Focus ring on interactive elements** `You`
 Twenty minutes, and the smallest version is the shared token plus one button.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
 
-- **One item.** A shortlist is a decision handed back to the person who asked you to make it. One `OI-n` in the footer, and no other.
+- **One item.** A shortlist is a decision handed back to the person who asked you to make it. One current `OI-n-Px` reference in the footer, and no other.
 - **A small possible first step.** Name the twenty-minute version, so starting is cheap and stopping is allowed.
 - **One plain sentence of reasoning.** Say the real reason: it is quick, they are already there, something depends on it. Drop the sentence entirely when the title says it all.
 - **Calibrated confidence.** "Probably", "if you have the energy", "it is a close call" are all better than false certainty.
@@ -57,7 +58,7 @@ Twenty minutes, and the smallest version is the shared token plus one button.
 Say it is close, and leave the runner-up unnamed. Naming a second item turns the footer back into the list it exists to replace, and the whole ledger is one click away in the UI:
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4-P1 Focus ring on interactive elements** `You`
 A close call, but this is the smaller restart and you were already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -88,7 +89,7 @@ A `blocked` parent is not a suggestion. Nothing they do moves the parent directl
 
 ## When the choice is awkward
 
-- **The user already stated a priority.** Record and acknowledge it, leave every status and item order unchanged, and wait for a fresh instruction naming what the agent should start. The footer may name that item; it may not name a rival.
+- **The user already stated a priority.** Update that item's P0–P3 field and acknowledge it. Automatic order may then reconcile within the item's status band, but status, provenance, manual placement, and authority stay unchanged. Wait for a fresh instruction naming what the agent should start. The footer may name that item; it may not name a rival.
 - **The information is not there.** Choose the smallest reversible open action and say the choice is close; do not invent a strong rationale.
 - **They are winding down.** Still name the smallest honest item, but phrase it as something to return to, not pressure to act tonight.
 - **The honest answer is rest.** The footer may name the next item for later while the body says to stop now. Recommendation timing never becomes urgency.
@@ -117,7 +118,7 @@ Each of these is the whole footer, at the end of the final response of its turn.
 **Asked directly, several things open**
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4-P1 Focus ring on interactive elements** `You`
 About twenty minutes, and you are already in that file.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -125,28 +126,28 @@ About twenty minutes, and you are already in that file.
 **Everything left needs them in person**
 
 ```text
-**OI-8 Approve the staging deploy** `You` — waiting-on-you
+**OI-8-P0 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the smallest thing on the list that only you can do.
 ```
 
 **Returning after a gap**
 
 ```text
-**OI-4 Focus ring on interactive elements** `You` — implemented
+**OI-4-P1 Focus ring on interactive elements** `You` — implemented
 You left it half-done and the suite still passes, so it is the cheapest restart.
 ```
 
 **Overloaded**
 
 ```text
-**OI-5 Skip link** `You`
+**OI-5-P2 Skip link** `You`
 Just the first section of it, if anything. Nothing here has a date on it.
 ```
 
 **They declined the last one, and every alternative was considered**
 
 ```text
-**OI-5 Skip link** `You`
+**OI-5-P2 Skip link** `You`
 The other options were considered; this remains the smallest useful restart.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -154,7 +155,7 @@ The other options were considered; this remains the smallest useful restart.
 **Winding down**
 
 ```text
-**OI-5 Skip link** `You`
+**OI-5-P2 Skip link** `You`
 Leave this as the clean restart for tomorrow; nothing needs to begin tonight.
 ```
 
@@ -173,10 +174,10 @@ Leave this as the clean restart for tomorrow; nothing needs to begin tonight.
 
 **The user already decided** — the body says it, the footer names their choice and nothing else:
 
-> OI-5 is recorded as your priority. Ledger unchanged; tell me `start OI-5` if you want me to work on it.
+> OI-5-P1 is recorded as high priority. Its status and authority are unchanged; tell me `start OI-5-P1` if you want me to work on it.
 
 **They said yes**
 
-> **User:** go on then, do OI-4.
+> **User:** go on then, do OI-4-P1.
 >
 > Only now does the work start — because they named it, in this turn, in plain words.

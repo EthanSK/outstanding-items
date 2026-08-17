@@ -26,7 +26,7 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 
 1. **Capture everything.** Every distinct request, correction, deferral, or "while you're there" aside becomes an item — including requests unrelated to the current work. Never refuse a reminder because it is off-topic; capture it without changing the execution state of any item.
 2. **Capturing is not accepting a job.** "Add this to outstanding items" and "remember this" ask you to record, and nothing more. Record it, say so, and stop.
-3. **Assign a stable ID.** Items are `OI-1`, `OI-2`, … in the order first seen. IDs are never reused and never renumbered, so deltas stay compact and references stay valid.
+3. **Assign a stable ID and explicit priority.** Keep the permanent ledger key as `OI-1`, `OI-2`, … in first-seen order, and give every item one priority: `P0` critical, `P1` high, `P2` normal/default, or `P3` low. Show the composite current reference everywhere user-facing — for example `OI-12-P1` — while retaining `OI-12` internally so changing priority never breaks history, links, or commands. Existing items with no provable priority migrate to `P2`; never invent urgency. Priority describes relative importance and never grants authority.
 4. **Record ledger provenance, not task authorship.** Set `provenance` to `user-requested` only when the user explicitly says to add or record that specific thing in Outstanding Items, the outstanding-items ledger, or the outstanding-items list. A normal work request — including “we need to do X”, “can you do X”, “remember X”, or an instruction to start X — does **not** qualify. If you capture that request automatically, use `agent-added`. Use `unknown-legacy` only for an older record whose capture source cannot be proved. Never infer `user-requested` from who wanted the underlying work, from a title, status, note, or later start instruction. Decision table, corrections, and examples: [references/provenance.md](references/provenance.md).
 5. **Never leave a real loose end out.** Automatically create an `agent-added` item whenever the current work reveals a concrete unresolved thing the user still needs to review, decide, provide, verify, or return to, even when they did not explicitly ask to add it to Outstanding Items. Before declaring the ledger empty, scan the current request, results, blockers, decisions, and unverified outcomes for such a user-facing loose end. Do not invent filler or speculative improvements when genuinely nothing remains; the ledger is memory, not idea exhaust.
 6. **Keep an actionable frontier.** Whenever any active item remains open, ensure the ledger also contains at least one concrete thing the user can choose to do next. A blocked parent does not justify silence: capture the nearest useful prerequisite, workaround, decision, or time/condition-bound follow-up as a separate `agent-added` item and record which item it unblocks. Prefer another already-open actionable item when one exists. Never invent busywork or pretend an external wait can be accelerated; for a pure external wait, create the next honest check at a sensible time or condition.
@@ -34,7 +34,7 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 8. **Show one recommendation, once per turn.** Maintain the ledger silently while you work, then append the compact recommendation to the **final response of the turn**. Start directly with the suggested item, never an `Outstanding` heading or the list. Never put it in commentary, progress notes, partial updates, plans, or tool-adjacent status messages. If anything active is open, name one item; if nothing is open, use the bold empty-ledger line below.
 9. **Label honestly.** Use the status table below. Never label an item `verified` without evidence you observed in this task or exact completion evidence already preserved in the canonical item and checked now. Status words describe; they never manufacture or extend authority.
 10. **Reconcile completion every time.** Whenever you read, add, update, suggest from, render, or otherwise interact with a ledger, inspect the evidence already recorded and any evidence observed in this task. If an item's scoped outcome is actually complete and verified — or the user explicitly dropped it — set the corresponding `verified` or `dropped` status, mark it completed, and move it to Done while preserving its evidence. Apply this to every provenance, and especially never leave completed `agent-added` work open merely to demand redundant user acceptance. This is ledger maintenance, not authority to perform unfinished work. Do not close speculative, merely implemented, unverified, `waiting-on-you`, `blocked`, `reminder`, transferred, or genuinely unfinished items.
-11. **Reconcile order without erasing intent.** Whenever you open, reconcile, or update a canonical ledger, run `ledger_ui.py reconcile-order` (or use the equivalent server path). Automatic items may move by actionable status and newest relevance, with `waiting-on-you` surfaced first. A drag or keyboard move in the Full outstanding items UI records `manual` order metadata; keep that item in its chosen slot until the user moves it again. Never infer manual placement for a legacy item, silently clear manual metadata, or reorder the ledger merely to match the footer recommendation.
+11. **Reconcile order without erasing intent.** Whenever you open, reconcile, or update a canonical ledger, run `ledger_ui.py reconcile-order` (or use the equivalent server path). Automatic items sort first by actionable status, then by priority from P0 through P3 as the fallback within that status band, then by newest relevance and newest stable ID. A drag or keyboard move in the Full outstanding items UI records `manual` order metadata; keep that item in its chosen slot until the user moves it again. Never infer manual placement for a legacy item, silently clear manual metadata, or reorder the ledger merely to match the footer recommendation.
 12. **Persist project chats by default.** When this chat is scoped to a Git project, resolve its per-chat ledger before the first capture with `ledger_ui.py project-ledger --project-root <root> --task-id <stable-task-id>`. Project storage is on by default: the canonical path is `<root>/.outstanding-items/<task-id>/outstanding-items.json`, and the command adds `/.outstanding-items/` to that project's `.gitignore` exactly once. Use `--no-project-storage` only when the user or project instructions explicitly opt this chat out. Never combine different chats into one ledger, never commit the private directory, and never create a second ledger when an existing canonical ledger already owns the chat.
 13. **Keep one source of truth.** The per-chat JSON ledger is authoritative. The footer quotes one item from it and the HTML UI renders all of it; never maintain parallel Markdown or browser-storage ledgers (see [references/backlog-artifact.md](references/backlog-artifact.md)).
 14. **Propose, never dispatch.** A suggestion is a sentence addressed to the user. Never convert it into a plan, a tool call, a hand-off, or a start.
@@ -46,7 +46,7 @@ Whenever later usage, debugging, or user feedback produces a durable verified fi
 One small block at the very end of the **final** response of the turn, after your normal answer, separated by a blank line. At most three lines: the one item you suggest next, an optional line saying how to start it and why, and the live UI link when one exists. Everything else stays in the ledger, out of the chat.
 
 ```text
-**OI-5 Add rate-limit docs to the handbook** `You` — planned
+**OI-5-P1 Add rate-limit docs to the handbook** `You` — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](<live local UI URL>)
 ```
@@ -54,7 +54,7 @@ Draft the limits table first, about twenty minutes; nothing else is waiting on i
 With no live UI, the link line is simply absent and nothing replaces it:
 
 ```text
-**OI-8 Approve the staging deploy** `You` — waiting-on-you
+**OI-8-P0 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
@@ -71,9 +71,9 @@ Rules:
 
 - **One recommendation per turn, in the final response only.** Update the ledger silently while working. Commentary, progress notes, partial updates, and status lines carry no recommendation, item, count, or link.
 - **No heading or label.** Start immediately with the item itself. Never prefix the block with `Outstanding`, `Suggested for you`, `Next`, or another heading.
-- **Exactly one item.** One `OI-n` appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
+- **Exactly one item.** One composite `OI-n-Px` reference appears in the footer, and it is the one you suggest. Never add a second item, an alternative, a shortlist, counts, section headings, reminders, or a `+N more` row. A footer that lists things has stopped being this footer.
 - **No Done section, ever.** A `verified`, `dropped`, or `transferred` item never appears in the footer — not as a line, not struck through, not as a count, not as a heading. Completions live in the ledger's Done group and in the Full outstanding items view, which is where the user audits them.
-- Line one starts with `**OI-n <short title>**`, immediately followed by the inline-code source marker `You` or `Agent`; append ` — <status>` only for a non-default state. Use `You` for `user-requested`, `Agent` for `agent-added`, and omit the marker for `unknown-legacy` rather than inventing an origin. Use the user's own words trimmed to roughly 60 characters. Before using `**No outstanding items**`, perform the Core contract 5 loose-end scan and the actionable-frontier scan in Core contract 6; use it only when zero active items remain open and no concrete user-facing loose end was omitted. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
+- Line one starts with `**OI-n-Px <short title>**`, immediately followed by the inline-code source marker `You` or `Agent`; append ` — <status>` only for a non-default state. Use `You` for `user-requested`, `Agent` for `agent-added`, and omit the marker for `unknown-legacy` rather than inventing an origin. Use the current priority suffix and the user's own words trimmed to roughly 60 characters. Before using `**No outstanding items**`, perform the Core contract 5 loose-end scan and the actionable-frontier scan in Core contract 6; use it only when zero active items remain open and no concrete user-facing loose end was omitted. The ledger retains `requested`; the compact footer omits it because it adds no useful signal there.
 - Line two is optional and never more than one line: a small first step, one plain reason, or the exact action a `waiting-on-you` item needs. Leave it out when it adds nothing.
 - **The Full outstanding items link appears once, or not at all.** Whenever a verified live local UI URL exists for this ledger, put `[Full outstanding items](<live local UI URL>)` on its own line as the last line of the footer, using the exact URL `ledger_ui.py start` printed. With no live UI, write no link line at all: never invent a URL, and never link raw JSON or Markdown.
 - **Rotate before repeating.** Exclude an unanswered or declined suggestion while another actionable open item exists. When every alternative has been considered, choose the best still-open item again with a useful, current first step rather than producing an empty recommendation. When the user asks what to do next, the slate is immediately clear. Do not mechanically repeat the same item on consecutive turns.
@@ -106,6 +106,17 @@ Three distinctions carry most of the weight:
 
 Full definitions and anti-patterns: [references/status-labels.md](references/status-labels.md).
 
+## Priority labels
+
+| Priority | Means |
+| --- | --- |
+| `P0` | Critical now: a serious immediate consequence or urgent hard deadline. |
+| `P1` | High: important or meaningfully blocking near-term work. |
+| `P2` | Normal: the honest default when no stronger priority is established. |
+| `P3` | Low: useful later, with little current consequence. |
+
+Priority is deliberately coarser than curation. Use it as a fallback among similarly actionable items, not as a replacement for dependencies, user momentum, real urgency, or what the user can do now. Changing priority changes the composite display reference, not the permanent `OI-n` identity, and never starts the item.
+
 ## Choosing the one item — for the user
 
 `Outsource your memory — a curated work experience.` means the footer offers one next move **for the user** and then waits. The person decides and initiates it. It is never a plan of yours and never a reason to begin.
@@ -120,7 +131,7 @@ Then:
 - An item that needs the user in person is a legitimate suggestion, because they are the one who would act. You still do not perform it, dispatch it, or chase it. Never suggest a `blocked` parent directly; suggest its separately captured actionable prerequisite or follow-up. A transferred item is owned elsewhere and is not active here.
 - Never state more confidence than the evidence supports. If it is a close call, say so in the reason; do not name the runner-up, because the whole list is one click away.
 - A suggestion never edits the ledger. Nothing is dropped, reordered, merged, hidden, or quietly deprioritised because it was not chosen.
-- If the user has stated a priority, record and acknowledge it, leave the ledger unchanged, suggest that item while it stands, and wait for a fresh instruction that names what the agent should start.
+- If the user states a priority, record and acknowledge it by updating only that item's priority field, then wait for a fresh instruction that names what the agent should start. The priority edit may affect automatic presentation order; it does not change status, manual placement, provenance, or authority.
 - If they ignore or decline it, rotate to another actionable open item and never start it. Record the offer so a resumed task does not immediately restart the same loop. If every alternative has already been considered and the item is still open, it returns to the candidate pool; refresh the first step instead of repeating stale wording.
 - If only blocked parents remain, the ledger is missing its actionable frontier. Add the nearest honest unblock or time/condition-bound follow-up as `agent-added` before writing the footer. Do not fabricate a check that is not yet useful.
 
@@ -134,7 +145,7 @@ For a chat with no project, keep the small in-context ledger until a durable fil
 
 Start or reuse the loopback editor, use its printed tokenized URL for the footer's single **Full outstanding items** link, and validate after agent-side mutations. The browser reads and atomically writes the same JSON, polls external changes, and rejects stale revisions.
 
-Reconcile the canonical order whenever you open or change the ledger. Automatic items sort by actionable status and newest relevance, while explicit drag/keyboard placement stays fixed through its recorded manual-order metadata. This is presentation maintenance only; it never starts work and never changes which item the footer recommends.
+Reconcile the canonical order whenever you open or change the ledger. Automatic items sort by actionable status, then P0→P3 priority, then newest relevance and stable ID; explicit drag/keyboard placement stays fixed through its recorded manual-order metadata. This is presentation maintenance only; it never starts work and does not replace the footer's contextual judgement.
 
 Give each item a short `explanation`: one warm, action-first sentence or two saying what the item is about, so hovering or focusing it in the UI brings the whole thing back. Lead with the concrete action in imperative Git commit-subject style — `Write a LinkedIn post…`, not `This is the idea to…` — then add only the context that helps someone meeting the item cold. Use no jargon, evidence dumps, next steps, or Markdown. It is optional, an older ledger without it still loads, and the UI falls back to a title-led status sentence. Commands, tooltip copy, persistence, migration, and browser-proof requirements: [references/ledger-ui.md](references/ledger-ui.md).
 

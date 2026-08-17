@@ -48,11 +48,11 @@ Prefer, in order: a path the user names; a task/session scratch directory; `outs
 
 Do not silently create a ledger before those triggers. When the user has already explicitly asked for the Full outstanding items UI or durable ledger file, that request supplies the path-creation authority; choose the task-owned output directory when one exists and report it.
 
-## Schema version 5
+## Schema version 6
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "owner": "user",
   "authorizes_work": false,
   "title": "Outstanding items",
@@ -64,6 +64,7 @@ Do not silently create a ledger before those triggers. When the user has already
   "items": [
     {
       "id": "OI-4",
+      "priority": "P1",
       "title": "Fix the flaky login test",
       "status": "implemented",
       "completed": false,
@@ -72,7 +73,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "group": "Outstanding for you",
       "state_text": "implemented; CI proof pending",
       "details_markdown": "Retried 20x locally, not on CI.",
-      "explanation": "This is the login test that passes locally and fails at random on CI. The fix is in, and a green CI run is what would settle it.",
+      "explanation": "Verify the login test that passes locally and fails at random on CI; the fix is in, and a green CI run would settle it.",
       "provenance": "user-requested",
       "order_intent": {
         "kind": "automatic",
@@ -83,6 +84,7 @@ Do not silently create a ledger before those triggers. When the user has already
     },
     {
       "id": "OI-1",
+      "priority": "P2",
       "title": "Rename the deploy script",
       "status": "verified",
       "completed": true,
@@ -110,10 +112,11 @@ Do not silently create a ledger before those triggers. When the user has already
 
 | Field | Rule |
 | --- | --- |
-| `schema_version` | Exactly `5` after loading. Versions 3 and 4 are upgraded atomically; other unknown versions are rejected. |
+| `schema_version` | Exactly `6` after loading. Versions 3, 4, and 5 are upgraded atomically; other unknown versions are rejected. |
 | `owner` / `authorizes_work` | Always `"user"` / `false`. UI edits never change them. |
 | `revision` | Non-negative integer incremented after every successful mutation. It prevents stale overwrites. |
-| `id` | `OI-n`, permanent, unique, never renumbered. Gaps are normal. |
+| `id` | Permanent internal `OI-n` key, unique and never renumbered. Gaps are normal. User-facing references append current priority as `OI-n-Px`; both forms resolve to the same item. |
+| `priority` | Required `P0`, `P1`, `P2`, or `P3`. P0 is critical, P1 high, P2 normal/default, and P3 low. It describes importance and grants no authority. |
 | `title` | The editable todo text shown in the UI, and in the footer on the turn this item is the one suggested. |
 | `status` | One of the nine labels from `SKILL.md`. A label describes; it grants no authority. |
 | `completed` | Derived mechanically: true only for `verified` or `dropped`. Completed items render after all open items. |
@@ -130,22 +133,22 @@ Do not silently create a ledger before those triggers. When the user has already
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
-| `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
+| `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. It stores the permanent `OI-n` key rather than the mutable display suffix. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
 
 The server validates IDs, statuses, completion consistency, unique positions, provenance and its optional correction history, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
 
-### Version 3 migration and version 4 migration
+### Version 3, 4, and 5 migration
 
-Loading a valid version 3 or 4 ledger upgrades it atomically to version 5 and increments its revision once. Version 3 also receives conservative `provenance: "unknown-legacy"`; both versions receive `order_intent: {"kind": "automatic", "relevance_updated_at": null}`. Migration never fabricates a manual placement from old positions, titles, status labels, notes, or conversational wording, and it preserves the existing item order during the schema write. The next explicit `reconcile-order`, server start, or UI load may then intelligently order those automatic items. Status, completion, tracking/transfer state, evidence, and all other item content stay unchanged.
+Loading a valid version 3, 4, or 5 ledger upgrades it atomically to version 6 and increments its revision once. Every older item receives `priority: "P2"`, the neutral default, because migration cannot honestly infer urgency. Version 3 also receives conservative `provenance: "unknown-legacy"`; versions 3 and 4 receive `order_intent: {"kind": "automatic", "relevance_updated_at": null}`. Version 5's existing automatic or manual ordering metadata is preserved exactly. Migration never fabricates urgency or manual placement from old positions, titles, status labels, notes, or conversational wording, and it preserves the existing item order during the schema write. The next explicit `reconcile-order`, server start, or UI load may then intelligently order automatic items. Status, completion, tracking/transfer state, evidence, and all other item content stay unchanged.
 
 ### Ordering policy
 
 The active list has two kinds of ordering intent:
 
-- **Automatic:** surface `waiting-on-you` first, then `in-progress`, then `implemented`, then `planned`/`requested`, then `reminder`, then `blocked`. Within a status band, newest `relevance_updated_at` comes first; when no timestamp is available, the newest permanent `OI-n` ID breaks the tie. Creating or substantively editing an item refreshes its relevance time.
+- **Automatic:** surface `waiting-on-you` first, then `in-progress`, then `implemented`, then `planned`/`requested`, then `reminder`, then `blocked`. Within a status band, sort P0 before P1 before P2 before P3. Within the same priority, newest `relevance_updated_at` comes first; when no timestamp is available, the newest permanent `OI-n` ID breaks the tie. Creating or substantively editing an item or changing its priority refreshes its relevance time.
 - **Manual:** a Full outstanding items drag or keyboard move fixes the moved item in its selected active-list slot. Automatic items may reorder around those fixed slots, but later reconciliation does not move or clear a manual item. Only another explicit user move changes it again.
 
-This policy avoids whole-list churn: reconciliation writes only when the visible active order actually changes, leaves completed/transferred order alone, and never rearranges the ledger to match the footer's one recommendation.
+This policy avoids whole-list churn: reconciliation writes only when the visible active order actually changes, leaves completed/transferred order alone, and never rearranges the ledger to match the footer's one recommendation. Priority is the fallback inside an actionability band, not permission and not a reason to override a manual position.
 
 ### Not offering the same thing twice
 

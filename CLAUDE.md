@@ -84,7 +84,9 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 - Use `You` / `user-requested` only when I explicitly tell you to add that
   specific thing to Outstanding Items. If I merely request or discuss the work
   and you capture it automatically, use `Agent` / `agent-added`.
-- Give each item a permanent `OI-n` ID. Never renumber.
+- Give each item a permanent internal `OI-n` key and P0–P3 priority. Show the
+  composite `OI-n-Px` reference to the user; changing priority never renumbers
+  the permanent key. Default unclassified legacy items to P2, never guessed urgency.
 - In a Git-project session, create or resolve this chat's canonical ledger under
   `.outstanding-items/<task-id>/` before the first capture, add
   `/.outstanding-items/` to the root `.gitignore`, and keep project storage on
@@ -109,7 +111,7 @@ Use the `outstanding-items` skill in any session where I make more than one requ
   merely to demand redundant acceptance. Leave implemented-but-unverified,
   waiting-on-you, blocked, reminders, transferred, and unfinished work open.
 - Whenever you open or update the ledger, reconcile its order. Sort automatic
-  items by actionable status and newest relevance, but preserve every explicit
+  items by actionable status, then P0–P3 priority, then newest relevance, but preserve every explicit
   drag or keyboard placement recorded as manual order intent. Never rearrange
   the ledger merely to match the footer recommendation.
 - If the only thing missing is me — a click, an approval, a key, a choice — that

@@ -4,6 +4,6 @@
 interface:
   display_name: "Outstanding Items"
   short_description: "Hold the user's outstanding-items ledger"
-  default_prompt: "Use $outstanding-items to keep my requests and every concrete user-facing loose end recorded and honestly labelled, store each Git-project chat in its own Git-ignored project ledger by default, reconcile exact completion evidence into Done, maintain an actionable prerequisite or follow-up whenever work is blocked, intelligently order automatic items without overwriting manual placement, end each final response with one compact line naming a single actionable next item whenever work remains, and never start, continue, or hand off an item without a fresh instruction from me naming it."
+  default_prompt: "Use $outstanding-items to keep my requests and every concrete user-facing loose end recorded and honestly labelled, give every item a stable OI-n key plus visible P0-P3 priority, store each Git-project chat in its own Git-ignored project ledger by default, reconcile exact completion evidence into Done, maintain an actionable prerequisite or follow-up whenever work is blocked, intelligently order automatic items by actionability then priority without overwriting manual placement, end each final response with one compact line naming a single actionable next item whenever work remains, and never start, continue, or hand off an item without a fresh instruction from me naming it."
 policy:
   allow_implicit_invocation: true

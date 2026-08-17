@@ -28,7 +28,7 @@ Use the equivalent `~/.claude/skills/` path under Claude Code. The command print
 Use the printed URL as the last line of the compact footer:
 
 ```markdown
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4-P1 Focus ring on interactive elements** `You`
 Twenty minutes, and the shared token is the whole first step.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -41,9 +41,9 @@ The footer itself, with or without that link, belongs only to the final response
 
 ## Interaction model
 
-Keep the resting interface visually quiet: each actionable row shows only its real checkbox and task text. The task text is the edit control. Clicking or pressing it creates one inline textarea at the same location; `Enter` saves, `Shift+Enter` inserts a line break, `Escape` cancels, and leaving the editor saves. An unchanged edit sends no mutation. Never pre-render a text input or separate Edit button beneath every item.
+Keep the resting interface visually quiet: each actionable row shows its compact composite reference, real checkbox, and task text. The `OI-n` prefix is the permanent item key; the adjacent P0–P3 control changes only priority and makes the full visible reference read as `OI-n-Px`. P0 is highest, P2 is the neutral default, and P3 is lowest. The task text is the edit control. Clicking or pressing it creates one inline textarea at the same location; `Enter` saves, `Shift+Enter` inserts a line break, `Escape` cancels, and leaving the editor saves. An unchanged edit sends no mutation. Never pre-render a text input or separate Edit button beneath every item.
 
-The whole row and editable task text never trigger item details. A small caret sits above the existing drag grip in the same action column, so it uses no additional horizontal content width. Hovering or keyboard-focusing that disclosure shows one tooltip above the row: the item's `OI-n` and a friendly state phrase on the first line, then its short explanation paragraph. Click or tap toggles it where hover is unavailable, `Escape` dismisses it without moving focus, and it flips below only when there is not enough space above. The tooltip is text only, rendered with `textContent`, and it is never used to show Markdown, evidence, logs, or a next step.
+The whole row and editable task text never trigger item details. A small caret sits above the existing drag grip in the same action column, so it uses no additional horizontal content width. Hovering or keyboard-focusing that disclosure shows one tooltip above the row: the item's current `OI-n-Px` reference and a friendly state phrase on the first line, then its short explanation paragraph. Click or tap toggles it where hover is unavailable, `Escape` dismisses it without moving focus, and it flips below only when there is not enough space above. The tooltip is text only, rendered with `textContent`, and it is never used to show Markdown, evidence, logs, or a next step.
 
 Outstanding-item reorder controls are latent rather than absent: hover or keyboard focus reveals the drag grip and move buttons. `Alt+Up` and `Alt+Down` on focused task text provide the same keyboard movement without requiring the buttons. Completed items stay at the bottom and may be reopened with their checkbox.
 
@@ -70,12 +70,13 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
   --id OI-12 \
   --title "Confirm the release" \
   --status waiting-on-you \
+  --priority P0 \
   --provenance user-requested \
   --group "Release" \
   --explanation "The release is built and ready; it just needs your yes before it goes out. One click in the release page is the whole job."
 ```
 
-For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. The command atomically increments the revision, and an open UI sees it within two seconds.
+For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. `--priority` accepts P0 through P3; a new item defaults to P2 when it is omitted. An existing item may be addressed by stable `OI-12` or its current composite `OI-12-P2`. A stale composite suffix fails closed instead of silently editing the wrong current priority. The command atomically increments the revision, and an open UI sees it within two seconds.
 
 `--provenance` is required when creating a new item. Use `user-requested` only when the user explicitly asks to add that specific thing to Outstanding Items. If the user merely requests or discusses the underlying work and the agent captures it automatically, use `agent-added`. Use `unknown-legacy` only when migrating an older item whose capture source cannot be proved. Later `upsert` calls preserve provenance. The UI shows a tiny inline `You` or `Agent` pill only for the two known origins; hovering explains that `You` means an explicit request for the ledger entry itself. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
 
@@ -92,7 +93,7 @@ python3 scripts/ledger_ui.py correct-provenance \
 
 This command validates the whole batch before writing, increments the revision once, and appends each item's `provenance_history`. It changes no status, completion state, position, transfer state, title, or evidence. The browser cannot invoke it.
 
-A newly created outstanding item receives a fresh relevance timestamp. Automatic reconciliation places it according to actionable status and recency; a `waiting-on-you` item can therefore surface above a newer ordinary request. Explicit drag/keyboard positions remain fixed, and creating a completed historical item does not disturb the active order.
+A newly created outstanding item receives a fresh relevance timestamp. Automatic reconciliation places it according to actionable status, then P0→P3 priority, then recency; a `waiting-on-you` item can therefore surface above a P0 ordinary request, while P0 wins between peers in the same status band. Explicit drag/keyboard positions remain fixed, and creating a completed historical item does not disturb the active order.
 
 ## Writing the explanation
 
@@ -141,9 +142,10 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 
 ## Persistence and live updates
 
-- `outstanding-items.json` is the single editable record. Version 3 and 4 ledgers upgrade atomically to version 5. Version 3 receives conservative `unknown-legacy` provenance; both receive automatic ordering metadata without pretending their legacy positions were manual intent.
+- `outstanding-items.json` is the single editable record. Version 3, 4, and 5 ledgers upgrade atomically to version 6. Every legacy item receives neutral `priority: "P2"`; version 3 receives conservative `unknown-legacy` provenance, versions 3 and 4 receive automatic ordering metadata, and version 5 manual placement stays intact.
 - Every browser mutation carries the revision it read. A stale mutation gets HTTP 409 and the new ledger, so it cannot erase an agent-side update.
-- A drag or keyboard move sends the exact moved ID and stores manual placement time, revision, and neighbouring anchors. Automatic reconciliation keeps manual items fixed while ordering only automatic items by actionable status and relevance recency.
+- A drag or keyboard move sends the exact moved ID and stores manual placement time, revision, and neighbouring anchors. Automatic reconciliation keeps manual items fixed while ordering only automatic items by actionable status, P0→P3 priority, relevance recency, and stable ID.
+- Every user-facing label and tooltip renders `OI-n-Px`, while canonical JSON stores the stable `id: "OI-n"` and mutable `priority: "Px"` separately. The inline priority control uses the same revision-safe mutation path as edits and preserves manual order, provenance, status, and evidence.
 - Writes are validated and atomic.
 - The browser polls the canonical JSON revision every two seconds while visible. External CLI/agent changes appear without regenerating HTML or restarting the server.
 - The per-ledger private connection file preserves the exact loopback URL across normal stop/start cycles. A disconnected page explains that it will retry instead of surfacing the browser's raw `Failed to fetch` text.
@@ -169,6 +171,6 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py stop \
 
 ## Verification boundary
 
-Automated API tests prove validation, migration, atomic edit/toggle/reopen/reorder behavior, stale-revision rejection, token gating, external-file refresh, and the optional `explanation` field. Asset checks prove that no text input or textarea exists in the resting HTML, that editing creates its textarea on demand, and that every row carries a `role="tooltip"` element wired through `aria-describedby` to its dedicated disclosure control and filled with `textContent`. A real-browser pass must still verify the uncluttered resting state; no detail on row or task-text hover; detail disclosure on caret hover, keyboard focus, and click/tap; `Escape` dismissal; an item with no `explanation`; click-to-edit behavior; completion snackbar and Undo; pointer drag without accidental detail activation; keyboard movement; transferred read-only presentation; responsive layout; and saved-state feedback before calling a new UI design verified.
+Automated API tests prove validation, migration, atomic priority/edit/toggle/reopen/reorder behavior, stale-revision rejection, token gating, external-file refresh, and the optional `explanation` field. Asset checks prove that the composite reference and P0–P3 control exist without a resting title input, that editing creates its textarea on demand, and that every row carries a `role="tooltip"` element wired through `aria-describedby` to its dedicated disclosure control and filled with `textContent`. A real-browser pass must still verify the compact ID column; priority selection and resulting reorder; stable manual placement; the uncluttered resting state; no detail on row or task-text hover; detail disclosure on caret hover, keyboard focus, and click/tap; `Escape` dismissal; an item with no `explanation`; click-to-edit behavior; completion snackbar and Undo; pointer drag without accidental detail activation; keyboard movement; transferred read-only presentation; responsive layout; and saved-state feedback before calling a new UI design verified.
 
 During that pass, capture the rendered ledger and load the screenshot into vision; DOM, Accessibility, file-existence, and automated-test evidence do not prove visual quality. Fix visible defects caused by the current UI change before finishing. Report a pre-existing browser/display/control problem as the exact acceptance blocker instead of changing unrelated windows or substituting an isolated browser.

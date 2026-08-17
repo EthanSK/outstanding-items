@@ -46,7 +46,7 @@ Work in this repository arrives in bursts of half-related requests. Use the
   proof. Never leave completed `Agent` work open merely to demand redundant
   acceptance; leave implemented-but-unverified and unfinished work open.
 - Whenever you open or update the ledger, reconcile its order. Sort automatic
-  items by actionable status and newest relevance, but preserve every explicit
+  items by actionable status, then P0–P3 priority, then newest relevance, but preserve every explicit
   drag or keyboard placement recorded as manual order intent.
 - Anything needing a review approval, a merge button, or a secret from me is
   `waiting-on-you` with the exact action. `blocked` means an upstream wall you

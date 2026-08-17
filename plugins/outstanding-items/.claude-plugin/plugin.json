@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "outstanding-items",
   "displayName": "Outstanding Items",
-  "version": "0.1.10",
+  "version": "0.2.0",
   "description": "Keep a user-owned ledger out of the chat and always suggest one actionable next item without starting it.",
   "author": {
     "name": "EthanSK",

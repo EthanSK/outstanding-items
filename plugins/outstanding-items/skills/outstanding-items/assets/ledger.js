@@ -207,9 +207,13 @@
     editor.style.height = `${editor.scrollHeight}px`;
   }
 
+  function displayId(item) {
+    return `${item.id}-${item.priority}`;
+  }
+
   function tooltipLabel(item, transferred) {
-    if (transferred) return `${item.id} · Looked after elsewhere`;
-    return `${item.id} · ${TOOLTIP_LABELS[item.status] || "On your list"}`;
+    if (transferred) return `${displayId(item)} · Looked after elsewhere`;
+    return `${displayId(item)} · ${TOOLTIP_LABELS[item.status] || "On your list"}`;
   }
 
   function tooltipAction(item) {
@@ -244,7 +248,7 @@
     tooltip.setAttribute("aria-hidden", "true");
     trigger.setAttribute("aria-controls", tooltip.id);
     trigger.setAttribute("aria-describedby", tooltip.id);
-    trigger.setAttribute("aria-label", `Show details for ${item.id}: ${item.title}`);
+    trigger.setAttribute("aria-label", `Show details for ${displayId(item)}: ${item.title}`);
     const title = node.querySelector(".item-title");
     title?.setAttribute("aria-controls", tooltip.id);
     title?.setAttribute("aria-keyshortcuts", "Alt+Enter");
@@ -270,7 +274,7 @@
       title?.setAttribute("aria-expanded", String(visible));
       trigger.setAttribute(
         "aria-label",
-        `${visible ? "Hide" : "Show"} details for ${item.id}: ${item.title}`,
+        `${visible ? "Hide" : "Show"} details for ${displayId(item)}: ${item.title}`,
       );
     };
     const togglePinned = () => {
@@ -366,7 +370,7 @@
     editor.maxLength = 500;
     editor.rows = 1;
     editor.value = initialValue;
-    editor.setAttribute("aria-label", `Edit ${item.id}`);
+    editor.setAttribute("aria-label", `Edit ${displayId(item)}`);
     titleButton.replaceWith(editor);
     autoSizeEditor(editor);
 
@@ -440,10 +444,41 @@
     node.classList.toggle("transferred", transferred);
     attachProvenance(node, item);
 
+    const reference = displayId(item);
+    const idPrefix = node.querySelector(".item-id-prefix");
+    const prioritySelect = node.querySelector(".priority-select");
+    const priorityReadonly = node.querySelector(".priority-readonly");
+    idPrefix.textContent = `${item.id}-`;
+    prioritySelect.value = item.priority;
+    prioritySelect.dataset.priority = item.priority;
+    prioritySelect.setAttribute(
+      "aria-label",
+      `Priority for ${item.id}: ${item.priority}. P0 is highest and P3 is lowest.`,
+    );
+    prioritySelect.title = "Set priority: P0 highest, P3 lowest";
+    priorityReadonly.textContent = item.priority;
+    if (transferred) {
+      prioritySelect.hidden = true;
+      priorityReadonly.hidden = false;
+      node.querySelector(".item-reference").setAttribute(
+        "aria-label",
+        `${reference}; priority is read-only because this item is owned elsewhere`,
+      );
+    } else {
+      prioritySelect.addEventListener("change", async () => {
+        const nextPriority = prioritySelect.value;
+        const result = await saveMutation(
+          { action: "priority", id: item.id, priority: nextPriority },
+          { focusId: item.id, focusSelector: ".priority-select" },
+        );
+        if (!result.ok) prioritySelect.value = item.priority;
+      });
+    }
+
     const checkbox = node.querySelector(".item-check");
     checkbox.checked = completed;
     checkbox.disabled = transferred;
-    checkbox.setAttribute("aria-label", `${completed ? "Reopen" : "Complete"} ${item.id}: ${item.title}`);
+    checkbox.setAttribute("aria-label", `${completed ? "Reopen" : "Complete"} ${reference}: ${item.title}`);
     if (!transferred) {
       checkbox.addEventListener("change", async () => {
         const nextCompleted = checkbox.checked;
@@ -484,7 +519,7 @@
       readOnlyTitle.append(readOnlyText, badge);
       readOnlyTitle.setAttribute(
         "aria-label",
-        `${item.title}. ${item.id}. ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Owned by ${item.transferred_to?.title || "another task"}, task ID ${item.transferred_to?.task_id || "unavailable"}; read-only here.`,
+        `${item.title}. ${reference}. ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Owned by ${item.transferred_to?.title || "another task"}, task ID ${item.transferred_to?.task_id || "unavailable"}; read-only here.`,
       );
       title.replaceWith(readOnlyTitle);
       const metadata = node.querySelector(".transfer-meta");
@@ -498,7 +533,7 @@
     } else {
       title.setAttribute(
         "aria-label",
-        `${item.title}. ${item.id}. Status ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Click to edit.`,
+        `${item.title}. ${reference}. Status ${item.status}. ${node.dataset.provenanceDescription || "Source not recorded."} Click to edit.`,
       );
       title.addEventListener("click", (event) => {
         cancelPendingEdit();
@@ -519,7 +554,7 @@
     const details = attachTooltip(node, item, transferred);
     const isDetailsActivationTarget = (target) =>
       target instanceof Element && !target.closest(
-        ".check-wrap, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
+        ".check-wrap, .item-reference, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
       );
     node.addEventListener("click", (event) => {
       if (
@@ -553,7 +588,7 @@
 
     const dragHandle = node.querySelector(".drag-handle");
     dragHandle.hidden = completed || transferred;
-    dragHandle.setAttribute("aria-label", `Drag ${item.id} to reorder`);
+    dragHandle.setAttribute("aria-label", `Drag ${reference} to reorder`);
     dragHandle.addEventListener("dragstart", (event) => {
       state.draggingId = item.id;
       node.classList.add("dragging");
@@ -591,7 +626,7 @@
     return node;
   }
 
-  function render({ preserveEdit = false, focusId = null } = {}) {
+  function render({ preserveEdit = false, focusId = null, focusSelector = ".item-title" } = {}) {
     if (!state.ledger) return;
     const editSnapshot = preserveEdit && state.editing
       ? { id: state.editing.id, draft: state.editing.draft() }
@@ -629,7 +664,7 @@
     } else if (focusId) {
       window.setTimeout(() => {
         const row = [...elements.openList.children].find((candidate) => candidate.dataset.id === focusId);
-        row?.querySelector(".item-title")?.focus();
+        row?.querySelector(focusSelector)?.focus();
       }, 0);
     }
   }
@@ -666,7 +701,7 @@
     if (result.ok) showSnackbar("Moved back to open items.");
   }
 
-  async function saveMutation(change, { focusId = null } = {}) {
+  async function saveMutation(change, { focusId = null, focusSelector = ".item-title" } = {}) {
     if (state.saving) {
       const error = new Error("Another change is still saving.");
       showSnackbar(error.message);
@@ -679,7 +714,7 @@
         method: "POST",
         body: JSON.stringify({ ...change, base_revision: state.ledger.revision }),
       });
-      render({ focusId });
+      render({ focusId, focusSelector });
       setSaveState("saved", "Saved");
       return { ok: true };
     } catch (error) {

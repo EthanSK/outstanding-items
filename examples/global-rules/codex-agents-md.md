@@ -19,7 +19,8 @@ Use the `outstanding-items` skill in any task where I make more than one request
   are unrelated to what you are currently doing. Never refuse a reminder for
   being off-topic. If I say "add this to outstanding items" or "remember this",
   record it, tell me it is recorded, and stop there.
-- Give each item a permanent `OI-n` ID. Never renumber.
+- Give each item a permanent internal `OI-n` key and P0–P3 priority. Show its
+  current composite `OI-n-Px` reference; changing priority never renumbers the key.
 - In a Git-project task, create or resolve this chat's ledger under
   `.outstanding-items/<task-id>/`, add `/.outstanding-items/` to the root
   `.gitignore`, and keep project storage on unless I explicitly opt out.
@@ -64,7 +65,7 @@ Use the `outstanding-items` skill in any task where I make more than one request
   merely to demand redundant acceptance. Leave implemented-but-unverified,
   waiting-on-you, blocked, reminders, transferred, and unfinished work open.
 - Whenever you open or update the ledger, reconcile its order. Sort automatic
-  items by actionable status and newest relevance, but preserve every explicit
+  items by actionable status, then P0–P3 priority, then newest relevance, but preserve every explicit
   drag or keyboard placement recorded as manual order intent. Never rearrange
   the ledger merely to match the footer recommendation.
 - If the only thing missing is me — a click, an approval, a key, a choice — that
@@ -112,7 +113,7 @@ Say so in the task. The skill stops appending the footer when asked and keeps th
 
 ## Checking it worked
 
-Start a task, make two unrelated requests, and look at the end of the final response. If it does not start directly with one `**OI-n …** — status` recommendation:
+Start a task, make two unrelated requests, and look at the end of the final response. If it does not start directly with one `**OI-n-Px …** — status` recommendation:
 
 1. Confirm the file exists: `ls ~/.codex/skills/outstanding-items/SKILL.md`
 2. Confirm the frontmatter is intact — `name:` and `description:` between `---` fences.

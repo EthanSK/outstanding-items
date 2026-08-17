@@ -24,7 +24,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 
 | Behaviour | What you see |
 | --- | --- |
-| Multi-request tracking | Every request in the task gets a permanent `OI-n` ID, in the order you said it. |
+| Multi-request tracking | Every request gets a permanent `OI-n` key plus a visible P0–P3 priority, such as `OI-12-P1`. |
 | Unrelated asides accepted | "Remind me to ask the design channel" is captured mid-task and never refused for being off-topic. |
 | Capture without commission | Something added to the list is recorded, confirmed, and left alone until you say otherwise. |
 | No lost loose ends | Any concrete unresolved review, decision, input, verification, or follow-up for you is captured automatically as **Agent**. The agent still never invents filler or speculative projects. |
@@ -40,6 +40,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 | One suggestion, for you | One item, one small possible first step, one sentence of reasoning — then it waits. Ignore it and it picks something else next time, or says nothing. |
 | Canonical project-chat ledger | In a Git project, each chat gets one private `.outstanding-items/<task-id>/outstanding-items.json` by default, and the directory is added to `.gitignore`. An explicit flag turns project storage off. |
 | Editable Full outstanding items | A quiet local list: click task text to edit it, drag or use keyboard controls to set a lasting manual position, and check it complete with a temporary Undo action. Completed items remain at the bottom. |
+| Explicit P0–P3 priority | Every visible reference ends in P0, P1, P2, or P3. Change it in the editor; automatic ordering uses it after actionability and before recency. |
 | A plain-words detail disclosure | Hover or focus the small caret above the drag grip—or tap it—and a short note explains the item without making the whole row noisy. |
 | Auditable ownership transfer | Moving work to another task preserves its status and notes as read-only history here instead of pretending it was completed. |
 | Registered related tasks | A useful relationship may be stored locally by title plus stable ID. It contacts nothing; a separately authorized memory-only delta still starts nothing. |
@@ -47,7 +48,7 @@ Working, and simple on purpose. This is a **skills-only plugin** built on the op
 A real footer looks like this — once per turn, at the end of the final response:
 
 ```text
-**OI-5 Add rate-limit docs to the handbook** `You` — planned
+**OI-5-P1 Add rate-limit docs to the handbook** `You` — planned
 Draft the limits table first, about twenty minutes; nothing else is waiting on it.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```
@@ -57,7 +58,7 @@ That is the whole thing. One item — the one it thinks you should do next — a
 The link is the exact URL the local editor printed. If no editor is running, that line simply is not there — the skill does not invent a URL to fill the space:
 
 ```text
-**OI-8 Approve the staging deploy** `You` — waiting-on-you
+**OI-8-P0 Approve the staging deploy** `You` — waiting-on-you
 Click approve in the deploy UI; it is the one thing left that only you can do.
 ```
 
@@ -65,11 +66,11 @@ When active work remains, the footer always names one item. Ignoring one suggest
 
 If the ledger has no open items at all, the agent first checks the current request, results, blockers, decisions, and unverified outcomes for anything concrete you still need to look at. A real loose end is added as **Agent**. Only a genuinely empty list says `**No outstanding items**`; the agent does not invent filler merely to avoid that honest result.
 
-IDs are permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing. And if you want the whole list in the chat, ask for it — you get it in the answer, once, and the footer stays one line.
+The `OI-n` part is permanent. Nothing is ever renumbered, so a reference you made ten turns ago still points at the same thing. The visible suffix is the item's current priority, so `OI-5-P2` becomes `OI-5-P0` when its priority changes without creating a new item. Stable `OI-5` references remain accepted by the tooling for compatibility. And if you want the whole list in the chat, ask for it — you get it in the answer, once, and the footer stays one line.
 
 ## Full outstanding items is an editor, not a raw file
 
-Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. Active work sits under **Outstanding**. At rest, a row is its checkbox and task text. A tiny **You** or **Agent** pill flows immediately after the text when the origin is known, so it does not reserve a separate column or force early wrapping. **You** is deliberately strict: it appears only when you explicitly asked to add that specific thing to Outstanding Items. If you merely requested or discussed the underlying work and the agent captured it automatically, the pill is **Agent**. Hover the pill to read that full meaning. Older items keep their honest legacy provenance in the data without adding a noisy or invented badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Automatic items stay sensibly ordered by actionable status and newest relevance, so a fresh `waiting-on-you` item does not remain buried. Drag with the reorder grip or use the keyboard move controls to set a lasting manual position; automatic reconciliation leaves that chosen slot alone. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
+Because the footer names one item, **Full outstanding items** is where the rest of it lives — a private local HTML view instead of a huge Markdown or JSON file. Active work sits under **Outstanding**. At rest, a row shows its compact composite reference (`OI-12-P1`), checkbox, and task text. The P0–P3 suffix is an accessible inline control: P0 is highest, P2 is the neutral default, and P3 is lowest. Changing it updates the same item rather than renaming its permanent `OI-n` key. A tiny **You** or **Agent** pill flows immediately after the text when the origin is known, so it does not reserve a separate column or force early wrapping. **You** is deliberately strict: it appears only when you explicitly asked to add that specific thing to Outstanding Items. If you merely requested or discussed the underlying work and the agent captured it automatically, the pill is **Agent**. Hover the pill to read that full meaning. Older items keep their honest legacy provenance in the data without adding a noisy or invented badge to the page. Click the text to create an inline editor; no blank input exists before that interaction. Automatic items stay sensibly ordered by actionable status, then P0→P3 priority, then newest relevance, so a high-priority peer does not remain buried. Drag with the reorder grip or use the keyboard move controls to set a lasting manual position; automatic reconciliation leaves that chosen slot alone. Checking a task complete moves it to the bottom and shows a temporary snackbar with **Undo**.
 
 The whole row no longer triggers item details on hover. A small caret sits above the existing drag grip, using that same action column instead of taking width from the task text. Hover or keyboard-focus the caret to preview the item's ID, friendly state phrase, and short action-first explanation; click or tap it where hover is unavailable. Double-click the row to keep the same note open, or focus the task text and press `Alt+Enter`; repeat the action without moving the pointer, use the caret, or press `Escape` to dismiss it. A single task-text click still edits. Explanations use imperative Git commit-subject style — `Write a LinkedIn post…`, not `This is the idea to…` — so they scan quickly when the title alone is not enough. Items saved before that field existed start their fallback with the item title, and every row's text is rendered as text, never as markup.
 
@@ -101,7 +102,7 @@ This is the part the whole project is built around, so it is worth being blunt a
 | It is obviously next, old, urgent, or blocking everything else | No. |
 | You said "add this to outstanding items" or "remember this" | No. |
 | The agent tidied, sorted, or summarised the list | No. |
-| You said "start OI-4 now" | **Yes** — that one item, in that turn. |
+| You said "start OI-4-P1 now" | **Yes** — that one item, in that turn. |
 
 The full decision table, with the reasoning and the hard cases, lives in [`references/authority.md`](plugins/outstanding-items/skills/outstanding-items/references/authority.md).
 
@@ -134,7 +135,7 @@ Full definitions, transitions, and anti-patterns: [`references/status-labels.md`
 The second half of the skill, and the reason the footer is one line. The ledger knows what is outstanding; curation decides which single item is worth putting in front of you — offered to you, decided by you.
 
 ```text
-**OI-4 Focus ring on interactive elements** `You`
+**OI-4-P1 Focus ring on interactive elements** `You`
 About twenty minutes, and you already have that file open.
 [Full outstanding items](http://127.0.0.1:PORT/?token=LOCAL_TOKEN)
 ```

@@ -230,11 +230,11 @@ MIDDOT = "·"
 
 FENCED_BLOCK_RE = re.compile(r"```[A-Za-z0-9]*\n(.*?)\n```", re.S)
 FOOTER_ITEM_RE = re.compile(
-    rf"^\*\*(OI-\d+) (.+)\*\* `(?:You|Agent)`(?: {DASH} ([a-z][a-z-]*))?$"
+    rf"^\*\*(OI-\d+-P[0-3]) (.+)\*\* `(?:You|Agent)`(?: {DASH} ([a-z][a-z-]*))?$"
 )
 FOOTER_EMPTY_RE = re.compile(r"^\*\*No outstanding items\*\*$")
 FOOTER_LINK_RE = re.compile(r"^\[Full outstanding items\]\(([^)]+)\)$")
-OI_ID_RE = re.compile(r"\bOI-\d+\b")
+OI_ID_RE = re.compile(r"\bOI-\d+-P[0-3]\b")
 LIST_ROW_RE = re.compile(rf"^\s*(?:[-*+{BULLET}]\s|{ELLIPSIS}|\d+[.)]\s)")
 OVERFLOW_RE = re.compile(rf"\+\s*\d+\s+more|{ELLIPSIS}\s*\+")
 
@@ -297,7 +297,9 @@ def footer_policy_errors(
         ]
     item_match = FOOTER_ITEM_RE.match(footer_header)
     if suggestible:
-        allowed_ids = {str(item["id"]) for item in suggestible}
+        allowed_ids = {
+            f"{item['id']}-{item.get('priority', 'P2')}" for item in suggestible
+        }
         if item_match is None:
             return [
                 "a suggestible open item exists, so the footer must recommend one instead of going quiet"
@@ -575,7 +577,7 @@ def check_authority_matrix() -> list[str]:
 
     next_action = read(SKILL_DIR / "references" / "next-action.md")
     for phrase in (
-        "One `OI-n` in the footer, and no other",
+        "One current `OI-n-Px` reference in the footer, and no other",
         "leave the runner-up unnamed",
         "**Unanswered.**",
         "**Declined.**",
@@ -589,7 +591,7 @@ def check_authority_matrix() -> list[str]:
     return problems
 
 
-@check("public-examples", "copy-paste examples preserve user ownership and schema v5")
+@check("public-examples", "copy-paste examples preserve user ownership and schema v6")
 def check_public_examples() -> list[str]:
     problems = []
 
@@ -646,8 +648,8 @@ def check_public_examples() -> list[str]:
     except json.JSONDecodeError as exc:
         problems.append(f"example backlog JSON is invalid: {exc}")
     else:
-        if payload.get("schema_version") != 5:
-            problems.append("example backlog JSON must use schema version 5")
+        if payload.get("schema_version") != 6:
+            problems.append("example backlog JSON must use schema version 6")
         if payload.get("owner") != "user" or payload.get("authorizes_work") is not False:
             problems.append("example backlog JSON must say owner=user and authorizes_work=false")
         items = payload.get("items")
@@ -668,6 +670,8 @@ def check_public_examples() -> list[str]:
                 intent = item.get("order_intent") if isinstance(item, dict) else None
                 if not isinstance(intent, dict) or intent.get("kind") not in {"automatic", "manual"}:
                     problems.append("every example item must carry supported order_intent metadata")
+                if not isinstance(item, dict) or item.get("priority") not in {"P0", "P1", "P2", "P3"}:
+                    problems.append("every example item must carry a supported P0-P3 priority")
         if not isinstance(payload.get("sections"), list):
             problems.append("example backlog JSON must contain a sections list")
 
@@ -734,7 +738,7 @@ def check_item_provenance() -> list[str]:
     skill = read(SKILL_MD)
     for text, phrase, name in (
         (artifact, "| `provenance` |", "backlog-artifact.md"),
-        (artifact, "Version 3 migration", "backlog-artifact.md"),
+        (artifact, "Version 3, 4, and 5 migration", "backlog-artifact.md"),
         (ui_reference, "--provenance", "ledger-ui.md"),
         (skill, "Record ledger provenance, not task authorship", "SKILL.md"),
         (skill, "Never leave a real loose end out", "SKILL.md"),
@@ -766,6 +770,70 @@ def check_item_provenance() -> list[str]:
         problems.append("homepage You badge must follow an explicit ledger-add request")
     if 'class="reply-title"' in homepage or ">Outstanding<" in homepage:
         problems.append("homepage demo restored the retired Outstanding header")
+    return problems
+
+
+@check("item-priority", "every item carries P0-P3 priority and displays a stable composite reference")
+def check_item_priority() -> list[str]:
+    problems = []
+    priorities = {"P0", "P1", "P2", "P3"}
+    payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
+    items = payload.get("items", [])
+    present = {item.get("priority") for item in items if isinstance(item, dict)}
+    if present != priorities:
+        problems.append(
+            f"example ledger priority values are {sorted(present)!r}, expected all four P0-P3 values"
+        )
+
+    runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
+    for fragment in (
+        "SCHEMA_VERSION = 6",
+        'PRIORITIES = {"P0", "P1", "P2", "P3"}',
+        'DEFAULT_PRIORITY = "P2"',
+        "PRIORITY_RANK",
+        "ITEM_REFERENCE_RE",
+        "def display_id",
+        'elif action == "priority"',
+        '"--priority"',
+        'item["priority"] = DEFAULT_PRIORITY',
+    ):
+        if fragment not in runtime:
+            problems.append(f"ledger_ui.py is missing priority behavior: {fragment!r}")
+
+    html_text = read(SKILL_DIR / "assets" / "ledger.html")
+    script = read(SKILL_DIR / "assets" / "ledger.js")
+    style = read(SKILL_DIR / "assets" / "ledger.css")
+    for priority in sorted(priorities):
+        if f'<option value="{priority}">{priority}</option>' not in html_text:
+            problems.append(f"ledger.html has no selectable {priority} priority")
+    for fragment in (
+        "function displayId(item)",
+        "`${item.id}-${item.priority}`",
+        'action: "priority"',
+        "P0 is highest and P3 is lowest",
+    ):
+        if fragment not in script:
+            problems.append(f"ledger.js is missing composite priority UI: {fragment!r}")
+    for fragment in (".item-reference", ".priority-select", 'data-priority="P0"'):
+        if fragment not in style:
+            problems.append(f"ledger.css is missing compact priority styling: {fragment!r}")
+
+    skill = read(SKILL_MD)
+    artifact = read(SKILL_DIR / "references" / "backlog-artifact.md")
+    ui_reference = read(SKILL_DIR / "references" / "ledger-ui.md")
+    readme = read(ROOT / "README.md")
+    docs = read(ROOT / "docs" / "index.html")
+    for text, phrase, name in (
+        (skill, "Show the composite current reference everywhere user-facing", "SKILL.md"),
+        (skill, "sort first by actionable status, then by priority", "SKILL.md"),
+        (artifact, "## Schema version 6", "backlog-artifact.md"),
+        (artifact, "sort P0 before P1 before P2 before P3", "backlog-artifact.md"),
+        (ui_reference, "P0 is highest, P2 is the neutral default", "ledger-ui.md"),
+        (readme, "Explicit P0–P3 priority", "README.md"),
+        (docs, "Every visible ID includes P0–P3 priority", "docs/index.html"),
+    ):
+        if phrase not in text:
+            problems.append(f"{name} does not document priority behavior: {phrase!r}")
     return problems
 
 
@@ -1446,6 +1514,7 @@ def check_suggestible_open_item_footer() -> list[str]:
     obs_items = [
         {
             "id": f"OI-{number}",
+            "priority": "P2",
             "status": "implemented" if number == 1 else "requested",
             "completed": False,
             "tracking_state": "active",
@@ -1453,7 +1522,7 @@ def check_suggestible_open_item_footer() -> list[str]:
         for number in range(1, 9)
     ]
     excluded = {"OI-1"}
-    valid_footer = "**OI-2 Check OBS scene-switch controls** `Agent`"
+    valid_footer = "**OI-2-P2 Check OBS scene-switch controls** `Agent`"
     problems = [
         f"eight-open-item valid recommendation failed: {problem}"
         for problem in footer_policy_errors(obs_items, excluded, valid_footer)
@@ -1471,13 +1540,13 @@ def check_suggestible_open_item_footer() -> list[str]:
         {**item, "status": "blocked" if item["id"] != "OI-8" else "reminder"}
         for item in obs_items
     ]
-    reminder_footer = "**OI-8 Revisit the parked OBS note** `Agent` — reminder"
+    reminder_footer = "**OI-8-P2 Revisit the parked OBS note** `Agent` — reminder"
     if footer_policy_errors(blocked_with_reminder, set(), reminder_footer):
         problems.append("reminder fallback failed when every ordinary item was blocked")
 
     blocked_only = [{**item, "status": "blocked"} for item in obs_items]
     blocked_errors = footer_policy_errors(
-        blocked_only, set(), "**OI-1 Retry the blocked OBS work** `Agent` — blocked"
+        blocked_only, set(), "**OI-1-P2 Retry the blocked OBS work** `Agent` — blocked"
     )
     if not blocked_errors or "actionable frontier" not in blocked_errors[0]:
         problems.append("blocked-only pool did not require a separately captured actionable frontier")
@@ -1485,12 +1554,13 @@ def check_suggestible_open_item_footer() -> list[str]:
     with_follow_up = blocked_only + [
         {
             "id": "OI-9",
+            "priority": "P1",
             "status": "requested",
             "completed": False,
             "tracking_state": "active",
         }
     ]
-    follow_up_footer = "**OI-9 Check whether the OBS fix has landed** `Agent`"
+    follow_up_footer = "**OI-9-P1 Check whether the OBS fix has landed** `Agent`"
     if footer_policy_errors(with_follow_up, set(), follow_up_footer):
         problems.append("captured blocker follow-up was not accepted as the actionable frontier")
     completed = [{**item, "completed": True, "status": "verified"} for item in obs_items]
