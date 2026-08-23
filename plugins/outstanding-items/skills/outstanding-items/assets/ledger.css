@@ -490,7 +490,8 @@ button.item-title:hover { color: var(--accent); }
 .ledger-item:focus-within .item-actions { opacity: 1; }
 
 .drag-handle,
-.item-actions button {
+.item-actions button,
+.item-actions a {
   display: grid;
   place-content: center;
   width: 2.15rem;
@@ -500,6 +501,7 @@ button.item-title:hover { color: var(--accent); }
   border-radius: 0.35rem;
   background: transparent;
   color: var(--muted);
+  text-decoration: none;
 }
 
 .item-actions .details-trigger {
@@ -511,6 +513,19 @@ button.item-title:hover { color: var(--accent); }
   border-radius: 0.3rem;
   line-height: 1;
 }
+
+.item-actions .open-in-codex {
+  position: absolute;
+  top: -0.22rem;
+  right: 0.4rem;
+  width: 1.35rem;
+  height: 1.15rem;
+  border-radius: 0.3rem;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.item-actions .open-in-codex[hidden] { display: none; }
 
 .details-caret {
   display: block;
@@ -540,9 +555,15 @@ button.item-title:hover { color: var(--accent); }
 }
 
 .drag-handle:hover,
-.item-actions button:hover {
+.item-actions button:hover,
+.item-actions a:hover {
   background: color-mix(in srgb, var(--accent) 9%, transparent);
   color: var(--accent);
+}
+
+.item-actions a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .item-actions button:disabled { opacity: 0.22; cursor: default; }

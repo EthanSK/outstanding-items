@@ -145,6 +145,8 @@ For a chat with no project, keep the small in-context ledger until a durable fil
 
 Start or reuse the loopback editor, use its printed tokenized URL for the footer's single **Full outstanding items** link, and validate after agent-side mutations. The browser reads and atomically writes the same JSON, polls external changes, and rejects stale revisions.
 
+For an active item, the editor's **Open in Codex** action may open a fresh normal Codex task with a prefilled prompt containing only that item's saved title, status, explanation, capture reason, and details. Ask the new task to explain the item simply and name one next action, then stop. Never submit the prompt, start the work, change the item, include the tokenized ledger URL or runtime path, or claim ownership transfer automatically; the user reviews the prompt and presses Send.
+
 Keep each row width-efficient: render the composite `OI-n-Px` reference as a slim metadata line above the task text inside the content column, never as a dedicated side column that squeezes the task.
 
 Reconcile the canonical order whenever you open or change the ledger. Automatic items sort by actionable status, then P0→P3 priority, then newest relevance and stable ID; explicit drag/keyboard placement stays fixed through its recorded manual-order metadata. This is presentation maintenance only; it never starts work and does not replace the footer's contextual judgement.
