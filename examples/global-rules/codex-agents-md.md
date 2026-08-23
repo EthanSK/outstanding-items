@@ -29,6 +29,10 @@ Use the `outstanding-items` skill in any task where I make more than one request
   merely request or discuss the work and you capture it automatically, use
   `agent-added`. Use `unknown-legacy` only when an older capture source cannot
   be proved.
+- For each new known origin, also store a short `capture_reason` naming the
+  exact message, task result, or unresolved discussion point that caused the
+  capture. Write it to follow “because”; never use a generic loose-end label or
+  invent history for an older item.
 - Automatically add every concrete unresolved thing I still need to review,
   decide, provide, verify, or return to as `agent-added`, even when I did not
   ask to add it to Outstanding Items. Before saying there are no outstanding

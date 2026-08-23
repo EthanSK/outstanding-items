@@ -72,13 +72,16 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
   --status waiting-on-you \
   --priority P0 \
   --provenance user-requested \
+  --capture-reason 'you said, “Add release approval to Outstanding Items”' \
   --group "Release" \
   --explanation "The release is built and ready; it just needs your yes before it goes out. One click in the release page is the whole job."
 ```
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. `--priority` accepts P0 through P3; a new item defaults to P2 when it is omitted. An existing item may be addressed by stable `OI-12` or its current composite `OI-12-P2`. A stale composite suffix fails closed instead of silently editing the wrong current priority. The command atomically increments the revision, and an open UI sees it within two seconds.
 
-`--provenance` is required when creating a new item. Use `user-requested` only when the user explicitly asks to add that specific thing to Outstanding Items. If the user merely requests or discusses the underlying work and the agent captures it automatically, use `agent-added`. Use `unknown-legacy` only when migrating an older item whose capture source cannot be proved. Later `upsert` calls preserve provenance. The UI shows a tiny inline `You` or `Agent` pill only for the two known origins; hovering explains that `You` means an explicit request for the ledger entry itself. `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
+`--provenance` is required when creating a new item. Use `user-requested` only when the user explicitly asks to add that specific thing to Outstanding Items. If the user merely requests or discusses the underlying work and the agent captures it automatically, use `agent-added`. Use `unknown-legacy` only when migrating an older item whose capture source cannot be proved. Later `upsert` calls preserve provenance.
+
+`--capture-reason` is also required for every new `user-requested` or `agent-added` item. Give it one short plain-language clause identifying the exact message, task result, or unresolved discussion point that caused capture. Write it to follow “because”: `you said, “Add release approval to Outstanding Items”` or `the deployment finished but still needed your approval`. Do not use a generic category such as `it was a useful loose end`, and never copy secrets, paths, logs, or long evidence into it. The UI shows the compact inline `You` or `Agent` pill and turns the stored reason into the pill tooltip; for example, `An agent added this because the deployment finished but still needed your approval.` `unknown-legacy` remains in the JSON for honesty but adds no visible badge.
 
 When evidence proves an earlier classification wrong, use the audited correction route instead of hand-editing JSON:
 
@@ -142,7 +145,7 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 
 ## Persistence and live updates
 
-- `outstanding-items.json` is the single editable record. Version 3, 4, and 5 ledgers upgrade atomically to version 6. Every legacy item receives neutral `priority: "P2"`; version 3 receives conservative `unknown-legacy` provenance, versions 3 and 4 receive automatic ordering metadata, and version 5 manual placement stays intact. If an old tooltip explanation exceeds today's 600-character limit, migration keeps the complete original in `details_markdown` and uses a bounded summary in the compact field instead of refusing to start the editor.
+- `outstanding-items.json` is the single editable record. Version 3 through 6 ledgers upgrade atomically to version 7. Versions 3 through 5 receive neutral `priority: "P2"`; version 6 priority stays intact. Version 3 receives conservative `unknown-legacy` provenance, versions 3 and 4 receive automatic ordering metadata, and versions 5 and 6 keep manual placement. Every migrated item receives an empty legacy `capture_reason` rather than a fabricated discussion trigger. If an old tooltip explanation exceeds today's 600-character limit, migration keeps the complete original in `details_markdown` and uses a bounded summary in the compact field instead of refusing to start the editor.
 - Every browser mutation carries the revision it read. A stale mutation gets HTTP 409 and the new ledger, so it cannot erase an agent-side update.
 - A drag or keyboard move sends the exact moved ID and stores manual placement time, revision, and neighbouring anchors. Automatic reconciliation keeps manual items fixed while ordering only automatic items by actionable status, P0→P3 priority, relevance recency, and stable ID.
 - Every user-facing label and tooltip renders `OI-n-Px`, while canonical JSON stores the stable `id: "OI-n"` and mutable `priority: "Px"` separately. The inline priority control uses the same revision-safe mutation path as edits and preserves manual order, provenance, status, and evidence.
@@ -156,6 +159,7 @@ After validation, add an archive notice to the old Markdown or otherwise mark it
 - Double-click a non-control part of a row to pin that same detail popover open, or focus the task text and press `Alt+Enter`. Repeat either action, use the existing disclosure control, or press `Escape` to dismiss it. A single task-text click still enters editing, checkbox clicks still control completion, and drag/reorder controls never trigger row disclosure.
 - Treat every even stationary click count as a double-click toggle. Browsers can continue a fixed-pointer sequence as clicks three and four without emitting another native `dblclick`; the even-click handler keeps the second toggle reliable and suppresses any redundant native event.
 - `provenance` is required per item, displayed as a compact accessible badge, and preserved by edit, completion, undo, reorder, transfer, and ordinary `upsert` mutations. The browser cannot change it. Only the agent-side, reason-required `correct-provenance` command may repair a proven mistake, and it appends an audit record.
+- `capture_reason` is required by `upsert` for new known-origin items, bounded to one short plain-text clause, and preserved by browser mutations. The badge tooltip uses it to explain the actual discussion trigger. Older items without recoverable source context keep an empty reason and an honest missing-trigger fallback.
 
 ## Stop or inspect
 

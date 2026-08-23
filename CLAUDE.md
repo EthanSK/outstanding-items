@@ -84,6 +84,10 @@ Use the `outstanding-items` skill in any session where I make more than one requ
 - Use `You` / `user-requested` only when I explicitly tell you to add that
   specific thing to Outstanding Items. If I merely request or discuss the work
   and you capture it automatically, use `Agent` / `agent-added`.
+- When creating a known-origin item, store one short `capture_reason` naming the
+  exact message, task result, or unresolved discussion point that triggered it.
+  Write it to follow “because”; never substitute a generic loose-end label or
+  invent legacy history.
 - Give each item a permanent internal `OI-n` key and P0–P3 priority. Show the
   composite `OI-n-Px` reference to the user; changing priority never renumbers
   the permanent key. Default unclassified legacy items to P2, never guessed urgency.
@@ -151,7 +155,8 @@ commentary or progress messages, and never as a list, a count, or a Done
 section. The list is mine: capture it, keep it out of the chat, suggest at most
 one next move, and wait for my current message to name the item you should
 start. `You` means I explicitly asked for that Outstanding Items entry; a normal
-work request captured automatically is `Agent`. Authority ends with that
+work request captured automatically is `Agent`. Each known-origin entry records
+the specific discussion point that triggered its capture. Authority ends with that
 response turn. Create or resolve this chat's ledger under
 `.outstanding-items/<task-id>/outstanding-items.json` before the first capture,
 add `/.outstanding-items/` to the repository's `.gitignore`, and keep project

@@ -48,11 +48,11 @@ Prefer, in order: a path the user names; a task/session scratch directory; `outs
 
 Do not silently create a ledger before those triggers. When the user has already explicitly asked for the Full outstanding items UI or durable ledger file, that request supplies the path-creation authority; choose the task-owned output directory when one exists and report it.
 
-## Schema version 6
+## Schema version 7
 
 ```json
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "owner": "user",
   "authorizes_work": false,
   "title": "Outstanding items",
@@ -75,6 +75,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "details_markdown": "Retried 20x locally, not on CI.",
       "explanation": "Verify the login test that passes locally and fails at random on CI; the fix is in, and a green CI run would settle it.",
       "provenance": "user-requested",
+      "capture_reason": "you said, “Add the flaky login test to Outstanding Items”",
       "order_intent": {
         "kind": "automatic",
         "relevance_updated_at": "2026-05-04T11:20:00Z"
@@ -93,6 +94,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "state_text": "verified",
       "details_markdown": "`./deploy.sh --help` ran clean.",
       "provenance": "unknown-legacy",
+      "capture_reason": "",
       "order_intent": {
         "kind": "automatic",
         "relevance_updated_at": null
@@ -112,7 +114,7 @@ Do not silently create a ledger before those triggers. When the user has already
 
 | Field | Rule |
 | --- | --- |
-| `schema_version` | Exactly `6` after loading. Versions 3, 4, and 5 are upgraded atomically; other unknown versions are rejected. |
+| `schema_version` | Exactly `7` after loading. Versions 3 through 6 are upgraded atomically; other unknown versions are rejected. |
 | `owner` / `authorizes_work` | Always `"user"` / `false`. UI edits never change them. |
 | `revision` | Non-negative integer incremented after every successful mutation. It prevents stale overwrites. |
 | `id` | Permanent internal `OI-n` key, unique and never renumbered. Gaps are normal. User-facing references append current priority as `OI-n-Px`; both forms resolve to the same item. |
@@ -129,17 +131,18 @@ Do not silently create a ledger before those triggers. When the user has already
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |
 | `explanation` | Optional. One short, plain-language paragraph (600 characters or fewer) describing what the item is about, shown as the hover/focus tooltip in the UI. Plain text only — no Markdown, evidence, paths, or next steps. Absent or empty is valid, and the UI then falls back to a sentence based on `status`. |
 | `provenance` | Required. `user-requested` only when the user explicitly asked to add that specific thing to Outstanding Items; a normal task request captured automatically is `agent-added`. Use `unknown-legacy` only when an older item's capture source cannot be proved. Ordinary mutations preserve this field. |
+| `capture_reason` | One concise plain-text clause naming the user message, task result, or unresolved discussion point that caused capture. Required by `upsert` for every new `user-requested` or `agent-added` item; empty is allowed only for honest legacy data whose trigger cannot be proved. The Agent badge renders it after “An agent added this because …”. |
 | `provenance_history` | Optional append-only correction audit. Each record stores `from`, `to`, `corrected_at`, `reason`, and an optional correcting `session_id`. Only `correct-provenance` writes it. |
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
 | `latest_unanswered_suggestion` | Optional record of the last item the footer suggested that the user has not taken up: `{"id": "OI-4", "text": "…", "outcome": "unanswered"}`. It stores the permanent `OI-n` key rather than the mutable display suffix. `outcome` is optional and is either `unanswered` or `declined`. It never changes item status or order. Clear it to `null` once the user acts on that item, asks for a fresh suggestion, or the suggestion is replaced. |
 
-The server validates IDs, statuses, completion consistency, unique positions, provenance and its optional correction history, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
+The server validates IDs, statuses, completion consistency, unique positions, provenance, the optional correction history, `capture_reason`, the `explanation` type and length, and the owner/authority invariant before every atomic write. Suggestion metadata is agent-maintained ledger context rather than a browser mutation field.
 
-### Version 3, 4, and 5 migration
+### Version 3, 4, 5, and 6 migration
 
-Loading a valid version 3, 4, or 5 ledger upgrades it atomically to version 6 and increments its revision once. Every older item receives `priority: "P2"`, the neutral default, because migration cannot honestly infer urgency. Version 3 also receives conservative `provenance: "unknown-legacy"`; versions 3 and 4 receive `order_intent: {"kind": "automatic", "relevance_updated_at": null}`. Version 5's existing automatic or manual ordering metadata is preserved exactly. A legacy explanation longer than the current 600-character tooltip limit is shortened only in the compact `explanation` field; the complete original is preserved under `Full legacy explanation` in `details_markdown`, so an old ledger cannot strand its editor or lose content. Migration never fabricates urgency or manual placement from old positions, titles, status labels, notes, or conversational wording, and it preserves the existing item order during the schema write. The next explicit `reconcile-order`, server start, or UI load may then intelligently order automatic items. Status, completion, tracking/transfer state, evidence, and all other item content stay unchanged.
+Loading a valid version 3 through 6 ledger upgrades it atomically to version 7 and increments its revision once. Versions 3 through 5 receive `priority: "P2"`, the neutral default, because those schemas cannot honestly infer urgency; version 6 priority is preserved. Version 3 also receives conservative `provenance: "unknown-legacy"`; versions 3 and 4 receive `order_intent: {"kind": "automatic", "relevance_updated_at": null}`; versions 5 and 6 preserve existing automatic or manual ordering metadata. Every migrated item receives an empty `capture_reason` because older schemas did not retain the discussion trigger and migration must not invent one. A legacy explanation longer than the current 600-character tooltip limit is shortened only in the compact `explanation` field; the complete original is preserved under `Full legacy explanation` in `details_markdown`, so an old ledger cannot strand its editor or lose content. Migration never fabricates a capture reason, urgency, or manual placement from old positions, titles, status labels, notes, or conversational wording, and it preserves the existing item order during the schema write. The next explicit `reconcile-order`, server start, or UI load may then intelligently order automatic items. Status, completion, tracking/transfer state, evidence, and all other item content stay unchanged.
 
 ### Ordering policy
 

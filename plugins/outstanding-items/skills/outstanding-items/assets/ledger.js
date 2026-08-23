@@ -84,13 +84,27 @@
   const PROVENANCE = {
     "user-requested": {
       label: "You",
-      description: "You explicitly added this item to Outstanding Items.",
+      missingReason: "You explicitly added this item to Outstanding Items; the original discussion trigger was not recorded.",
     },
     "agent-added": {
       label: "Agent",
-      description: "An agent added this item to track a useful loose end.",
+      missingReason: "An agent added this item, but the original discussion trigger was not recorded.",
     },
   };
+
+  function sentence(text) {
+    const trimmed = String(text || "").trim();
+    return /[.!?…]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+  }
+
+  function provenanceDescription(item, provenance) {
+    const reason = typeof item.capture_reason === "string" ? item.capture_reason.trim() : "";
+    if (!reason) return provenance.missingReason;
+    if (item.provenance === "agent-added") {
+      return `An agent added this because ${sentence(reason)}`;
+    }
+    return `You added this to Outstanding Items because ${sentence(reason)}`;
+  }
 
   function apiUrl(path) {
     const query = new URLSearchParams({ token });
@@ -350,12 +364,13 @@
       badge.removeAttribute("aria-label");
       return;
     }
+    const description = provenanceDescription(item, provenance);
     badge.hidden = false;
-    node.dataset.provenanceDescription = provenance.description;
+    node.dataset.provenanceDescription = description;
     badge.textContent = provenance.label;
     badge.dataset.provenance = item.provenance;
-    badge.dataset.tooltip = provenance.description;
-    badge.setAttribute("aria-label", `Provenance: ${provenance.description}`);
+    badge.dataset.tooltip = description;
+    badge.setAttribute("aria-label", `Provenance: ${description}`);
   }
 
   function beginEdit(node, item, initialValue = item.title) {

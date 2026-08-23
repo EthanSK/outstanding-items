@@ -25,6 +25,10 @@ Work in this repository arrives in bursts of half-related requests. Use the
   to Outstanding Items. A normal work request captured automatically is
   `agent-added`; use `unknown-legacy` only when an old capture source cannot be
   proved.
+- For every new known origin, store one short `capture_reason` naming the exact
+  message, task result, or unresolved discussion point that caused capture.
+  Write it to follow “because”; do not use a generic loose-end label or invent
+  history for an older item.
 - Automatically add every concrete unresolved thing I still need to review,
   decide, provide, verify, or return to as `agent-added`. Before saying there
   are no outstanding items, check current results, blockers, decisions, and

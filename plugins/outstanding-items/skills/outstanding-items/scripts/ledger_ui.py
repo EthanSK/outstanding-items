@@ -32,8 +32,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 
-SCHEMA_VERSION = 6
-LEGACY_SCHEMA_VERSIONS = {3, 4, 5}
+SCHEMA_VERSION = 7
+LEGACY_SCHEMA_VERSIONS = {3, 4, 5, 6}
 STATUSES = {
     "requested",
     "planned",
@@ -76,6 +76,7 @@ MAX_BODY_BYTES = 1_000_000
 # One short, plain-language paragraph shown as the item's hover/focus tooltip.
 MAX_EXPLANATION_CHARS = 600
 MAX_PROVENANCE_REASON_CHARS = 1_000
+MAX_CAPTURE_REASON_CHARS = 600
 CODEX_THREAD_ID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
     re.I,
@@ -142,7 +143,7 @@ def item_for_reference(items: list[dict[str, Any]], reference: str) -> dict[str,
 
 
 def migrate_schema(data: Any) -> bool:
-    """Upgrade supported prior schemas without inventing provenance or manual intent."""
+    """Upgrade supported prior schemas without inventing provenance or discussion history."""
     if not isinstance(data, dict):
         raise ValueError("ledger root must be an object")
     version = data.get("schema_version")
@@ -177,7 +178,11 @@ def migrate_schema(data: Any) -> bool:
             item["provenance"] = "unknown-legacy"
         if version in {3, 4}:
             item["order_intent"] = automatic_order_intent()
-        item["priority"] = DEFAULT_PRIORITY
+        if version in {3, 4, 5}:
+            item["priority"] = DEFAULT_PRIORITY
+        # Older ledgers did not retain the discussion point that caused capture.
+        # Keep that absence explicit instead of fabricating a reason from the title.
+        item["capture_reason"] = ""
     revision = data.get("revision")
     if not isinstance(revision, int) or revision < 0:
         raise ValueError("revision must be a non-negative integer")
@@ -335,6 +340,13 @@ def validate_ledger(data: Any) -> None:
         provenance = item.get("provenance")
         if provenance not in PROVENANCES:
             raise ValueError(f"{item_id} has unsupported provenance {provenance!r}")
+        capture_reason = item.get("capture_reason", "")
+        if not isinstance(capture_reason, str):
+            raise ValueError(f"{item_id} capture_reason must be a string")
+        if len(capture_reason) > MAX_CAPTURE_REASON_CHARS:
+            raise ValueError(
+                f"{item_id} capture_reason must be at most {MAX_CAPTURE_REASON_CHARS} characters"
+            )
         order_intent = item.get("order_intent")
         if not isinstance(order_intent, dict):
             raise ValueError(f"{item_id} order_intent must be an object")
@@ -521,6 +533,7 @@ def migrate_markdown(source: pathlib.Path, title: str, task_id: str | None) -> d
                 "details_markdown": details,
                 "explanation": "",
                 "provenance": "unknown-legacy",
+                "capture_reason": "",
                 "order_intent": automatic_order_intent(),
                 "completed_at": None,
                 "completed_session_id": None,
@@ -1607,6 +1620,16 @@ def command_upsert(args: argparse.Namespace) -> int:
     if item is not None and item.get("tracking_state") == "transferred":
         raise ValueError(f"{display_id(item)} is transferred history and cannot be updated in this task")
     provenance = getattr(args, "provenance", None)
+    capture_reason_arg = getattr(args, "capture_reason", None)
+    capture_reason = None
+    if capture_reason_arg is not None:
+        capture_reason = " ".join(capture_reason_arg.split())
+        if not capture_reason:
+            raise ValueError("--capture-reason must not be empty")
+        if len(capture_reason) > MAX_CAPTURE_REASON_CHARS:
+            raise ValueError(
+                f"--capture-reason must be at most {MAX_CAPTURE_REASON_CHARS} characters"
+            )
     if item is None:
         if not args.title:
             raise ValueError("--title is required when adding a new item")
@@ -1614,6 +1637,11 @@ def command_upsert(args: argparse.Namespace) -> int:
             raise ValueError(
                 "--provenance is required when adding a new item; choose "
                 "user-requested, agent-added, or unknown-legacy"
+            )
+        if provenance in {"user-requested", "agent-added"} and capture_reason is None:
+            raise ValueError(
+                "--capture-reason is required when adding an item with known provenance; "
+                "record the concise discussion point that triggered its capture"
             )
         initial_status = args.status or "requested"
         initial_completed = initial_status in DONE_STATUSES
@@ -1633,6 +1661,7 @@ def command_upsert(args: argparse.Namespace) -> int:
             "details_markdown": "",
             "explanation": "",
             "provenance": provenance,
+            "capture_reason": capture_reason or "",
             "order_intent": automatic_order_intent(changed_at),
             "completed_at": changed_at if initial_completed else None,
             "completed_session_id": args.session_id if initial_completed else None,
@@ -1651,6 +1680,7 @@ def command_upsert(args: argparse.Namespace) -> int:
             requested_priority,
             args.group,
             args.explanation,
+            capture_reason,
             args.notes_file,
         )
     )
@@ -1664,6 +1694,8 @@ def command_upsert(args: argparse.Namespace) -> int:
                 f"--explanation must be at most {MAX_EXPLANATION_CHARS} characters"
             )
         item["explanation"] = explanation
+    if capture_reason is not None:
+        item["capture_reason"] = capture_reason
     if args.status:
         item["status"] = args.status
         item["completed"] = args.status in DONE_STATUSES
@@ -1823,6 +1855,13 @@ def parser() -> argparse.ArgumentParser:
         "--provenance",
         choices=sorted(PROVENANCES),
         help="required for a new item; records who caused the item to enter the ledger",
+    )
+    upsert.add_argument(
+        "--capture-reason",
+        help=(
+            "required for a new item with known provenance; one concise clause naming "
+            "the discussion point that caused its capture"
+        ),
     )
     upsert.add_argument("--group")
     upsert.add_argument(

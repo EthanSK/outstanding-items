@@ -648,8 +648,8 @@ def check_public_examples() -> list[str]:
     except json.JSONDecodeError as exc:
         problems.append(f"example backlog JSON is invalid: {exc}")
     else:
-        if payload.get("schema_version") != 6:
-            problems.append("example backlog JSON must use schema version 6")
+        if payload.get("schema_version") != 7:
+            problems.append("example backlog JSON must use schema version 7")
         if payload.get("owner") != "user" or payload.get("authorizes_work") is not False:
             problems.append("example backlog JSON must say owner=user and authorizes_work=false")
         items = payload.get("items")
@@ -672,6 +672,8 @@ def check_public_examples() -> list[str]:
                     problems.append("every example item must carry supported order_intent metadata")
                 if not isinstance(item, dict) or item.get("priority") not in {"P0", "P1", "P2", "P3"}:
                     problems.append("every example item must carry a supported P0-P3 priority")
+                if not isinstance(item, dict) or not isinstance(item.get("capture_reason"), str):
+                    problems.append("every example item must carry capture_reason metadata")
         if not isinstance(payload.get("sections"), list):
             problems.append("example backlog JSON must contain a sections list")
 
@@ -700,8 +702,10 @@ def check_item_provenance() -> list[str]:
     for fragment in (
         'label: "You"',
         'label: "Agent"',
-        "You explicitly added this item to Outstanding Items.",
-        "An agent added this item to track a useful loose end.",
+        "the original discussion trigger was not recorded",
+        "An agent added this because ${sentence(reason)}",
+        "item.capture_reason",
+        "provenanceDescription(item, provenance)",
         'badge.setAttribute("aria-label"',
         "badge.dataset.tooltip",
         "attachProvenance(node, item)",
@@ -728,6 +732,8 @@ def check_item_provenance() -> list[str]:
         '"correct-provenance"',
         "provenance_history",
         "migrate_schema",
+        '"--capture-reason"',
+        "MAX_CAPTURE_REASON_CHARS",
     ):
         if fragment not in runtime:
             problems.append(f"ledger_ui.py is missing provenance enforcement: {fragment!r}")
@@ -738,9 +744,11 @@ def check_item_provenance() -> list[str]:
     skill = read(SKILL_MD)
     for text, phrase, name in (
         (artifact, "| `provenance` |", "backlog-artifact.md"),
-        (artifact, "Version 3, 4, and 5 migration", "backlog-artifact.md"),
+        (artifact, "| `capture_reason` |", "backlog-artifact.md"),
+        (artifact, "Version 3, 4, 5, and 6 migration", "backlog-artifact.md"),
         (ui_reference, "--provenance", "ledger-ui.md"),
-        (skill, "Record ledger provenance, not task authorship", "SKILL.md"),
+        (ui_reference, "--capture-reason", "ledger-ui.md"),
+        (skill, "Record provenance and its discussion trigger", "SKILL.md"),
         (skill, "Never leave a real loose end out", "SKILL.md"),
         (skill, "Before declaring the ledger empty", "SKILL.md"),
         (skill, "review, decide, provide, verify, or return to", "SKILL.md"),
@@ -748,6 +756,7 @@ def check_item_provenance() -> list[str]:
         (skill, "A normal work request", "SKILL.md"),
         (provenance_reference, "We need to write the release note", "provenance.md"),
         (provenance_reference, "correct-provenance", "provenance.md"),
+        (provenance_reference, "An agent added this because <capture_reason>", "provenance.md"),
         (provenance_reference, "Every concrete thing the user still needs to look at becomes `agent-added`", "provenance.md"),
         (read(ROOT / "README.md"), "No lost loose ends", "README.md"),
         (read(ROOT / "README.md"), "Only a genuinely empty list says", "README.md"),
@@ -787,7 +796,7 @@ def check_item_priority() -> list[str]:
 
     runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
     for fragment in (
-        "SCHEMA_VERSION = 6",
+        "SCHEMA_VERSION = 7",
         'PRIORITIES = {"P0", "P1", "P2", "P3"}',
         'DEFAULT_PRIORITY = "P2"',
         "PRIORITY_RANK",
@@ -844,7 +853,7 @@ def check_item_priority() -> list[str]:
     for text, phrase, name in (
         (skill, "Show the composite current reference everywhere user-facing", "SKILL.md"),
         (skill, "sort first by actionable status, then by priority", "SKILL.md"),
-        (artifact, "## Schema version 6", "backlog-artifact.md"),
+        (artifact, "## Schema version 7", "backlog-artifact.md"),
         (artifact, "sort P0 before P1 before P2 before P3", "backlog-artifact.md"),
         (ui_reference, "P0 is highest, P2 is the neutral default", "ledger-ui.md"),
         (readme, "Explicit P0–P3 priority", "README.md"),

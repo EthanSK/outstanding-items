@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "owner": "user",
   "authorizes_work": false,
   "title": "Synthetic outstanding items",
@@ -24,6 +24,7 @@
       "details_markdown": "Shared token is a possible route, not permission.",
       "explanation": "Add clear focus outlines to buttons and links so keyboard users can see where they are while tabbing.",
       "provenance": "user-requested",
+      "capture_reason": "you said, “Add the focus ring to Outstanding Items”",
       "completed_at": null,
       "completed_session_id": null,
       "order_intent": {
@@ -43,6 +44,7 @@
       "details_markdown": "Paste the prepared note only if wanted.",
       "explanation": "Carry the prepared note into the design audit so that task records the shared token, but only when you decide to send it.",
       "provenance": "agent-added",
+      "capture_reason": "the design-audit overlap remained recorded here but had not been carried to its owning task",
       "completed_at": null,
       "completed_session_id": null,
       "order_intent": {
@@ -62,6 +64,7 @@
       "details_markdown": "Parked on purpose; no deadline.",
       "explanation": "Ask the design channel what the empty state should say before anyone builds it; keep it parked until you decide to raise it.",
       "provenance": "user-requested",
+      "capture_reason": "you said, “Add the design-channel reminder to Outstanding Items”",
       "completed_at": null,
       "completed_session_id": null,
       "order_intent": {
@@ -80,6 +83,7 @@
       "state_text": "verified",
       "details_markdown": "CI run 481: login suite green 20/20.",
       "provenance": "unknown-legacy",
+      "capture_reason": "",
       "completed_at": "2026-05-04T11:10:00Z",
       "completed_session_id": "sess_EXAMPLE_9d21",
       "order_intent": {
