@@ -373,6 +373,7 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  user-select: text;
   transition: opacity 130ms ease;
 }
 
@@ -383,13 +384,47 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   bottom: auto;
 }
 
+.item-tooltip-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
 .item-tooltip-label {
   display: block;
-  margin-bottom: 0.25rem;
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.item-tooltip-close {
+  flex: 0 0 auto;
+  width: 1.65rem;
+  height: 1.65rem;
+  margin: -0.35rem -0.45rem 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.item-tooltip-close[hidden] { display: none; }
+
+.item-tooltip-close:hover {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  color: var(--accent);
+}
+
+.item-tooltip-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .item-tooltip-text {
@@ -403,6 +438,8 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   opacity: 1;
   visibility: visible;
 }
+
+.ledger-item.details-pinned .item-tooltip { pointer-events: auto; }
 
 .item-title {
   display: block;

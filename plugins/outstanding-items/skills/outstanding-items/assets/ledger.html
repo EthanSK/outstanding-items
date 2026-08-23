@@ -34,7 +34,7 @@
           <h2 id="open-title">Outstanding</h2>
         </div>
         <ol class="item-list" id="open-list" aria-describedby="open-help"></ol>
-        <p class="sr-only" id="open-help">Click task text to edit it. Use the details disclosure above the reorder grip to show or hide its short note. Double-click a row or press Alt and Enter on its task text to keep that same note open; repeat the action or press Escape to dismiss it. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
+        <p class="sr-only" id="open-help">Click task text to edit it. Use the details disclosure above the reorder grip to show or hide its short note. Double-click a row or press Alt and Enter on its task text to keep that same note open; use its close button or press Escape to dismiss it. The pinned note selects text normally and never activates the row underneath. Drag the reorder control with a pointer, or reveal the move up and move down buttons with keyboard focus.</p>
         <div class="empty-state" id="open-empty" hidden>
           <p>Nothing is outstanding.</p>
         </div>
@@ -91,8 +91,13 @@
           <span class="item-title-text"></span>
           <span class="provenance-badge" hidden></span>
         </button>
-        <div class="item-tooltip" role="tooltip">
-          <span class="item-tooltip-label"></span>
+        <div class="item-tooltip" role="dialog" aria-modal="false">
+          <div class="item-tooltip-header">
+            <span class="item-tooltip-label"></span>
+            <button type="button" class="item-tooltip-close" hidden>
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
           <p class="item-tooltip-text"></p>
         </div>
         <p class="transfer-meta" hidden>

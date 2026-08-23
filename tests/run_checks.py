@@ -1661,7 +1661,7 @@ def check_full_outstanding_items_link() -> list[str]:
     return problems
 
 
-@check("item-explanations", "every item can carry a plain-language tooltip explanation")
+@check("item-explanations", "every item can carry an isolated plain-language explanation dialog")
 def check_item_explanations() -> list[str]:
     problems = []
     assets = SKILL_DIR / "assets"
@@ -1670,9 +1670,16 @@ def check_item_explanations() -> list[str]:
     style = read(assets / "ledger.css")
     runtime = read(SKILL_DIR / "scripts" / "ledger_ui.py")
 
-    for fragment in ('class="item-tooltip"', 'role="tooltip"', "item-tooltip-label", "item-tooltip-text"):
+    for fragment in (
+        'class="item-tooltip"',
+        'role="dialog"',
+        'aria-modal="false"',
+        "item-tooltip-label",
+        "item-tooltip-text",
+        'class="item-tooltip-close" hidden',
+    ):
         if fragment not in html_text:
-            problems.append(f"ledger.html has no tooltip {fragment!r}")
+            problems.append(f"ledger.html has no explanation dialog {fragment!r}")
     if "Use the details disclosure above the reorder grip" not in html_text:
         problems.append("ledger.html does not describe the dedicated detail disclosure")
     for fragment in ('class="details-trigger"', 'class="details-caret"', 'aria-expanded="false"'):
@@ -1686,16 +1693,28 @@ def check_item_explanations() -> list[str]:
         "tooltipAction(item)",
         "return fallback(action)",
         'querySelector(".item-tooltip-text").textContent',
-        'querySelector(".item-tooltip-label").textContent',
+        'tooltipLabelElement.textContent',
         'trigger.setAttribute("aria-describedby"',
         'trigger.setAttribute("aria-controls"',
+        'tooltip.setAttribute("aria-labelledby"',
         'trigger.addEventListener("pointerenter"',
         'trigger.addEventListener("focus"',
         'trigger.addEventListener("click"',
+        'closeButton.addEventListener("click"',
+        "suppressNextTriggerFocus = true",
+        "if (suppressNextTriggerFocus)",
+        '["pointerdown", "click", "dblclick"].forEach',
+        "event.stopPropagation()",
         'node.classList.toggle("details-visible"',
     ):
         if fragment not in script:
-            problems.append(f"ledger.js is missing the tooltip wiring: {fragment!r}")
+            problems.append(f"ledger.js is missing the explanation dialog wiring: {fragment!r}")
+    for fragment in (
+        ".ledger-item.details-pinned .item-tooltip { pointer-events: auto; }",
+        "user-select: text;",
+    ):
+        if fragment not in style:
+            problems.append(f"ledger.css is missing explanation dialog isolation: {fragment!r}")
     for forbidden in (
         "This one is here",
         "This one is finished",

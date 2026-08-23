@@ -1645,22 +1645,24 @@ class LedgerAssetTests(unittest.TestCase):
         script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
         style = (ASSETS / "ledger.css").read_text(encoding="utf-8")
 
-        # One tooltip per row, in the shared template rather than per ledger.
+        # One non-modal detail surface per row, in the shared template rather
+        # than per ledger.
         self.assertEqual(html.count('class="item-tooltip"'), 1)
-        self.assertIn('role="tooltip"', html)
+        self.assertIn('role="dialog" aria-modal="false"', html)
         self.assertIn("item-tooltip-label", html)
         self.assertIn("item-tooltip-text", html)
 
         # Safe text rendering only, wired to the dedicated disclosure control.
         self.assertNotIn("innerHTML", script)
         self.assertNotIn("insertAdjacentHTML", script)
-        self.assertIn('querySelector(".item-tooltip-label").textContent', script)
+        self.assertIn('tooltipLabelElement.textContent', script)
         self.assertIn('querySelector(".item-tooltip-text").textContent', script)
         self.assertIn("item.explanation", script)
         self.assertIn("tooltipAction(item)", script)
         self.assertIn("return fallback(action)", script)
         self.assertIn('trigger.setAttribute("aria-describedby", tooltip.id)', script)
         self.assertIn('trigger.setAttribute("aria-controls", tooltip.id)', script)
+        self.assertIn('tooltip.setAttribute("aria-labelledby", tooltipLabelElement.id)', script)
         for forbidden in (
             "This one is here",
             "This one is finished",
@@ -1748,6 +1750,27 @@ class LedgerAssetTests(unittest.TestCase):
         # remains the touch-safe path where double-click is unavailable.
         self.assertIn('event.key === "Escape" && node.classList.contains("details-visible")', script)
         self.assertIn('trigger.addEventListener("click", togglePinned)', script)
+
+        # Once pinned, the explanation behaves like a real non-modal dialog:
+        # it owns pointer input, offers a close control, and leaves native text
+        # selection alone instead of toggling the row underneath.
+        self.assertIn('class="item-tooltip-close" hidden', html)
+        self.assertIn('closeButton.hidden = !pinned', script)
+        self.assertIn('closeButton.addEventListener("click"', script)
+        self.assertIn('suppressNextTriggerFocus = true', script)
+        self.assertIn('if (suppressNextTriggerFocus)', script)
+        self.assertIn('trigger.focus({ preventScroll: true })', script)
+        self.assertIn('["pointerdown", "click", "dblclick"].forEach', script)
+        self.assertIn('event.stopPropagation()', script)
+        self.assertIn('.ledger-item.details-pinned .item-tooltip { pointer-events: auto; }', style)
+        self.assertIn('user-select: text;', style)
+        isolation = re.search(
+            r'\["pointerdown", "click", "dblclick"\]\.forEach\([\s\S]+?\n    \}\);',
+            script,
+        )
+        self.assertIsNotNone(isolation)
+        self.assertNotIn("preventDefault", isolation.group(0))
+        self.assertNotIn("togglePinned", isolation.group(0))
         self.assertIn("@media (hover: none)", style)
 
 

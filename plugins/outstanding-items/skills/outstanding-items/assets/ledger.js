@@ -288,14 +288,19 @@
   function attachTooltip(node, item, transferred) {
     const tooltip = node.querySelector(".item-tooltip");
     const trigger = node.querySelector(".details-trigger");
-    if (!tooltip || !trigger) return;
+    const closeButton = node.querySelector(".item-tooltip-close");
+    const tooltipLabelElement = node.querySelector(".item-tooltip-label");
+    if (!tooltip || !trigger || !closeButton || !tooltipLabelElement) return;
     tooltip.id = `item-tooltip-${item.id}`;
-    tooltip.querySelector(".item-tooltip-label").textContent = tooltipLabel(item, transferred);
+    tooltipLabelElement.id = `item-tooltip-label-${item.id}`;
+    tooltipLabelElement.textContent = tooltipLabel(item, transferred);
     tooltip.querySelector(".item-tooltip-text").textContent = tooltipText(item, transferred);
     tooltip.setAttribute("aria-hidden", "true");
+    tooltip.setAttribute("aria-labelledby", tooltipLabelElement.id);
     trigger.setAttribute("aria-controls", tooltip.id);
     trigger.setAttribute("aria-describedby", tooltip.id);
     trigger.setAttribute("aria-label", `Show details for ${displayId(item)}: ${item.title}`);
+    closeButton.setAttribute("aria-label", `Close details for ${displayId(item)}`);
     const title = node.querySelector(".item-title");
     title?.setAttribute("aria-controls", tooltip.id);
     title?.setAttribute("aria-keyshortcuts", "Alt+Enter");
@@ -304,6 +309,7 @@
     let hovered = false;
     let focused = false;
     let suppressed = false;
+    let suppressNextTriggerFocus = false;
 
     // Prefer showing it above the row, and flip below only when the row sits too
     // close to the top of the viewport for the tooltip to fit.
@@ -317,6 +323,7 @@
       node.classList.toggle("details-visible", visible);
       node.classList.toggle("details-pinned", pinned);
       tooltip.setAttribute("aria-hidden", String(!visible));
+      closeButton.hidden = !pinned;
       trigger.setAttribute("aria-expanded", String(visible));
       title?.setAttribute("aria-expanded", String(visible));
       trigger.setAttribute(
@@ -351,6 +358,11 @@
     });
     trigger.addEventListener("focus", () => {
       focused = true;
+      if (suppressNextTriggerFocus) {
+        suppressNextTriggerFocus = false;
+        syncVisibility();
+        return;
+      }
       suppressed = false;
       place();
       syncVisibility();
@@ -360,6 +372,19 @@
       syncVisibility();
     });
     trigger.addEventListener("click", togglePinned);
+    closeButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      suppressNextTriggerFocus = true;
+      dismiss();
+      trigger.focus({ preventScroll: true });
+    });
+    ["pointerdown", "click", "dblclick"].forEach((eventName) => {
+      tooltip.addEventListener(eventName, (event) => {
+        // A pinned explanation is an interactive non-modal dialog. Own its
+        // pointer events, but preserve the browser's normal text selection.
+        event.stopPropagation();
+      });
+    });
     trigger.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
