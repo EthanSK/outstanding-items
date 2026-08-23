@@ -1701,6 +1701,14 @@ def check_item_explanations() -> list[str]:
         'trigger.addEventListener("focus"',
         'trigger.addEventListener("click"',
         'closeButton.addEventListener("click"',
+        "function attachTooltip(node, item, transferred, cancelPendingEdit)",
+        "attachTooltip(node, item, transferred, cancelPendingEdit)",
+        'let pinSource = null',
+        'if (pinSource !== "pointer") return',
+        'window.getSelection()?.removeAllRanges()',
+        'if (document.activeElement === title) title.blur()',
+        'togglePinned("keyboard")',
+        'details.togglePinned("pointer")',
         "suppressNextTriggerFocus = true",
         "if (suppressNextTriggerFocus)",
         '["pointerdown", "click", "dblclick"].forEach',
@@ -1709,6 +1717,17 @@ def check_item_explanations() -> list[str]:
     ):
         if fragment not in script:
             problems.append(f"ledger.js is missing the explanation dialog wiring: {fragment!r}")
+    dismiss_match = re.search(r"const dismiss = \(\) => \{([\s\S]+?)\n    \};", script)
+    if not dismiss_match or "cancelPendingEdit();" not in dismiss_match.group(1):
+        problems.append("ledger.js does not cancel delayed editing when details are dismissed")
+    escape_handlers = re.findall(
+        r"(?:trigger|node)\.addEventListener\(\"keydown\", \(event\) => \{([\s\S]+?)\n    \}\);",
+        script,
+    )
+    if len(escape_handlers) < 2 or any(
+        "event.stopPropagation();" not in handler for handler in escape_handlers[:2]
+    ):
+        problems.append("ledger.js does not fully own Escape while dismissing details")
     for fragment in (
         ".ledger-item.details-pinned .item-tooltip { pointer-events: auto; }",
         "user-select: text;",

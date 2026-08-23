@@ -1725,7 +1725,7 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("Handle every even click here", script)
         self.assertIn('title?.setAttribute("aria-keyshortcuts", "Alt+Enter")', script)
         self.assertIn('event.altKey || event.key !== "Enter"', script)
-        self.assertIn("details.togglePinned()", script)
+        self.assertIn('details.togglePinned("pointer")', script)
         self.assertIn("setPinnedDetails(null)", script)
         self.assertIn("press Alt and Enter", html)
 
@@ -1749,7 +1749,30 @@ class LedgerAssetTests(unittest.TestCase):
         # Escape works from the row, while click/tap on the original disclosure
         # remains the touch-safe path where double-click is unavailable.
         self.assertIn('event.key === "Escape" && node.classList.contains("details-visible")', script)
-        self.assertIn('trigger.addEventListener("click", togglePinned)', script)
+        self.assertIn('trigger.addEventListener("click", () => togglePinned("disclosure"))', script)
+
+        # Dismissing a pinned explanation owns Escape completely and cancels
+        # the delayed single-click editor before it can replace/focus the title.
+        self.assertIn("function attachTooltip(node, item, transferred, cancelPendingEdit)", script)
+        self.assertIn("attachTooltip(node, item, transferred, cancelPendingEdit)", script)
+        dismiss = re.search(
+            r"const dismiss = \(\) => \{([\s\S]+?)\n    \};",
+            script,
+        )
+        self.assertIsNotNone(dismiss)
+        self.assertIn("cancelPendingEdit();", dismiss.group(1))
+        escape_handlers = re.findall(
+            r"(?:trigger|node)\.addEventListener\(\"keydown\", \(event\) => \{([\s\S]+?)\n    \}\);",
+            script,
+        )
+        self.assertGreaterEqual(len(escape_handlers), 2)
+        self.assertTrue(all("event.stopPropagation();" in handler for handler in escape_handlers[:2]))
+        self.assertIn('let pinSource = null', script)
+        self.assertIn('if (pinSource !== "pointer") return', script)
+        self.assertIn('window.getSelection()?.removeAllRanges()', script)
+        self.assertIn('if (document.activeElement === title) title.blur()', script)
+        self.assertIn('togglePinned("keyboard")', script)
+        self.assertIn('details.togglePinned("pointer")', script)
 
         # Once pinned, the explanation behaves like a real non-modal dialog:
         # it owns pointer input, offers a close control, and leaves native text

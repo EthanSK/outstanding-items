@@ -285,7 +285,7 @@
     state.detailControllers.forEach((controller) => controller.sync());
   }
 
-  function attachTooltip(node, item, transferred) {
+  function attachTooltip(node, item, transferred, cancelPendingEdit) {
     const tooltip = node.querySelector(".item-tooltip");
     const trigger = node.querySelector(".details-trigger");
     const closeButton = node.querySelector(".item-tooltip-close");
@@ -310,6 +310,13 @@
     let focused = false;
     let suppressed = false;
     let suppressNextTriggerFocus = false;
+    let pinSource = null;
+
+    const clearPointerFocus = () => {
+      if (pinSource !== "pointer") return;
+      window.getSelection()?.removeAllRanges();
+      if (document.activeElement === title) title.blur();
+    };
 
     // Prefer showing it above the row, and flip below only when the row sits too
     // close to the top of the viewport for the tooltip to fit.
@@ -331,17 +338,24 @@
         `${visible ? "Hide" : "Show"} details for ${displayId(item)}: ${item.title}`,
       );
     };
-    const togglePinned = () => {
+    const togglePinned = (source = "disclosure") => {
+      cancelPendingEdit();
       if (state.detailsPinnedId === item.id) {
+        clearPointerFocus();
+        pinSource = null;
         suppressed = true;
         setPinnedDetails(null);
       } else {
+        pinSource = source;
         suppressed = false;
         place();
         setPinnedDetails(item.id);
       }
     };
     const dismiss = () => {
+      cancelPendingEdit();
+      clearPointerFocus();
+      pinSource = null;
       if (state.detailsPinnedId === item.id) setPinnedDetails(null);
       suppressed = true;
       syncVisibility();
@@ -371,7 +385,7 @@
       focused = false;
       syncVisibility();
     });
-    trigger.addEventListener("click", togglePinned);
+    trigger.addEventListener("click", () => togglePinned("disclosure"));
     closeButton.addEventListener("click", (event) => {
       event.stopPropagation();
       suppressNextTriggerFocus = true;
@@ -388,17 +402,19 @@
     trigger.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       event.preventDefault();
+      event.stopPropagation();
       dismiss();
     });
     node.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && node.classList.contains("details-visible")) {
         event.preventDefault();
+        event.stopPropagation();
         dismiss();
         return;
       }
       if (!event.altKey || event.key !== "Enter" || !event.target.closest(".item-title")) return;
       event.preventDefault();
-      togglePinned();
+      togglePinned("keyboard");
     });
     node.addEventListener("dragstart", () => {
       dismiss();
@@ -624,7 +640,7 @@
       });
     }
 
-    const details = attachTooltip(node, item, transferred);
+    const details = attachTooltip(node, item, transferred, cancelPendingEdit);
     const isDetailsActivationTarget = (target) =>
       target instanceof Element && !target.closest(
         ".check-wrap, .item-reference, .item-actions, .edit-input, .item-tooltip, .transfer-meta",
@@ -639,7 +655,7 @@
       ) return;
       event.preventDefault();
       cancelPendingEdit();
-      details.togglePinned();
+      details.togglePinned("pointer");
       // A stationary pointer can continue with click counts 3 and 4 without
       // producing another native dblclick. Handle every even click here, then
       // suppress the redundant native event when the browser does emit it.
@@ -656,7 +672,7 @@
       if (!isDetailsActivationTarget(event.target)) return;
       event.preventDefault();
       cancelPendingEdit();
-      details.togglePinned();
+      details.togglePinned("pointer");
     });
 
     const dragHandle = node.querySelector(".drag-handle");
