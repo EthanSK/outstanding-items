@@ -1566,6 +1566,11 @@ class LedgerAssetTests(unittest.TestCase):
         self.assertIn("openInCodex.hidden = !canOpenInCodex", script)
         self.assertIn("openInCodex.href = buildCodexDeepLink(item)", script)
         self.assertIn("position: absolute;", style)
+        self.assertRegex(style, r"\.item-actions\s*\{[^}]*opacity:\s*1;")
+        self.assertIn("background: color-mix(in srgb, var(--accent) 10%, transparent);", style)
+        self.assertIn(".item-actions .drag-handle,\n.item-actions .move-up,", style)
+        self.assertIn("pointer-events: none;", style)
+        self.assertIn(".ledger-item:not(:hover):not(:focus-within) .item-actions .move-up", style)
         self.assertIn(".item-actions .open-in-codex[hidden] { display: none; }", style)
 
         prompt_builder = re.search(
