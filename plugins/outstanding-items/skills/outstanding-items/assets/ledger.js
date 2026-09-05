@@ -221,6 +221,14 @@
     editor.style.height = `${editor.scrollHeight}px`;
   }
 
+  function formatAdded(value) {
+    if (!value) return "Creation time not recorded";
+    const dateAdded = new Date(value);
+    const date = dateAdded.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    const time = dateAdded.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short" });
+    return `Added ${date} at ${time}`;
+  }
+
   function displayId(item) {
     return `${item.id}-${item.priority}`;
   }
@@ -295,6 +303,7 @@
     tooltipLabelElement.id = `item-tooltip-label-${item.id}`;
     tooltipLabelElement.textContent = tooltipLabel(item, transferred);
     tooltip.querySelector(".item-tooltip-text").textContent = tooltipText(item, transferred);
+    tooltip.querySelector(".item-tooltip-added").textContent = formatAdded(item.dateAdded);
     tooltip.setAttribute("aria-hidden", "true");
     tooltip.setAttribute("aria-labelledby", tooltipLabelElement.id);
     trigger.setAttribute("aria-controls", tooltip.id);

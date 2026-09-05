@@ -323,6 +323,16 @@ def validate_ledger(data: Any) -> None:
         if item_id in seen:
             raise ValueError(f"duplicate item id: {item_id}")
         seen.add(item_id)
+        date_added = item.get("dateAdded")
+        if date_added is not None:
+            if not isinstance(date_added, str) or not re.fullmatch(
+                r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})", date_added
+            ):
+                raise ValueError(f"{item_id} dateAdded must be null or an ISO date and time with a timezone")
+            try:
+                dt.datetime.fromisoformat(date_added.replace("Z", "+00:00"))
+            except ValueError as error:
+                raise ValueError(f"{item_id} dateAdded must be a valid date and time") from error
         title = item.get("title")
         if not isinstance(title, str) or not title.strip():
             raise ValueError(f"{item_id} title must be non-empty")
@@ -1651,6 +1661,7 @@ def command_upsert(args: argparse.Namespace) -> int:
         changed_at = utc_now()
         item = {
             "id": item_id,
+            "dateAdded": changed_at if provenance != "unknown-legacy" else None,  # Importing an older item cannot establish when it was originally added.
             "priority": requested_priority or reference_priority or DEFAULT_PRIORITY,
             "title": args.title.strip(),
             "status": initial_status,

@@ -45,6 +45,8 @@ Keep the resting interface visually quiet: put the compact composite reference i
 
 The whole row and editable task text never trigger item details. A small caret sits above the existing drag grip in the same action column, so it uses no additional horizontal content width. Hovering or keyboard-focusing that disclosure shows one tooltip above the row: the item's current `OI-n-Px` reference and a friendly state phrase on the first line, then its short explanation paragraph. Click or tap toggles it where hover is unavailable, `Escape` dismisses it without moving focus, and it flips below only when there is not enough space above. The tooltip is text only, rendered with `textContent`, and it is never used to show Markdown, evidence, logs, or a next step.
 
+Both the hover preview and pinned expanded details show `Added` followed by the original capture date and local time, including seconds and timezone, beneath the explanation. New known-origin `upsert` captures save `dateAdded` once in UTC. Edits, reordering, priority changes, completion, reopening, provenance correction, and transfer preserve it. Older items and unknown-legacy imports without a recorded date show `Creation time not recorded`; opening or updating them never invents a creation time. This optional field needs no schema migration. Keep the full date visible and allow it to wrap at narrow widths.
+
 Outstanding-item reorder controls are latent rather than absent: hover or keyboard focus reveals the drag grip and move buttons. `Alt+Up` and `Alt+Down` on focused task text provide the same keyboard movement without requiring the buttons. Completed items stay at the bottom and may be reopened with their checkbox.
 
 After a successful completion mutation, show a temporary snackbar with **Undo**. Undo sends a real reopen mutation using the current `base_revision`; it never rewinds client state independently of the canonical JSON. Keep the snackbar available for eight seconds, pause its timeout during hover or keyboard focus, do not steal focus, and allow `Command+Z` or `Control+Z` while it is live. A failed or stale mutation must report the error and render the server's current ledger instead of claiming success.
@@ -74,7 +76,7 @@ python3 ~/.codex/skills/outstanding-items/scripts/ledger_ui.py upsert \
   --provenance user-requested \
   --capture-reason 'you said, “Add release approval to Outstanding Items”' \
   --group "Release" \
-  --explanation "The release is built and ready; it just needs your yes before it goes out. One click in the release page is the whole job."
+  --explanation "Approve the Outstanding Items 0.4.4 release on the GitHub release page so the verified plugin update becomes public. Click Publish release; no technical review remains."
 ```
 
 For rich notes, write a task-local temporary note and pass `--notes-file`; do not squeeze paragraphs through shell quoting. `--priority` accepts P0 through P3; a new item defaults to P2 when it is omitted. An existing item may be addressed by stable `OI-12` or its current composite `OI-12-P2`. A stale composite suffix fails closed instead of silently editing the wrong current priority. The command atomically increments the revision, and an open UI sees it within two seconds.
@@ -100,19 +102,22 @@ A newly created outstanding item receives a fresh relevance timestamp. Automatic
 
 ## Writing the explanation
 
-`--explanation` fills the tooltip. Write it as if the user is meeting the item for the first time in a while and wants to feel oriented, not tested.
+`--explanation` fills the hover preview and pinned details. Write it for a user returning months later with zero conversation context, not for someone who remembers the task that created it.
 
 - One or two warm, ordinary sentences. Up to 600 characters, and shorter is better.
 - Use imperative Git commit-subject style: lead with the concrete action and a direct verb such as `Write`, `Add`, `Check`, or `Finish`.
-- Say what the item does and why it is on the list, in the user's own vocabulary.
+- Name the actual feature, product surface, or real-world outcome instead of referring only to a task or prior discussion.
+- State the concrete current problem or desired outcome and say why it matters when useful. Name the exact user decision or action when one remains; for a finished item, state the verified or dropped outcome instead of inventing another action.
+- Expand or explain acronyms and domain jargon that a returning reader might not remember.
 - Plain text only: no Markdown, no code, no file paths, no ticket numbers, no command output, no evidence, no credentials.
-- Describe the item, never the plan. It states nothing about what will happen next, claims no progress, and is not permission to act.
+- Describe the item and the user's remaining choice or action, never an agent implementation plan. The explanation claims no unproved progress and grants no permission to act.
+- Never depend on unexplained wording such as “this”, “it”, “the issue”, prior item numbers, task titles, or remembered architecture. Ordinary pronouns are fine after their subject is clear.
 - Omit throat-clearing such as “This is”, “This would”, “This one”, or “The idea is”. Do not force a genuinely non-action fact into a command.
 - No apologies, no reference to forgetting or remembering, and nothing that reads as talking down to the user.
 
-Good: `Write the real rate limits into the handbook so the docs page gives people the numbers they need.`
+Good: `Choose how other people can open public Liked videos, Disliked videos, and History Playlists without seeing the owner's private activity. Approve a small server endpoint that returns only the requested Playlist's Video IDs and dates, or a larger database redesign that stores ratings and viewing history separately.`
 
-Avoid: `This would add rate-limit numbers to the handbook.`
+Avoid: `Decide the smart-playlist issue from the other task.`
 
 Leaving it out is safe. Ledgers written before this field existed stay valid, and the UI starts its fallback with the item title before adding a plain sentence based on the status. Fill the field in when you can: the fallback describes the state, while a written explanation describes the item.
 

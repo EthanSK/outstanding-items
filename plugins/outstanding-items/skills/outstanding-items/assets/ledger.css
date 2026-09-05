@@ -434,6 +434,14 @@ details > .section-heading:focus-visible h2 { color: var(--ink); }
   overflow-wrap: anywhere;
 }
 
+.item-tooltip-added {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
 .ledger-item.details-visible .item-tooltip {
   opacity: 1;
   visibility: visible;

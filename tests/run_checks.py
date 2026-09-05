@@ -164,6 +164,8 @@ def repo_files() -> list[pathlib.Path]:
     out = []
     for dirpath, dirnames, filenames in os.walk(ROOT):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS)
+        if pathlib.Path(dirpath) == ROOT:  # Starting a local ledger creates private connection files; exclude its Git-ignored root directory from publication checks.
+            dirnames[:] = [d for d in dirnames if d != ".outstanding-items"]
         for name in sorted(filenames):
             if name in SKIP_FILES or (
                 name.startswith(".opus-") and name.endswith("-prompt.md")
@@ -1771,13 +1773,24 @@ def check_item_explanations() -> list[str]:
         "Writing the explanation",
         "textContent",
         "imperative Git commit-subject style",
+        "returning months later with zero conversation context",
+        "exact user decision or action when one remains",
+        "Expand or explain acronyms and domain jargon",
+        "prior item numbers, task titles, or remembered architecture",
     ):
         if phrase not in ui_reference:
             problems.append(f"ledger-ui.md does not cover: {phrase!r}")
     skill = read(SKILL_DIR / "SKILL.md")
-    for phrase in ("Phrase actions for scanning", "imperative Git commit-subject style"):
+    for phrase in (
+        "Phrase actions for scanning",
+        "imperative Git commit-subject style",
+        "returning months later with zero conversation context",
+        "exact user decision or action when one remains",
+        "Expand or explain domain acronyms and jargon",
+        "prior numbering, a task title, or remembered architecture",
+    ):
         if phrase not in skill:
-            problems.append(f"SKILL.md does not preserve the action-first rule: {phrase!r}")
+            problems.append(f"SKILL.md does not preserve the self-contained explanation rule: {phrase!r}")
 
     payload = json.loads(read(ROOT / "examples" / "outstanding-items.json"))
     items = payload.get("items", [])
@@ -1795,6 +1808,10 @@ def check_item_explanations() -> list[str]:
                 problems.append(f"{item['id']} explanation contains markup: {markup!r}")
         if re.match(r"^(?:This is|This would|This one|The idea is)\b", explanation, re.I):
             problems.append(f"{item['id']} explanation starts with throat-clearing copy")
+        if re.match(r"^(?:this|it|the issue)\b", explanation, re.I):
+            problems.append(f"{item['id']} explanation begins with context-only wording")
+        if not re.search(r"\b(?:approve|decide|choose|send|ask|check)\b", explanation, re.I):
+            problems.append(f"{item['id']} explanation does not name the user's remaining decision or action")
     return problems
 
 

@@ -108,6 +108,94 @@ def sample_ledger() -> dict:
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_added_time_is_saved_once_and_survives_item_mutations(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            ledger_ui.atomic_write_json(ledger, sample_ledger())
+            args = ledger_ui.parser().parse_args([
+                "upsert", "--ledger", str(ledger), "--id", "OI-9",
+                "--title", "Check capture time", "--provenance", "agent-added",
+                "--capture-reason", "the synthetic check needs a recorded creation time",
+            ])
+            date_added = "2026-08-07T10:05:06Z"
+            with mock.patch.object(ledger_ui, "utc_now", return_value=date_added):
+                ledger_ui.command_upsert(args)
+            args.title = "Check the preserved capture time"
+            with mock.patch.object(ledger_ui, "utc_now", return_value="2026-08-08T12:00:00Z"):
+                ledger_ui.command_upsert(args)
+            data = ledger_ui.read_json(ledger)
+            for action in [
+                {"action": "edit", "title": "Rename the item"},
+                {"action": "priority", "priority": "P1"},
+                {"action": "toggle", "completed": True},
+                {"action": "toggle", "completed": False},
+                {"action": "reorder", "order": ["OI-1", "OI-9", "OI-2"], "moved_id": "OI-9"},
+            ]:
+                data = ledger_ui.mutate(data, {
+                    **action, "id": "OI-9", "base_revision": data["revision"],
+                    "dateAdded": "2099-01-01T00:00:00Z",
+                })
+                item = next(item for item in data["items"] if item["id"] == "OI-9")
+                self.assertEqual(item["dateAdded"], date_added)
+            ledger_ui.atomic_write_json(ledger, data)
+            ledger_ui.command_transfer(ledger_ui.parser().parse_args([
+                "transfer", "--ledger", str(ledger), "--ids", "OI-9",
+                "--task-id", "task_EXAMPLE_target", "--task-title", "Synthetic destination",
+            ]))
+            item = next(item for item in ledger_ui.read_json(ledger)["items"] if item["id"] == "OI-9")
+            self.assertEqual(item["dateAdded"], date_added)
+
+    def test_legacy_creation_time_stays_unknown_during_import_and_edit(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            ledger = pathlib.Path(temp) / "ledger.json"
+            data = sample_ledger()
+            data["schema_version"] = 6
+            ledger.write_text(json.dumps(data), encoding="utf-8")
+            migrated = ledger_ui.read_json(ledger)
+            self.assertTrue(all(item.get("dateAdded") is None for item in migrated["items"]))
+            for item_id, extra in [("OI-1", []), ("OI-9", ["--provenance", "unknown-legacy"])]:
+                ledger_ui.command_upsert(ledger_ui.parser().parse_args([
+                    "upsert", "--ledger", str(ledger), "--id", item_id,
+                    "--title", "Preserve the older item", *extra,
+                ]))
+            data = ledger_ui.read_json(ledger)
+            self.assertTrue(all(item.get("dateAdded") is None for item in data["items"]))
+
+    def test_added_time_rejects_invalid_or_timezone_free_dates(self) -> None:
+        for value in [None, "2026-08-07T10:05:06Z", "2026-08-07T11:05:06.123+01:00"]:
+            data = sample_ledger()
+            data["items"][0]["dateAdded"] = value
+            ledger_ui.validate_ledger(data)
+        for value in ["", 0, {}, "yesterday", "2026-08-07", "2026-08-07T10:05:06", "2026-02-30T10:05:06Z"]:
+            with self.subTest(value=value):
+                data = sample_ledger()
+                data["items"][0]["dateAdded"] = value
+                with self.assertRaisesRegex(ValueError, "dateAdded"):
+                    ledger_ui.validate_ledger(data)
+
+    @unittest.skipUnless(shutil.which("node"), "Node is required to execute browser date formatting")
+    def test_added_time_displays_full_local_date_time_and_timezone(self) -> None:
+        script = (ASSETS / "ledger.js").read_text(encoding="utf-8")
+        match = re.search(r"  function formatAdded\(value\) \{[\s\S]+?\n  \}", script)
+        self.assertIsNotNone(match)
+        probe = match.group(0) + """
+const assert = require('node:assert/strict');
+assert.equal(formatAdded(null), 'Creation time not recorded');
+assert.equal(formatAdded(undefined), 'Creation time not recorded');
+for (const [zone, date, expectedTime] of [
+  ['Europe/London', '2026-08-07T10:05:06Z', '11:05:06'],
+  ['Europe/London', '2026-01-07T10:05:06Z', '10:05:06'],
+  ['America/New_York', '2026-08-07T10:05:06Z', '06:05:06'],
+]) {
+  process.env.TZ = zone;
+  const actual = formatAdded(date);
+  assert.match(actual, /^Added .*2026.* at /);
+  assert.ok(actual.includes(expectedTime), actual);
+  assert.match(actual, /(?:GMT|UTC|BST|EDT)/);
+}
+"""
+        subprocess.run([shutil.which("node"), "-e", probe], check=True, capture_output=True, text=True)
+
     def test_project_ledger_defaults_on_and_is_idempotently_gitignored(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             project = pathlib.Path(temp) / "project"

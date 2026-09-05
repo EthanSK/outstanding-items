@@ -73,7 +73,7 @@ Do not silently create a ledger before those triggers. When the user has already
       "group": "Outstanding for you",
       "state_text": "implemented; CI proof pending",
       "details_markdown": "Retried 20x locally, not on CI.",
-      "explanation": "Verify the login test that passes locally and fails at random on CI; the fix is in, and a green CI run would settle it.",
+      "explanation": "Verify the login test fix in continuous integration, where the test still fails at random even though local retries pass. Decide whether one green remote run is enough to close the item.",
       "provenance": "user-requested",
       "capture_reason": "you said, “Add the flaky login test to Outstanding Items”",
       "order_intent": {
@@ -129,10 +129,11 @@ Do not silently create a ledger before those triggers. When the user has already
 | `group` | A display label preserving the originating queue/category. It does not determine execution or section membership. |
 | `state_text` | The exact human state sentence when migrating a rich ledger. Preserve it even when `status` is normalized. |
 | `details_markdown` | Full item-specific notes, evidence, constraints, and decisions. The list UI edits the title only. |
-| `explanation` | Optional. One short, plain-language paragraph (600 characters or fewer) describing what the item is about, shown as the hover/focus tooltip in the UI. Plain text only — no Markdown, evidence, paths, or next steps. Absent or empty is valid, and the UI then falls back to a sentence based on `status`. |
+| `explanation` | Optional. One short, plain-language paragraph (600 characters or fewer) shown in the hover preview and pinned details. It must stand alone for a user returning months later: name the feature or surface, the concrete problem or outcome, useful stakes, and the exact user decision or action still needed; explain domain jargon and never depend on prior numbering, task titles, remembered architecture, or context-only references such as “this”, “it”, or “the issue”. Plain text only — no Markdown, evidence dumps, paths, or agent implementation plans. Absent or empty is valid, and the UI then falls back to a sentence based on `status`. |
 | `provenance` | Required. `user-requested` only when the user explicitly asked to add that specific thing to Outstanding Items; a normal task request captured automatically is `agent-added`. Use `unknown-legacy` only when an older item's capture source cannot be proved. Ordinary mutations preserve this field. |
 | `capture_reason` | One concise plain-text clause naming the user message, task result, or unresolved discussion point that caused capture. Required by `upsert` for every new `user-requested` or `agent-added` item; empty is allowed only for honest legacy data whose trigger cannot be proved. The Agent badge renders it after “An agent added this because …”. |
 | `provenance_history` | Optional append-only correction audit. Each record stores `from`, `to`, `corrected_at`, `reason`, and an optional correcting `session_id`. Only `correct-provenance` writes it. |
+| `dateAdded` | Original item capture time as an ISO date-time with a timezone, written in UTC by `upsert` for new known-origin items. Immutable through normal mutations. Optional or null for older imports whose creation time was not recorded; never infer it from relevance, completion, migration, file, or ledger times. |
 | `completed_at` | UTC timestamp when checked complete, otherwise null. |
 | `completed_session_id` | Stable completing session ID when exposed; otherwise `unavailable` or null. Never invent one. |
 | `sections` | Non-item context such as related-task tables, reference maps, and archived decisions. |
