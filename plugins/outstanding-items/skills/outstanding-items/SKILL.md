@@ -51,6 +51,8 @@ Draft the limits table first, about twenty minutes; nothing else is waiting on i
 [Full outstanding items](<live local UI URL>)
 ```
 
+In Codex, append the hover-only opening symbol to the recommended item’s first line: `[↗](</Full explanation of this outstanding item>)`. Put the item’s self-contained explanation in that deliberately non-existent destination, so the destination popup supplies context without opening another page. This is a hover control, not a working file link; never claim clicking it opens anything. Keep the canonical ledger as the source of truth and the separate Full outstanding items editor link when available. Use this only in a host where the user has confirmed destination-text hover works. For multiline text or delimiter characters that cannot be represented faithfully, use a real local context viewer instead; hover cannot show images. Never put secrets into a destination.
+
 With no live UI, the link line is simply absent and nothing replaces it:
 
 ```text

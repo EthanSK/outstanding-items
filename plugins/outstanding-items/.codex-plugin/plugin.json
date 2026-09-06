@@ -1,6 +1,6 @@
 {
   "name": "outstanding-items",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Keep a user-owned ledger out of the chat and always suggest one actionable next item without starting it.",
   "author": {
     "name": "EthanSK",
@@ -9,7 +9,13 @@
   "homepage": "https://ethansk.github.io/outstanding-items/",
   "repository": "https://github.com/EthanSK/outstanding-items",
   "license": "MIT",
-  "keywords": ["memory", "tasks", "ledger", "productivity", "skills"],
+  "keywords": [
+    "memory",
+    "tasks",
+    "ledger",
+    "productivity",
+    "skills"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Outstanding Items",
@@ -17,7 +23,10 @@
     "longDescription": "Capture every request and concrete user-facing loose end in a user-owned ledger, reconcile proven completions into Done, maintain an actionable frontier when work is blocked, keep the full list out of the conversation, and offer one small next move without treating it as permission to start.",
     "developerName": "EthanSK",
     "category": "Productivity",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "websiteURL": "https://ethansk.github.io/outstanding-items/",
     "defaultPrompt": [
       "Track these requests without starting anything I only ask you to remember.",
