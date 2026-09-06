@@ -104,7 +104,8 @@
       <p class="kicker">Install</p>
       <h2 id="install-title">Pick your agent. Install the same skill.</h2>
       <p>The repository follows both plugin formats while keeping one canonical skill underneath.</p>
-      <p class="small">No service starts and no port opens. Each harness installs the plugin through its own marketplace.</p>
+      <p>On skill use, the agent checks for public updates at most weekly after a successful check, with a shared local lease. Reviewed updates install through a safe route, preserve local edits, and come with a brief explanation. Python 3 is needed for the check; no process starts on installation. You can opt out. Failed checks retry later; plugin updates use the host updater.</p>
+<p class="small">No service starts and no port opens. Each harness installs the plugin through its own marketplace.</p>
     </div>
     <div class="code-block">
       <button class="copy-button" type="button" data-copy-target="install-code">Copy</button>
