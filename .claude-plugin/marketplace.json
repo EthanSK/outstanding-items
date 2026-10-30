@@ -14,9 +14,16 @@
       },
       "homepage": "https://ethansk.github.io/outstanding-items/",
       "repository": "https://github.com/EthanSK/outstanding-items",
-      "license": "MIT",
-      "keywords": ["memory", "tasks", "ledger", "productivity", "skills"],
-      "category": "Productivity"
+      "license": "LicenseRef-Ethan-No-Sale-1.0",
+      "keywords": [
+        "memory",
+        "tasks",
+        "ledger",
+        "productivity",
+        "skills"
+      ],
+      "category": "Productivity",
+      "version": "0.4.8"
     }
   ]
 }

@@ -2151,16 +2151,20 @@ def check_legacy_uninstaller() -> list[str]:
     return problems
 
 
-@check("license", "the licence is MIT and is referenced")
+@check("license", "the source licence, scope, and packaged copies agree")
 def check_license() -> list[str]:
     problems = []
     text = read(ROOT / "LICENSE")
-    if "MIT License" not in text:
-        problems.append("LICENSE is not the MIT licence")
+    if not text.startswith("ETHAN SOURCE-AVAILABLE NO-SALE TERMS, VERSION 1.0"):
+        problems.append("LICENSE does not identify the current source terms")
     if "Copyright (c)" not in text:
         problems.append("LICENSE has no copyright line")
-    if "MIT" not in read(ROOT / "README.md"):
-        problems.append("README.md does not mention the licence")
+    if "[scope and release policy](LICENSING.md)" not in read(ROOT / "README.md"):
+        problems.append("README.md does not link the source licence scope")
+    if "MIT License" not in read(ROOT / "LICENSES/prior-project-license.txt"):
+        problems.append("the earlier MIT grant has not been preserved")
+    if read(ROOT / "plugins/outstanding-items/LICENSE") != text:
+        problems.append("the distributable plugin licence differs from the root")
     return problems
 
 
