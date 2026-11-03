@@ -14,7 +14,7 @@
       },
       "homepage": "https://ethansk.github.io/outstanding-items/",
       "repository": "https://github.com/EthanSK/outstanding-items",
-      "license": "LicenseRef-Ethan-No-Sale-1.0",
+      "license": "MIT",
       "keywords": [
         "memory",
         "tasks",
@@ -23,7 +23,7 @@
         "skills"
       ],
       "category": "Productivity",
-      "version": "0.4.8"
+      "version": "0.4.10"
     }
   ]
 }
